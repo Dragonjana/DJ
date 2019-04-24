@@ -1,0 +1,48 @@
+To add new IP address in Linux
+
+[UAT root @ lswtratdewasu2u ~]
+# cd /etc/sysconfig/network-scripts/
+[UAT root @ lswtratdewasu2u /etc/sysconfig/network-scripts]
+# ls 
+ifcfg-eth0   ifdown-eth   ifdown-post    ifdown-tunnel  ifup-eth   ifup-plip   ifup-routes    init.ipv6-global        pre_ifcfg-eth0
+ifcfg-lo     ifdown-ippp  ifdown-ppp     ifup           ifup-ippp  ifup-plusb  ifup-sit       net.hotplug
+ifdown       ifdown-ipv6  ifdown-routes  ifup-aliases   ifup-ipv6  ifup-post   ifup-tunnel    network-functions
+ifdown-bnep  ifdown-isdn  ifdown-sit     ifup-bnep      ifup-isdn  ifup-ppp    ifup-wireless  network-functions-ipv6
+[UAT root @ lswtratdewasu2u /etc/sysconfig/network-scripts]
+# cat ifcfg-eth0
+DEVICE="eth0"
+BOOTPROTO="static"
+DNS1="192.193.215.65"
+GATEWAY="169.177.57.1"
+#HWADDR="00:50:56:9A:3B:19"
+IPADDR="169.177.57.244"
+NETMASK="255.255.255.0"
+NM_CONTROLLED="yes"
+ONBOOT="yes"
+TYPE="Ethernet"
+UUID="b87959f1-e7c3-41c2-a9a5-110147c6e8f4"
+[UAT root @ lswtratdewasu2u /etc/sysconfig/network-scripts]
+# cd ..
+[UAT root @ lswtratdewasu2u /etc/sysconfig]
+# ls 
+auditd       clock      grub              kdump     netconsole              ntpclient   readahead      sendmail          udev
+authconfig   console    i18n              kernel    network                 ntpd        readonly-root  sendmail.rpmedit  xinetd
+autofs       cpuspeed   init              keyboard  networking              ntpdate     rngd           snmpd
+autosys      crond      ip6tables-config  mcelogd   network.prepostinstall  prelink     rsyslog        snmptrapd
+cbq          ethconf    iptables-config   mkinitrd  network-scripts         quota_nld   sandbox        sysstat
+chef-client  firstboot  irqbalance        modules   nfs                     raid-check  saslauthd      sysstat.ioconf
+[UAT root @ lswtratdewasu2u /etc/sysconfig]
+# cat network
+NETWORKING=yes
+HOSTNAME=lswtratdewasu2u
+GATEWAY=169.177.57.1
+NETWORKING_IPV6=no
+[UAT root @ lswtratdewasu2u /etc/sysconfig]
+# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+169.177.57.244            lswtratdewasu2u.nam.nsroot.net lswtratdewasu2u
+[UAT root @ lswtratdewasu2u /etc/sysconfig]
+# 
+
+and need to reboot
