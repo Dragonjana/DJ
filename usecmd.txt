@@ -1,0 +1,7108 @@
+Autosys agent stop and restart process: 
+AIX:
+cd /etc/init.d 
+Dls 
+uname -a 
+./waae_agent-WA1_AGENT status 
+./waae_agent-WA2_AGENT status 
+./waae_agent-WA1_AGENT stop 
+./waae_agent-WA2_AGENT stop 
+./waae_agent-WA1_AGENT start 
+./waae_agent-WA2_AGENT start 
+uname -a 
+/etc/init.d/waae_agent-WA1_AGENT status 
+/etc/init.d/waae_agent-WA2_AGENT status
+
+
+Script to be run before stopping the Autosys agent
+/net/autosw26d.nam.nsroot.net/opt/CA_cds/scripts/agentlog.ksh
+
+Linux:
+/opt/CA/WorkloadAutomationAE/SystemAgent/WA2_AGENT/cybagent -s      --to stop 
+/opt/CA/WorkloadAutomationAE/SystemAgent/WA2_AGENT/cybagent -a      -- to start
+
+/opt/CA/WorkloadAutomationAE/SystemAgent/WA1_AGENT/cybAgent -a;
+/opt/CA/WorkloadAutomationAE/SystemAgent/WA2_AGENT/cybAgent -a;
+
+For Output:
+ps -ef | grep -i cyb
+
+
+To find the large files in the directory:
+find . -xdev -size +1000000 -exec ls -l {} \; | sort -nrk 5 | more
+
+To increase autosys ulimts value:
+below ex: for increase " open files (-n) "
+
+have to create /etc/sysconfig/autosys
+and then paste in this file ulimit command 
+depending on what you want to change
+for example ulimit -n <some value>
+after that you have to recycle autosys agent
+
+
+# cat /etc/sysconfig/autosys
+ulimit -n 66535
+
+Ulimit set to AIX 
+
+Edit the limits file under /etc/security/limits (takes effect after reboot)
+Here are a few of the flags that can be set:
+
+oracle:
+        fsize = -1
+        data = -1
+        stack = -1
+        fsize_hard = -1
+        nofiles = -1
+        nofiles_hard = -1
+		
+Use the chuser command to change individual user settings (logout and login required)
+Here are a few of the flags that can be set:
+
+chuser rss=-1 username
+chuser fsize=-1 username
+chuser data=-1 username
+chuser nofiles=4000 username
+chuser “stack=8388608? username
+
+----------------------remove/delete un-deletable file-------- 
+ls -lia
+total 44
+133121 d--x--x--x  2 root    root 4096 Feb  3 11:24 .
+ 30107 dr-x--x--x 12 root    root 4096 Jan 13 16:05 ..
+136018 -rw-r--r--  1 root    root  956 Feb  3 11:23 \
+
+
+# find . -inum 136018 -exec rm -i {} \;
+rm: remove regular file `./\\'? y
+
+----------------------Open SSH-----------------------------------
+
+
+from="CDFTPLS@mfssb.es.ssmb.com"
+
+
+-------------------welcome note on su user ----------------------
+
+$ cat .profile
+#!/bin/ksh
+set -o vi
+stty erase ^?
+export PS1='$ '
+echo "Welcome jana"
+
+
+-----------------------NDM start------------------------------
+
+
+
+cd /etc/rc3.d
+./S91ndm start
+
+or
+
+cd /opt/cdunix/ndm/bin/
+ls -l
+ps -ef|grep -i ndm
+./ndmstat
+
+or
+
+cd /opt/cdunix/etc/
+ls -lrt
+./start_ndm.sh
+
+or
+
+cd /etc/init.d/
+./ndm-cduser-133071496 status
+./ndm-cduser-133071496 start
+
+or
+
+nohup /usr/bin/su cduser -c '/opt/cdunix/ndm/bin/cdpmgr -i /opt/cdunix/ndm/cfg/GPBPSNDMP/initparm.cfg' &
+
+
+ 381  cd /opt/cdunix/ndm/bin
+  382  export NDMAPICFG=/opt/cdunix/ndm/cfg/cliapi/ndmapi.cfg;
+  383  cdpmgr -i /opt/cdunix/ndm/cfg/kycnamprd/initparm.cfg
+
+
+if cduser not found in /etc/passwd
+put entry manually in /etc/passwd
+uid=1000630(cduser) gid=300190(outbound) groups=300190(outbound)
+and below cmd
+pwconv
+
+id cduser 
+
+then try connectivity
+
+
+
+
+cd /opt/cdunix/ndm/cfg/CITISTAU
+ls -ltr
+cp netmap.cfg netmap.cfg.11082015
+cp userfile.cfg userfile.cfg.11082015
+
+
+1.  Run /opt/cdunix/ndm/bin/spcli.sh 
+2.  In the script prompt, write:
+
+Sync Netmap path=/opt/cdunix/ndm/cfg/OTMSPRD/netmap.cfg Name=SLHNDMP;
+update remotenode name=SLHNDMP protocol=tls;
+q;
+
+ndm transfer script from gclmwp-oata04.
+
+/opt/cdunix/scripts/XFRndm.sh /home/ftp/pub/TransactorFeedCEEMEA/IL/TLV_Test TLVCMESF001\!D:\\M_files\\BAU\\Binar\\Trade_OASYS\\Incoming\\TLV_Test
+
+cat userfile.cfg  |grep -i CDPXGCS
+
+
+su - cduser
+>direct
+
+>sel stat pnum=***** summ=no;
+
+
+for other id ( like oatcop)
+
+su - oatcop
+bash
+
+ps -ef|grep cdpmgr
+    root 26689  9673   0 17:48:52 ?           2:16 /opt/cdunix/ndm/bin/cdpmgr -i /opt/cdunix/ndm/cfg/gclmwp-oata04/initparm.cfg
+
+bash-3.2$ ls -ltr /opt/cdunix/ndm/cfg/cliapi/ndmapi.cfg
+-rw-r--r--   1 cduser   xfer         314 Jun 15  2013 /opt/cdunix/ndm/cfg/cliapi/ndmapi.cfg
+
+export NDMAPICFG=/opt/cdunix/ndm/cfg/cliapi/ndmapi.cfg
+
+/opt/cdunix/ndm/bin/direct
+
+ sel stat pnum=92080 summ=no;
+
+
+to check error code for NDM
+cd /opt/cdunix/ndm/cfg/
+
+/usr/sfw/bin/ggrep -A 10 -i XCMM018I msgfile.cfg
+XCMM018I:\
+:mod.name=NUCMSU00:\
+:short.text=Time expired before the max delay proc done. Pnum=&PNUM.:\
+:long.text=Time expired before the max delay process finished \
+execution. \
+ \
+\nSYSTEM ACTION->None. \
+ \
+\nRESPONSE->     Increase the time and try again. You \
+               may want to check the statistics to \
+               determine the necessary time increase. \
+
+
+There is problem with unsynchronized Secure+ with netmap.
+Needed NDM support ( SA? ) from oafin for:
+1.       Recognize NDM installation path
+suppose that is /opt/cdunix/ndm
+2.       Use spcli.sh  for synchronize Secure+ with netmap.cfg
+
+using cduser account please execute:
+spcli.sh
+> Sync Netmap path=${ndmpath}/netmap.cfg name=* ;
+
+and then you allow to enable/disable secure+ for mentioned connection, following
+3.        For enable Secure+
+> update remotenode name=flxltprd protocol=TLS override=n;
+ or for disable secure+
+> update remotenode name=flxltprd protocol=disable override=n;
+Note same settings should be done on both NDMs – PNODE and SNODE. 
+
+
+ SPCLI need to be performed with "su cduser"
+
+export PATH=$PATH:/opt/cdunix/ndm/bin ; export NDMAPICFG=/opt/cdunix/ndm/cfg/cliapi/ndmapi.cfg
+
+/opt/cdunix/ndm/bin/spcli.sh
+Sync Netmap path=${ndmpath}/netmap.cfg name=* ;
+
+open parmfile path=/opt/cdunix/ndm/secure+/nodes;
+
+
+display localnode;
+
+display remotenode name=flxltprd;
+
+SPCLI> display remotenode name=flxltprd;
+SPCG271E rc=8 The specified node(s) "flxltprd" do not exist in this parmfile.
+
+SPCLI> path=/opt/cdunix/ndm/cfg/oafinprod/netmap.cfg
+
+sync netmap
+path=/opt/cdunix/ndm/cfg/oafinprod/netmap.cfg
+name=*;
+
+SPCG021E rc=8 No parmfile is currently open.
+
+open parmfile path=/opt/cdunix/ndm/secure+/nodes;
+sync netmap
+path=/opt/cdunix/ndm/cfg/oafinprod/netmap.cfg
+name=*;
+
+update remotenode name=flxltprd protocol=disable;
+"this is to disable secure+ "
+
+
+=====
+Open Parmfile Path=/opt/cdunix/ndm/secure+/nodes;
+=====
+SPCLI> display remotenode name=menaflexpr;
+SPCG021E rc=8 No parmfile is currently open.
+=====
+do this
+Open Parmfile Path=/opt/cdunix/ndm/secure+/nodes;
+===
+SPCLI> Open Parmfile Path=/opt/cdunix/ndm/secure+/nodes;
+SPCG050I rc=0 Parmfile opened successfully.
+
+===
+validate Parmfile;
+update remotenode name=menaflxpr protocol=disable;
+validate Parmfile;
+======
+Open Parmfile Path=/opt/cdunix/ndm/secure+/nodes;
+validate Parmfile;
+update remotenode name=mecdhub protocol=disable;
+validate Parmfile;
+
+====
+Validating node: mecdhub
+SPCG151W rc=4 Secure+ is disabled for this node.
+
+
+
+
+
+
+----------------------------secure+-----------------------------------
+
+There is problem with unsynchronized Secure+ with netmap.
+Needed NDM support ( SA? ) from oafin for:
+1. Recognize NDM installation path
+suppose that is /opt/cdunix/ndm
+2. Use spcli.sh for synchronize Secure+ with netmap.cfg
+
+using cduser account please execute:
+spcli.sh
+> Sync Netmap path=${ndmpath}/netmap.cfg name=* ;
+
+and then you allow to enable/disable secure+ for mentioned connection, following
+3. For enable Secure+
+> update remotenode name=flxltprd protocol=TLS override=n;
+or for disable secure+
+> update remotenode name=flxltprd protocol=disable override=n;
+Note same settings should be done on both NDMs – PNODE and SNODE. 
+
+
+
+There is problem with unsynchronized Secure+ with netmap.
+Needed NDM support ( SA? ) from oafin for:
+1. Recognize NDM installation path
+suppose that is /opt/cdunix/ndm
+2. Use spcli.sh for synchronize Secure+ with netmap.cfg
+
+using cduser account please execute:
+spcli.sh
+> Sync Netmap path=${ndmpath}/netmap.cfg name=* ;
+
+and then you allow to enable/disable secure+ for mentioned connection, following
+3. For enable Secure+
+> update remotenode name=flxltprd protocol=TLS override=n;
+or for disable secure+
+> update remotenode name=flxltprd protocol=disable override=n;
+Note same settings should be done on both NDMs – PNODE and SNODE. 
+
+
+
+bash-3.2# 
+bash-3.2# su - cduser
+
+
+You are authorized to use this System for approved business purposes only.
+Use for any other purpose is prohibited. All transactional records, reports,
+email, software and other data generated by or residing upon this System,
+to the extent permitted by local law, are the property of Citigroup Inc. or
+one of its subsidiaries or their affiliates (individually or collectively
+' Citigroup ') and may be used by Citigroup for any purpose authorized and
+permissible in your country of work. Activities on this System are monitored
+to the extent permitted by local law.
+
+$ bash
+bash-3.2$ 
+bash-3.2$ ls -ltr /opt/cdunix/ndm/bin/spcli.sh
+-rwxr--r--   1 cduser   xfer        1424 Dec 22  2008 /opt/cdunix/ndm/bin/spcli.sh
+bash-3.2$ export PATH=$PATH:/opt/cdunix/ndm/bin ; export 
+declare -x HOME="/opt/cdunix"
+declare -x HZ=""
+declare -x LOGNAME="cduser"
+declare -x MAIL="/var/mail/cduser"
+declare -x NDMAPICFG="/export/opt/cdunix/ndm/cfg/cliapi/ndmapi.cfg"
+declare -x NDMBASE="/export/opt/cdunix"
+declare -x OLDPWD
+declare -x PATH="/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/X11R6/bin:/export/opt/cdunix/ndm/bin::/opt/cdunix/ndm/bin"
+declare -x PWD="/opt/cdunix"
+declare -x SHELL="/bin/ksh"
+declare -x SHLVL="1"
+declare -x TERM="vt100"
+declare -x TZ="US/Eastern"
+bash-3.2$ NDMAPICFG=/opt/cdunix/ndm/cfg/cliapi/ndmapi.cfg
+bash-3.2$ 
+bash-3.2$ 
+bash-3.2$ cd /opt/cdunix/ndm/bin/
+bash-3.2$ ./spcli.sh
+   **************************************************************
+   *              Secure+ Command Line Interface                *
+   *                      Version 3.1.02                        *
+   *------------------------------------------------------------*
+   * Copyright (c) 1999, 2005 Sterling Commerce Inc.            *
+   * All Rights Reserved.                                       *
+   **************************************************************
+
+SPCLI> Sync Netmap path=${ndmpath}/netmap.cfg name=* ;
+SPCG001E rc=8 The specified file "${ndmpath}/netmap.cfg" does not exist.
+
+quit;
+bash-3.2$ ps -ef | grep cdpmgr
+    root 23224 17662   0   Jun 11 ?           0:44 /export/opt/cdunix/ndm/bin/cdpmgr -i /export/opt/cdunix/ndm/cfg/oafinprod/initp
+  cduser 26050 28668   0 15:11:06 pts/7       0:00 grep cdpmgr
+bash-3.2$ ./spcli.sh
+   **************************************************************
+   *              Secure+ Command Line Interface                *
+   *                      Version 3.1.02                        *
+   *------------------------------------------------------------*
+   * Copyright (c) 1999, 2005 Sterling Commerce Inc.            *
+   * All Rights Reserved.                                       *
+   **************************************************************
+
+SPCLI> Sync Netmap path=${ndmpath}/netmap.cfg name=* ;
+SPCG001E rc=8 The specified file "${ndmpath}/netmap.cfg" does not exist.
+
+SPCLI> open parmfile path=/opt/cdunix/ndm/secure+/nodes;
+SPCG050I rc=0 Parmfile opened successfully.
+
+SPCLI> Sync Netmap path=${ndmpath}/netmap.cfg name=* ;
+SPCG001E rc=8 The specified file "${ndmpath}/netmap.cfg" does not exist.
+
+SPCLI> display localnode;
+
+  name=.Local
+  baserecord=oafinprod
+  type=l
+  protocol=ssl
+  override=y
+  authtimeout=120
+  stsenablesig=n
+  stsenableautoupdate=n
+  stslimitexportversion=y
+  stsenableenc=n
+  stsencalgs=(ideacbc128,tdescbc112,descbc56)
+  stsauthlocalkey=
+  stsauthremotekey=
+  stsprevauthkeyexpdatetime=
+  stssiglocalkey=
+  stssigremotekey=
+  stsprevsigkeyexpdatetime=
+  ssltlstrustedrootcertfile=/opt/cdunix/ndm/secure+/certificates/trusted.txt
+  ssltlscertfile=/opt/cdunix/ndm/secure+/certificates/keycert.txt
+  ssltlsenableclientauth=n
+  ssltlscertcommonname=
+  ssltlsenablecipher=(SSL_RSA_WITH_RC4_128_MD5,SSL_RSA_WITH_RC4_128_SHA,SSL_RSA_WITH_3DES_EDE_CBC_SHA,SSL_RSA_WITH_DES_CBC_SHA,SSL_RSA_EXPORT_WITH_RC4_40_MD5,SSL_RSA_EXPORT_WITH_DES40_CBC_SHA,SSL_RSA_WITH_NULL_MD5)
+
+  2013/01/10 14:44:14 cduser
+
+SPCG400I rc=0 Display local node command successful.
+
+SPCLI> display remotenode name=flxltprd;
+SPCG271E rc=8 The specified node(s) "flxltprd" do not exist in this parmfile.
+
+SPCLI> open parmfile path=/opt/cdunix/ndm/secure+/nodes;
+sync netmap
+path=/opt/cdunix/ndm/cfg/oafinprod/netmap.cfg
+name=*;
+SPCG050I rc=0 Parmfile opened successfully.
+
+SPCLI> SPCG300I rc=0 Synchronize with Netmap successful.
+
+SPCLI> update remotenode name=flxltprd protocol=disable;
+SPCG470I rc=0 Update remotenode "flxltprd" command successful.
+
+SPCLI> display remotenode name=flxltprd;
+
+  name=flxltprd
+  baserecord=flxltprd
+  type=r
+  protocol=disable
+  override=defaulttoln
+  authtimeout=120
+  stsenablesig=defaulttoln
+  stsenableautoupdate=defaulttoln
+  stslimitexportversion=y
+  stsenableenc=defaulttoln
+  stsencalgs=()
+  stsauthlocalkey=
+  stsauthremotekey=
+  stsprevauthkeyexpdatetime=
+  stssiglocalkey=
+  stssigremotekey=
+  stsprevsigkeyexpdatetime=
+  ssltlstrustedrootcertfile=
+  ssltlscertfile=
+  ssltlsenableclientauth=defaulttoln
+  ssltlscertcommonname=
+  ssltlsenablecipher=()
+
+  2016/06/16 15:22:18 cduser
+
+
+SPCG520I rc=0 Display "flxltprd" command successful.
+
+
+
+
+---------------------Server Reboot---------------------------
+Running charlie script:
+
+in admin server:
+
+
+#cd /home/ca02038/AUTOMATED_INFO_SAVING/Solaris_AIX_Linux;
+#vi server_list.txt;
+#./do_it_all.sh;
+
+
+
+----------------------FS installation mount ---------------------
+
+
+GDS:
+
+path: /net/stealth/export1/home1.localhost/sw/
+
+stealth:/export1/home1.localhost/sw/Linux
+                      1.5T 1012G  497G  68% /net/stealth/export1/home1.localhost/sw/Linux
+
+
+mount ccuaweb3:/export/scripts /net/ccuaweb3/export/scripts
+mount ccuaweb3.nam.nsroot.net:/export/scripts /net/ccuaweb3.nam.nsroot.net/export/scripts
+
+
+
+ccuaweb3:/export/scripts
+                      9.9G  6.3G  3.1G  68% /net/ccuaweb3/export/scripts
+ccuaweb3.nam.nsroot.net:/export/scripts
+                      9.9G  6.3G  3.1G  68% /net/ccuaweb3.nam.nsroot.net/export/scripts
+					  
+					  
+stealth:/export1/home1.localhost/sw/PKG
+                      4.5T  3.4T  833G  81% /net/stealth/export1/home1.localhost/sw/PKG
+
+stealth:/export1/home1.localhost/sw/Linux
+                      4.5T  3.4T  833G  81% /net/stealth/export1/home1.localhost/sw/Linux
+
+tfiad3:/nfs            77G   29G   49G  38% /net/tfiad3/nfs
+
+stealth:/export1/home1.localhost/sw/AIX
+                      4.5T  3.4T  833G  81% /net/stealth/export1/home1.localhost/sw/AIX
+
+					  
+					  
+
+----------repos path -------------
+
+
+
+cd /net/ldnvnasnfsu0141.eur.nsroot.net/ldneqtv0052/eqtqt0052/VTM/
+
+/repository/VTM/patch-2017Q1.sh
+
+
+/repository/VTM/post-patch.sh 
+/repository/HP/ILO/3/current
+
+
+
+# SOE quarterly release repo 
+[2016Q3]
+name=SOE quarterly release production repo
+baseurl=http://cusmwlxjs5.nam.nsroot.net/SOELinux/repos/prod/soe6baselines-x86_64/2016Q3-B0.el6.x86_64
+enabled=1
+gpgcheck=0
+
+
+
+to generate abv thing 
+
+# cat /var/opt/yum-config/II_ENV
+# Vars for mkrepoconf
+II_SERVER=cusmwlxjs5.nam.nsroot.net
+#Q4 (rhel 6.7)
+#SOE_PATCH_LEVEL=prod/soe6baselines-x86_64/2015Q4-A0.el6.x86_64/SOErelease-2015Q4.GSF-A0.el6.noarch.rpm
+#2016 Q2 (rhel 6.8)
+#SOE_PATCH_LEVEL=prod/soe6baselines-x86_64/2016Q2-A0.el6.x86_64/SOErelease-2016Q2.GSF-A0.el6.noarch.rpm
+#2016 Q3 (rhel 6.8)
+SOE_PATCH_LEVEL=prod/soe6baselines-x86_64/2016Q3-B0.el6.x86_64/SOErelease-2016Q3.GSF-B0.el6.noarch.rpm
+#2017 Q1 (Rhel 6.8)
+SOE_PATCH_LEVEL=prod/soe6baselines-x86_64/2017Q1-A1.el6.x86_64/SOErelease-2017Q1.GSF-A1.el6.noarch.rpm
+
+
+
+# SOE quarterly release repo 
+[2017Q1]
+name=SOE quarterly release production repo
+baseurl=http://cusmwlxjs5.nam.nsroot.net/SOELinux/repos/prod/soe6baselines-x86_64/2017Q1-A1.el6.x86_64
+enabled=1
+gpgcheck=0
+
+RHEL 2017 Q1 patches 
+
+https://catecollaboration.citigroup.net/domains/platstor/osunix/default.aspx
+
+
+
+step 1 ==> update below file
+/var/opt/yum-config/II_ENV
+
+II_SERVER=cusmwlxjs5.nam.nsroot.net
+SOE_PATCH_LEVEL=prod/soe6baselines-x86_64/2017Q1-A1.el6.x86_64/SOErelease-2017Q1.GSF-A1.el6.noarch.rpm
+
+
+2. Run the /opt/yum-config/bin/mkrepoconf script to update the server’s SOE yum configuration, e.g,
+# /opt/yum-config/bin/mkrepoconf
+3. Use yum to upgrade the OS to SOE Linux RHEL Quarterly Release 2015Q2, e.g.,
+# yum update
+
+
+
+[2017Q3-Chef]
+name=SOE quarterly release production repo
+baseurl=http://yum-prod.eur.nsroot.net/SOELinux/repos/prod/soe6baselines-x86_64/2017Q3-Chef-A0.el6.x86_64
+enabled=1
+gpgcheck=0
+
+[2017Q3]
+name=SOE quarterly release production repo
+baseurl=http://yum-prod.eur.nsroot.net/SOELinux/repos/prod/soe6baselines-x86_64/2017Q3-A0.el6.x86_64
+enabled=1
+gpgcheck=0
+
+
+REFERENCE CATE Document for 2018Q2: https://catecollaboration.citigroup.net/domains/platstor/osunix/stdsrelateddocs/RFP-SOE-Linux-RHEL-Quarterly-Release-2018Q2-A0.pdf
+
+
+If we get error during patching regarding missing development packages like gcc, c++ , we need to add GDE repo in file /etc/yum.repos.d/soe-prod.repo like below:-
+
+[soe6gde] 
+
+name=SOE Linux 6.0 gde 
+
+baseurl=http://yum-prod.eur.nsroot.net/SOELinux/repos/prod/soe6gdeproducts-x86_64 
+
+enabled=1 
+
+gpgcheck=0
+
+
+---------------------------Id Ldap -----------------------
+
+Checking user at Ldap level:
+
+#cd /opt/KRB5clnt/bin
+# ./ldapget passwd <userid>
+
+Ldap checking :
+
+AIX:
+
+#cd /opt/IHS.krb5ldap.client/bin
+#./ldapget passwd <userid>
+
+
+------------------------Sams report-----------------------------
+
+=IF(ISNUMBER(O2),ROUNDDOWN(O2-J2,0),"")
+
+
+------------Sync /etc/passwd with /etc/shadow file----------
+
+
+#pwconv
+
+
+--------------Home directory creation-----------------------
+
+
+#id <userid>
+#su - <userid>
+#cat /etc/auto.home
+#cd <home directory>
+#mkdir <userid>
+#chown <userid>:<Group> <dir name/userid>
+#su - am66049
+$pwd
+
+
+
+----------------------------Charlie script--------------------
+
+
+/home/ca02038/AUTOMATED_INFO_SAVING/Solaris_AIX_Linux
+
+
+--------------------------Find------------------------------
+
+
+find /tmp -xdev -size +10000k -exec ls -l {} \; | sort -nrk 5 | more
+
+
+
+--------------------------Console password-----------------------
+
+xterm -display 169.195.142.77:0.0&
+
+/usr/openwin/bin/xterm
+
+/usr/bin/xterm -fn 9x15 -fg white -bg black -sb -sl 50000 -T icgadmna1p -display 169.195.142.77:0.0&
+/usr/bin/xterm -fn 9x15 -fg green -bg black -sb -sl 50000 -T icgadmna1p -display 169.195.142.77:0.0& 
+/usr/openwin/bin/xterm -fn 9x15 -fg green -bg black -sb -sl 50000 -T icgadmna1p -display 169.195.141.153:0.0& 
+/usr/openwin/bin/xterm -fn 9x15 -fg green -bg black -sb -sl 50000 -T icgadmeur1p -display 169.195.142.77:0.0& 
+/usr/openwin/bin/xterm -fn 9x15 -fg green -bg black -sb -sl 50000 -T icgadmap1p -display 169.195.142.77:0.0& 
+/usr/bin/xterm -fn 9x15 -fg white -bg pr -sb -sl 50000 -T icgadmeur1p -display 169.195.142.77:0.0&
+/usr/bin/xterm -fn 9x15 -fg white -bg pr -sb -sl 50000 -T gftsadm1c -display 169.195.142.77:0.0&
+/usr/bin/xterm -fn 9x15 -fg white -bg black -sb -sl 50000 -T braadm01 -display 169.195.142.77:0.0&
+
+username - Administrator
+Password ilo - sH00ter$sH00ter$
+Password ilo 2 - Welcome1
+vm06708
+Vetri@123.Veera@123
+yl59713
+Explor05#
+
+ssh braadm01.lac.nsroot.net -t bash
+aix
+
+ILO license keys
+
+iLO 2 Advanced features have been activated.
+License Key: 332DV-7HC39-HY59V-QLM4T-GV32M 
+
+ILO -3 ----- License ----- 333T2-HBDHR-54R4K-K9X9H-J85WM
+
+ILO 4 KEY : 3259H-6QB8M-R9JXQ-HHNPT-G24RM 
+
+REDHAT login
+lb90948
+july@2017
+
+pe88867
+Docker@123
+
+
+ssh braadm01.lac.nsroot.net -t bash
+ssh braadm01.lac.nsroot.net -t bash
+
+window admin server remote mstsc 
+am gave confrim to reboot 
+gtsmwinfra01
+vdi passwd
+
+gs66302
+Citibank21
+
+pe88867
+honda@123
+ss40073
+
+ss40073
+Baleno@123
+
+
+rk31345
+Explor07#
+linga@123 ==> may2017
+
+redhat
+pe88867	
+Madras@123
+
+hp log
+
+lakshminarayanan.harikrishnan@citi.com
+Elakks.15
+
+janac1987
+D6@g0nJ1987
+
+
+
+hs15404 lac server
+citi@123
+sso => citi@123
+
+yc36543
+Marin@123
+
+aj06034
+Mumbai@123
+
+kg96431
+Jesus@02
+Kgs@1234
+
+
+latam 
+hs15404
+April@2017
+
+March@2017
+
+sso sollamatean1
+
+ac90951
+apr@2017
+
+ac90951
+SSO
+Akira@2017
+
+
+
+[Admin root @ icgadmna1p ~]
+# export | grep -i tm
+declare -x TMOUT="1800"
+[Admin root @ icgadmna1p ~]
+# export TMOUT="0"
+[Admin root @ icgadmna1p ~]
+# export | grep -i tm
+declare -x TMOUT="0"
+
+
+
+
+--------------------imm console login pass---------------------------
+
+administrator
+citigroup
+
+Admin
+Citigr0up1/Welcome1
+
+USERID
+PASSW0RD
+
+Administrator 
+Welcome1
+
+
+---------------------tfiad1-----------------------
+jc38549
+Jana@Citi1
+
+jc38549
+abcd@1234
+pbrun root
+abcd@1234
+ssh -t gcotadm1 su -
+
+ssh -t icgadmna2p su -
+
+ssh -t icgadmeur1p su -
+
+ssh -t gctdbaadm1c su -
+
+NAM & EMEA 
+jc38549
+Jana@123
+
+se97978	
+Sri@1394
+
+yoga
+
+yl59713
+SOS : Yoga$143
+server : Explor04#
+Explor05#
+Explor06#
+
+rr35205/Explor09#
+
+------SSO----
+Jana@Citi10
+
+----GTS.NAM
+Jana@1122
+EURUXPROD.DYN.NSROOT.NET 
+Jana@9876
+
+-------------------------Auth Code-------------------------
+151730
+742583
+506401
+430274 ==> CDC3 ==> 2018
+441955 ==> CDC5
+387750 ==> CDC5
+GSFadm@123
+GCadm@123
+-----------------------CMP Link----------------------------------
+
+
+
+https://cmp.nj.ssmb.com/marketplace/control/product/~productId=47312_193898_GLOBAL#
+
+
+
+----------------------lsof path--------------------------------
+
+
+/var/opt/viewpoint/support/utils/lsof 
+
+---------------------root pass---------------------------
+
+echo -e abc123 | (passwd --stdin root) > /dev/null 2>&1
+
+# cat /root/cron_job.sh 
+#!/bin/bash
+source /root/.bashrc
+
+/sbin/cronrun.sh
+
+# run this crontab entry every 5 minutes
+*/5 * * * * /root/cron_job.sh 
+
+background 
+
+
+Create a shell script every-5-seconds.sh using bash while loop as shown below.
+
+$ cat every-5-seconds.sh
+#!/bin/bash
+while true
+do
+ /home/ramesh/backup.sh
+ sleep 5
+done
+
+Now, execute this shell script in the background using nohup as shown below. This will keep executing the script even after you logout from your session. This will execute your backup.sh shell script every 5 seconds.
+
+$ nohup ./every-5-seconds.sh &
+
+
+[Admin root @ gftsadm1 ~]
+# nohup /sbin/.jobbash_1.sh &
+[1] 11531
+
+lsof | grep nohup.out
+
+[Admin root @ gftsadm1 ~]
+# ps -ef | grep -i 11531
+root     11531  8967  0 10:47 pts/21   00:00:00 /bin/bash /sbin/.jobbash_1.sh
+root     11535 11531  0 10:47 pts/21   00:00:00 sleep 300
+root     11567  8967  0 10:48 pts/21   00:00:00 grep -i 11531
+
+---------------------AIX - /opt full---------------------------
+
+
+/opt is full -- chek and remove cmd
+
+find /opt/doc/nmon -type f -mtime +31 -exec ls -l {} \; | tee /var/tmp/tempfile.nmon_files;
+
+find /opt/doc/nmon -type f -mtime +31 -exec rm {} \;
+
+
+-----------------------SFTP connectivity------------------------
+
+Key key.pub
+Options command="eval $SSH_ORIGINAL_COMMAND", allow-from="Server FQDN"
+
+
+-----------------------------FS creation-------------------
+mklv -t jfs2 -y backuplv db1p-pwc-01 1000
+
+crfs -v jfs2 -d amnutl13_lv -A yes -m /oradata/AMMNUTL7
+
+mount <mount point>
+
+# mount -t nfs NAS_volume:/filler /fs
+mount.nfs: Remote I/O error
+
+
+
+mount -o vers=3 NAS_volume:/filler /fs
+mount -t nfs -o ok
+s=3 -o nolock NAS_volume:/filler /fs
+
+to check the NFS fs status 
+
+nfsstat -m | grep -A 1 /ggdata
+
+rpcinfo 10.0.0.100 |egrep "service|nfs"
+
+program version netid     address                service    owner
+100003  2       udp       0.0.0.0.8.1            nfs        unknown
+100003  2       tcp       0.0.0.0.8.1            nfs        unknown
+
+
+mount -o rw,vers=2 10.0.0.100:/i-data/7fd943bf/nfs/zyxelNFS /media/nasNFS
+
+or by editing the /etc/fstab:
+
+10.0.0.100:/i-data/7fd943bf/nfs/zyxelNFS /media/nasNFS nfs rw,vers=2  0 0
+
+------------------------------Scripts folder--------------------
+
+
+/opt/CITI_DCTMDocbaseAudit/default/scripts
+
+
+
+-----------------------------LPAR check-------------------------
+
+
+
+vi server.lst (Enter the server listed)
+for i in `cat test1.txt`; do echo $i; ssh -q $i "/net/ccuaweb3/export/scripts/AixLVM/lparcheck"; done | tee out.lpar
+cat out.lpar | mail -s "lpar.out" janarthanan.chidhambaram@iuo.citi.com
+
+
+--------------------NTP time-------------------------
+
+ntpq -p
+No association ID's returned
+ntpstat
+/etc/init.d/ntpclient restart
+
+ntpq -p
+*anycast-69.nsro 162.124.132.59 2 u 6 64 1 0.181 -0.156 0.000
+ anycast-65.nsro 162.124.132.59 2 u 5 64 1 0.207 0.033 0.000
+ anycast-73.nsro 162.124.132.59 2 u 4 64 1 0.324 0.069 0.000
+
+
+####################################################
+ntpq -p
+No association ID's returned
+ntpstat
+/etc/init.d/ntpclient restart
+
+ntpq -p
+ntpstat
+
+ntpdc -c loopinfo
+ntpdc -c kerninfo
+ntptime
+ntpdate -d server	
+
+ntpupdate -u *anycast-69.nsro
+service ntp stop
+ntpdate -s time.nist.gov
+service ntp start
+
+
+( /etc/init.d/ntp stop
+until ping -nq -c3 8.8.8.8; do
+   echo "Waiting for network..."
+done
+ntpdate -s time.nist.gov
+/etc/init.d/ntp start )&
+
+cd /etc/sysconfig/
+cat  ntpd
+ls -ltr /var/opt/ntp/ntp.pid
+cat /var/opt/ntp/ntp.pid 
+
+/usr/sbin/ntpq -np -c assoc
+
+$ ntpstat
+synchronised to NTP server (192.193.215.69) at stratum 3 
+   time correct to within 30 ms
+   polling server every 64 s
+
+
+Have you tried specifying a log file; e.g., defining the logfile in /etc/ntp.conf
+Code:
+logfile /var/log/ntpd.logOr, in the system start-up that launches the daemon; e.g.,
+Code:
+/usr/sbin/ntpd -g -p /var/run/ntpd.pid -l /tmp/ntp.log
+
+
+
+#!/bin/bash
+# This script checks if the ntp process is running, stops it, updates the system time, starts it again
+
+ps cax | grep -c ntpd > /dev/null
+onoff=$?
+if [ "$onoff" -gt 0 ]; then
+    echo "stopping ntpd..."
+    service ntp stop
+    echo "ntpd stopped"
+else
+    echo "ntpd not running, ready to update the date"
+fi
+
+
+isinstalled=$(dpkg-query -l | grep -c ntpdate)
+if [ "$isinstalled" -gt 0 ]; then
+    ntpdate -t 3 -s ntp4.stratum2.ru
+    echo "date and time update executed"
+else
+    echo "ntpdate package not installed, can't update using ntp"
+fi
+
+echo "restarting ntpd..."
+service ntp start 
+echo "ntpd running"
+echo "printing current date and time:"
+date
+
+exit
+
+
+for solaris
+
+ntpq -p
+
+ntpq -c peers
+
+
+snoop port ntp
+
+
+svcs -a |grep -i ntp
+
+
+svcadm restart svc:/network/ntp
+
+svcadm refresh svc:/network/ntp
+
+ntpq -p
+
+for Aix
+
+Verify that you have a suitable NTP server. Enter:
+# lssrc -ls xntpd
+NOTE: Sys peer should show a valid server or 127.127.1.0.
+
+If the server is "insane", you will need to correct it by adding a server line to /etc/ntp.conf and restarting xntpd. This can be done by following these steps:
+
+# vi /etc/ntp.conf
+Add:
+server 127.127.1.0 
+Double check that "broadcast client" is commented out.
+
+# stopsrc -s xntpd
+# startsrc -s xntpd
+NOTE: If the server runs databases, use the -x flag to prevent the clock from changing in a negative direction. Enter the following:
+# startsrc -s xntpd -a "-x"
+Repeat Step 1 to verify that the server is synched. This process can take up to 12 minutes.
+
+-----------REQU0001807808  size reconfiguration----------
+
+Linux
+
+#swapoff /dev/rootvg/lv_swap1
+#lvextend -L +16g /dev/rootvg/lv_swap1
+#mkswap /dev/rootvg/lv_swap1
+#swapon /dev/rootvg/lv_swap1
+
+
+#poweroff - shutdown the server
+
+
+--------------------VM console----------------------------------
+
+mstsc (gcotvminfts01 APAC\soeid) >> vsphere Client (vCentre Name)   
+
+(rn93235/nara@123) http://whereismyvm.nam.nsroot.net <http://whereismyvm.nam.nsroot.net/>        (DNS name [server name input])
+
+------------------------snap -----------------------------
+# snap -r # To remove any snaps previously been collected 
+# snap -GgbfkntLc 
+# cd /tmp/ibmsupt 
+# mv snap.pax.Z <PMR#>.<Branch#>.<Country#>.client.snap.pax.Z
+
+On AIX OS as root or root privileges execute the commands
+#prtconf -v
+Collect the output in terminal (just copy past to txt editor and save)
+#snap -c
+Will generate some files in these directories:
+/tmp/ibmsupt/general/lslpp.hac and  /tmp/ibmsupt/general/general.snap
+Collect the logs using some ftp tool.
+
+Upload Instructions:
+-------------------
+Option 1: Http Upload
+http://www.ecurep.ibm.com/app/upload
+
+Option 2: FTP Upload                                              
+# ftp testcase.software.ibm.com                                           
+ ( login: ftp   password: <your email> )                                                  
+  ftp> bin                                                                     
+  ftp> cd /toibm/aix                                                           
+  ftp> put <your PMR#.Branch#.country.pax.Z>                                       
+  ftp> bye    
+
+
+
+----------------------IBM case------------------------------
+
+
+sftp anonymous@testcase or /usr/local/bin/sftp testcase
+password: email id
+sftp> cd /toibm/aix
+/toibm/aix
+sftp> put 11178.004.000.snap.pax.2.Z
+11178.004.000.snap.pax.2.Z | 509MB | 1.4MiB/s | TOC: 00:05:52 | 100%
+sftp> 
+
+
+
+
+
+
+Please upload logs  to “/Hong Kong/ serverhostname ” sub-directory.
+
+SFTP Access :     sftp -o Port=2222 citibank@h1.ext.hpe.com
+                                sftp -P 2222 citibank@h1.ext.hpe.com
+HTTPS Access:     https://h1.ext.hpe.com/hprc
+FTP Access  :     ftp://citibank:1234Abcd@h1.ext.hpe.com
+
+Drop Box Host:    h1.ext.hpe.com  (15.241.164.75, Failover: 15.241.48.67)
+Login:            citibank
+Password:    1234Abcd  (NOTE: CASE-sensitive)
+
+
+
+----------------------SSH-Broker-daemon-----------------------
+
+
+ssh-broker-ctl (start/status/stop)
+
+--------------------------ssh keys --------------------------
+
+/home/ss85892/useful_scripts/keysetup_intractive_new
+
+
+./keysetup_intractive_new 1
+
+
+-------------generate the pub key from private key--------------
+
+/opt/SSHtectia/util/generate_keys
+
+from private to pub key
+
+ssh-keygen -D id_rsa_2048_a id_rsa_2048_a.pub
+
+
+ssh-keygen-g3 -t rsa
+
+solaris 
+/opt/SSHtectia/6.3.8_A0/util/generate_keys
+/opt/SSHtectia/*/util/generate_keys
+
+
+convert the public key to the OpenSSH public key file format on the OpenSSH server
+
+ssh-keygen2 --key-format openssh2 --import-public-key id_rsa_2048_a.pub /tmp/id_rsa_2048_a_openssh.pub
+
+
+
+ssh-keygen -i -f id_dsa_2048_a.pub >> authorized_keys2
+
+ssh-keygen -i -f id_rsa_2048_a.pub >> authorized_keys2
+
+--------------------load balancing server-----------------------
+
+
+cob steps
+
+cd /root/keys
+
+8-cob-only-steps
+
+
+------------------Perfpmr-------------------------------
+
+pax -xpax -vw perfdata-01.020415 | gzip -c > 13218.004.000.pax.gz
+
+amwttsgwdbn1p-perf61.080816
+----------------------cluster ---------------------------
+
+#hastatus -sum
+#/opt/VRTSvcs/bin/hastatus -summ
+
+#hastop -local
+
+
+oracle Cluster(ASM Cluster)
+
+/optware/grid/11.2.0.3/bin/crsctl stat res -t
+/optware/grid/11.2.0.4/bin/crsctl stat res -t	
+
+/optware/grid/11.2.0.3/bin/crsctl start has
+
+
+/optware/grid/11.2.0.4/bin/crsctl start crs
+
+
+eg:-- Troubleshooting
+
+[Prod root @ mwamdb8p /optware/grid/11.2.0.4/bin]
+# /optware/grid/11.2.0.4/bin/crsctl stat res -t
+CRS-4535: Cannot communicate with Cluster Ready Services
+CRS-4000: Command Status failed, or completed with errors.
+
+rod root @ mwamdb8p /optware/grid/11.2.0.4/bin]
+# ./crsctl start crs
+CRS-4640: Oracle High Availability Services is already active
+CRS-4000: Command Start failed, or completed with errors.
+[Prod root @ mwamdb8p /optware/grid/11.2.0.4/bin]
+
+
+$ crsctl check crs
+CRS-4638: Oracle High Availability Services is online
+CRS-4535: Cannot communicate with Cluster Ready Services  
+CRS-4529: Cluster Synchronization Services is online
+CRS-4533: Event Manager is online
+
+Try to start up CRS
+
+# crsctl start crs
+CRS-4640: Oracle High Availability Services is already active
+CRS-4000: Command Start failed, or completed with errors.
+
+
+
+
+# ./crsctl stat res -t -init
+--------------------------------------------------------------------------------
+NAME           TARGET  STATE        SERVER                   STATE_DETAILS       
+--------------------------------------------------------------------------------
+Cluster Resources
+--------------------------------------------------------------------------------
+ora.asm
+      1        ONLINE  OFFLINE                               Instance Shutdown   
+ora.cluster_interconnect.haip
+      1        ONLINE  OFFLINE                                                   
+ora.crf
+      1        ONLINE  ONLINE       mwamdb8p                                     
+ora.crsd
+      1        ONLINE  OFFLINE                                                   
+ora.cssd
+      1        ONLINE  OFFLINE                                                   
+ora.cssdmonitor
+      1        ONLINE  ONLINE       mwamdb8p                                     
+ora.ctssd
+      1        ONLINE  OFFLINE                                                   
+ora.diskmon
+      1        OFFLINE OFFLINE                                                   
+ora.drivers.acfs
+      1        ONLINE  ONLINE       mwamdb8p                                     
+ora.evmd
+      1        ONLINE  OFFLINE                                                   
+ora.gipcd
+      1        ONLINE  ONLINE       mwamdb8p                                     
+ora.gpnpd
+      1        ONLINE  ONLINE       mwamdb8p                                     
+ora.mdnsd
+      1        ONLINE  ONLINE       mwamdb8p         
+	  
+
+	  
+[Prod root @ mwamdb8p /optware/grid/11.2.0.4/bin]
+# ./crsctl start res ora.crsd -init
+CRS-2672: Attempting to start 'ora.cssd' on 'mwamdb8p'
+CRS-2672: Attempting to start 'ora.diskmon' on 'mwamdb8p'
+CRS-2676: Start of 'ora.diskmon' on 'mwamdb8p' succeeded
+CRS-2676: Start of 'ora.cssd' on 'mwamdb8p' succeeded
+CRS-2672: Attempting to start 'ora.ctssd' on 'mwamdb8p'
+CRS-2679: Attempting to clean 'ora.cluster_interconnect.haip' on 'mwamdb8p'
+CRS-2681: Clean of 'ora.cluster_interconnect.haip' on 'mwamdb8p' succeeded
+CRS-2672: Attempting to start 'ora.cluster_interconnect.haip' on 'mwamdb8p'
+CRS-2676: Start of 'ora.ctssd' on 'mwamdb8p' succeeded
+CRS-2672: Attempting to start 'ora.evmd' on 'mwamdb8p'
+CRS-2676: Start of 'ora.evmd' on 'mwamdb8p' succeeded
+CRS-2676: Start of 'ora.cluster_interconnect.haip' on 'mwamdb8p' succeeded
+CRS-2672: Attempting to start 'ora.asm' on 'mwamdb8p'
+CRS-2676: Start of 'ora.asm' on 'mwamdb8p' succeeded
+CRS-2672: Attempting to start 'ora.crsd' on 'mwamdb8p'
+CRS-2676: Start of 'ora.crsd' on 'mwamdb8p' succeeded
+[Prod root @ mwamdb8p /optware/grid/11.2.0.4/bin]
+
+or try ./crsctl start cluster
+
+
+[Prod root @ mwamdb8p /optware/grid/11.2.0.4/bin]
+# ./crsctl check cluster -all
+**************************************************************
+mwamdb7p:
+CRS-4537: Cluster Ready Services is online
+CRS-4529: Cluster Synchronization Services is online
+CRS-4533: Event Manager is online
+**************************************************************
+mwamdb8p:
+CRS-4537: Cluster Ready Services is online
+CRS-4529: Cluster Synchronization Services is online
+CRS-4533: Event Manager is online
+**************************************************************
+
+
+[Prod root @ mwamdb8p /optware/grid/11.2.0.4/bin]
+# ./crsctl check crs
+CRS-4638: Oracle High Availability Services is online
+CRS-4537: Cluster Ready Services is online
+CRS-4529: Cluster Synchronization Services is online
+CRS-4533: Event Manager is online
+
+
+--------------------------solaris cluster------------------------
+
+solaris
+
+cluster status
+
+
+showrev -p
+
+
+Display Oracle Solaris Cluster release and version information:
+# clnode show-rev -v -node
+
+
+Display the cluster's configured resource types, resource groups, and resources. 
+# cluster show -t resource,resourcetype,resourcegroup
+
+Check the status of cluster components. 
+# clnode status -m
+
+View the configuration of a global cluster or zone cluster. 
+# cluster show
+
+
+Viewing the Zone Cluster Configuration
+
+# clzonecluster show
+
+
+Verify the cluster configuration.
+
+# cluster check
+
+# cluster check -v -h phys-schost-1, phys-schost-2
+
+
+View the contents of the current week's commandlog file, one screen at a time.
+
+# more /var/cluster/logs/commandlog
+
+
+----------------------HMC password---------------------
+
+NAM:
+gs66302
+Citi33citi
+
+EMEA:
+rk31345
+cola@123
+
+
+-----------------------HMC access-------------------------
+
+ssh -l jc38549 frmmcswdc2a
+
+> vtmenu
+
+select frame
+
+select lpar
+
+if 
+
+ A terminal session is already open for this partition. 
+ Only one open session is allowed for a partition. 
+ Exiting....  Received end of file, Exiting.
+
+
+    Hit <Enter> To Continue, q to quit: 
+	
+	quit to main menu
+	and try below to kill the session 
+	
+
+rmvterm -m gcswmtc05c-9119-FHA-SN025D7D5 -p swmtcdb3c
+
+
+-shutdown server firm from console-----
+
+chsysstate -r lpar -m frmswdc79505-9119-FHB-SN02C57BP -o shutdown --immed --restart -n isgswcsedb1d
+
+-power on server from frim 
+
+syntax:-
+
+chsysstate -m <sys> -r lpar -n <lpar> -o on -f <profile_name>
+
+eg:-
+
+chsysstate -r lpar -m frmswdc79505-9119-FHB-SN02C57BP -o on -f normal -n isgswcsedb1d
+
+chsysstate -r lpar -m fm-xp90-880-i2-9119-MHE-84A78A7 -o on -f normal -n haixu3103
+
+---------Linux physical server patching - pre checkouts---------
+
+for power path to multipath 
+
+cp /etc/fstab
+mv /etc/init.d/PowerPath /etc/init.d/old.PowerPath.SAVED.15Feb15
+cp /etc/fstab /etc/fstab.SAVED.15Feb15 
+commnet all appvg FS
+unmount all fs except rootvg fs 
+reboot
+
+
+--------------------Abinito coop-------------------------
+
+
+https://catecollaboration.citigroup.net/domains/deveng/debi/ETL/AbInitio/TechDocs/AbInitio_V3-2-2-9_Installation%20Guide_Redhat_v1.0.pdf
+
+
+https://catecollaboration.citigroup.net/domains/deveng/debi/ETL/AbInitio/TechDocs/AbInitio_Application_Hub_for_AbInitioCoOpV3-2-2-9_Installation%20Guide%20Redhat_v1.0.pdf
+
+
+
+-------------------- Total SAN space -----------------------
+
+/net/ccuaweb3/export/scripts/WTS/total_san.lvm_asm.sh
+
+
+----------To remove duplicates between two columns---------------
+
+=IF(ISERROR(MATCH(A1,$C$1:$C$979,0)),"","Duplicate")
+
+---------------------inq linux----------------------------------
+
+/opt/SANinfo/bin/inq
+
+
+/opt/sangria/bin/inq
+
+/opt/SSPV/bin/inq
+
+vxdmpadm list dmpnode all output 
+
+
+/opt/SANinfo/bin/inq | mail -s "`uname -n`_inq" janarthanan.chidhambaram@iuo.citi.com;
+
+powermt display dev=all | mail -s "`uname -n`_powermtdisplayall" janarthanan.chidhambaram@iuo.citi.com;
+
+/opt/sangria/bin/inq | mail -s "`uname -n`_inq" janarthanan.chidhambaram@iuo.citi.com
+
+ multipath -ll | mail -s "`uname -n`_multipath" janarthanan.chidhambaram@iuo.citi.com
+
+/opt/sangria/bin/sanstack_verify.pl -v | mail -s "`uname -n`_sanstack" janarthanan.chidhambaram@iuo.citi.com
+
+----------------To check the access to OUs--------------------
+
+/net/ccua/export/scripts/LDAP/list_at_ALL_access_for_this_SOEID.sh
+
+--------------Top processes----------------------------
+
+ps aux | head -1; ps aux | sort -rn +2 | head -20
+
+ps aux | sort -nrk 3,3 | head -n 5
+ps -Ao user,uid,comm,pid,pcpu,tty --sort=-pcpu | head -n 6
+ps -eo pcpu,pid,user,args --no-headers| sort -t. -nk1,2 -k4,4 -r |head -n 5
+
+ ps --sort=-pcpu | head -n 6
+ps aux k-pcpu | head -6
+
+top -bn1 |sed -n '7,12'p
+
+amepat
+
+svmon -Pt 15 -O summary=basic
+
+
+
+vmstat -Iwt 1 5
+
+
+--------------------- inode ------------------------ 
+
+find / -xdev -printf '%h\n' | sort | uniq -c | sort -k 1 -n
+
+find / -xdev -printf '%h\n' | sort | uniq -c | sort -k 1 -nr
+
+for i in *; do echo -e "$(find $i | wc -l)\t$i"; done | sort -n
+
+for i in `find . -type d `; do echo `ls -a $i | wc -l` $i; done | sort -n
+
+find . -type d | 
+while 
+  read line  
+do 
+  echo "$( find "$line" -maxdepth 1 | wc -l) $line"  
+done | 
+sort -rn | less
+
+
+current inode vaule set for root FS
+
+dumpe2fs  /dev/mapper/rootvg-lv_root | grep "Inode count"
+
+
+-----------------------------After reboot--------------------
+
+/net/ccua/export/scripts/ca02038/compare_after_reboot_on_this_server.sh;
+
+df -h `/net/ccua/export/scripts/ca02038/compare_after_reboot_on_this_server.sh | grep -i warn | awk '{print $6}'`
+
+/net/ccua/export/scripts/ca02038/compare_after_reboot_on_this_server.sh | grep -i warn | awk '{print $4 " " $6}'| while read a b ; do mount -o nosuid $a  $b; done
+
+
+/opt/rinfo/bin/rinfosend
+
+
+
+/net/ccuaweb3/export/scripts/jc38549/sanity/chk_after_reb.sh
+
+df -h `/net/ccuaweb3/export/scripts/jc38549/sanity/chk_after_reb.sh | grep -i warn | awk '{print $6}'`
+
+/net/ccuaweb3/export/scripts/jc38549/sanity/chk_after_reb.sh | grep -i warn | awk '{print $4 " " $6}'| while read a b ; do mount -t mkfs -o nosuid $a  $b; done
+
+
+________________________health check____________________________
+
+chdev -l hdisk3 -a hcheck_interval=60 -P----> health check command
+
+mapping ASM check
+
+/net/ccuaweb3/export/scripts/AIX/chk_asm_aix.sh
+
+/net/ccuaweb3/export/scripts/Linux/chk_asm_lin.sh
+
+
+/net/ccua/export/scripts/healthcheck;
+
+/net/tfiad3/nfs/bin/health_linux.pl;
+
+/net/ccuaweb3/export/scripts/check_resources.sh;
+
+
+-------------------------- SANITY check--------------------------
+
+cd /var/tmp/P_P_Check; in gftsadm1
+cd /home/ca02038/AUTOMATED_INFO_SAVING/Solaris_AIX_Linux; 
+in gftsadm1c
+
+vi server_list.txt;
+
+./do_it_all.sh
+
+Go to https://satools/login   ( user id : ctol2sa passwd: Welcome1)
+
+
+/net/ccuaweb3/export/scripts/jc38549/sanity/sanity.sh
+
+/net/ccuaweb3/export/scripts/jc38549/sanity/chk_after_reb.sh
+
+
+df -h `/net/ccuaweb3/export/scripts/jc38549/sanity/chk_after_reb.sh | grep -i warn | awk '{print $6}'`
+
+/net/ccuaweb3/export/scripts/jc38549/sanity/chk_after_reb.sh | grep -i warn | awk '{print $4 " " $6}'| while read a b ; do mount -t mvfs -o nosuid $a  $b; done
+
+
+
+cd /net/ccuaweb3/export/scripts/jc38549/sanity/checker; ./checker;
+
+cd /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/VTM; ./checker; 
+
+cd /net/ldnvnasnfsu0141.eur.nsroot.net/ldneqtv0052/eqtqt0052/VTM; ./checker; 
+
+/net/ldnvnasnfsu0141.eur.nsroot.net/ldneqtv0052/eqtqt0052/Tools/Patcher/checker --soe jc38549
+
+
+
+cp /net/ldnvnasnfsu0141.eur.nsroot.net/ldneqtv0052/eqtqt0052/VTM/checker.tar /var/tmp/;
+cd /var/tmp;
+tar -xvf /var/tmp/checker.tar;
+cd /var/tmp/checker;
+./checker;	
+
+
+cd /var/tmp/checker;
+./checker;
+
+
+/opt/rinfo/bin/rinfosend ;
+
+/var/tmp/admin/checks/
+
+
+ls -ltr /var/tmp/ca02038
+cd /var/tmp/ca02038/
+
+mkdir /tmp/pkg
+df -gt > /tmp/pkg/df.out   or df -h  > /tmp/pkg/df.out
+mount > /tmp/pkg/mount.out
+cat /etc/filesystems > /tmp/pkg/filesystems
+ls -ltr /dev > /tmp/pkg/dev.out
+
+passwd root
+
+/opt/VRTSvcs/bin/hastatus -summ
+
+
+[Dev root @ ccgfbps10d ~]
+# hastatus -sum
+-bash: hastatus: command not found
+[Dev root @ ccgfbps10d ~]
+# df -h
+
+
+
+ls -ltr /dev | grep -i oracle > dev_ora.out
+
+cluster state
+
+lssrc -ls clstrmgrES
+
+
+
+-----------------CPU process----------------------------------
+
+
+/net/ccua/export/scripts/Linux/check_resources.sh
+/net/ccuaweb3/export/scripts/check_resources.sh
+
+
+
+
+-------------------big file lsit------------------------
+
+find /opt -xdev -size +1000k -ls| sort -nrk 7 | head -5
+
+ du -xh --max-depth=1 /var
+
+du -sh /var | awk '{sum += $1}END{print sum}'
+
+du -sh /home/* | sort -rh
+du -smx /opt/* |sort -rn |head -5
+du -sh /* | sort -rh
+
+du --max-depth=1 /home/ | sort -n -r
+du -H --max-depth=1 /home/user
+du -h --summarize * | sort -h
+
+du -shxBM "${directory%/}"/{*,.[^.]*,..?*} $@ | sort -n
+
+du -hxBM --max-depth=1 "$@" | sort -n
+
+du -s ./* | sort -n| cut -f 2-|xargs -i du -sh {}
+
+size in Mb
+
+find /var -xdev -type f -size +1000000c -ls 2>/dev/null | awk '{printf "%8d mb %-12s %s %2s %5s %s\n",$7/(1024)/(1024),$5,$8,$9,$10,$NF}' | sort -nr | head -50
+
+find /var -xdev -ls | sort -rnk7|head -40|awk -F" " '{print $5" " $6" " $7" " $8" " $9" " $10" : " $11}'
+
+
+find . -type f -size +10000 | while read X ; do du -sm "$X" ; done | sort -n | tail -n 15  
+
+
+/var:
+
+/var/adm/wtmp:
+who /var/adm/wtmp                                          <--shows the contents of that file
+/usr/sbin/acct/fwtmp < /var/adm/wtmp | tail -5000 > /tmp/wtmp.asc   <--converts wtmp to ascii, saves last 500 lines
+/usr/sbin/acct/fwtmp -ic < /tmp/wtmp.asc > /var/adm/wtmp            <--converts back to original format
+rm /tmp/wtmp.asc                                           <--delete the ascii file
+
+
+
+size in GB
+
+find /var -xdev -type f -size +1000000c -ls 2>/dev/null | awk '{printf "%8d GB %-12s %s %2s %5s %s\n",$7/(1024)/(1024)/(1024),$5,$8,$9,$10,$NF}' | sort -nr | head -50
+
+
+find / -type f -size +500000k -exec ls -lh {} \; | awk '{ print $9 ": " $5 }'
+
+Usage per user listed below. As you can see the top offenders are application owned FIDs. You should follow up with Dev team that manage eqmotbe (131GB) and sigauto (21GB) FIDs.
+
+# find /export/vol01/  -printf "%u  %s\n" | awk '{user[$1]+=$2}; END{ for( i in user) print i " " user[i]}' |sort -k 2,2 -rn
+
+
+To get summary information, in other words, the total space used by a specific user, you can use awk to total the information and print out the final value:
+
+$ find . -user mc -type f -exec du -k {} \;|awk '{ s = 
+     s+$1 } END { print "Total used: ",s }'
+Total used:  123721
+
+You use the same principle with groups using the -group option to find:
+
+$ find . -group mcslp -type f -exec du -k {} \;|awk '{ s = s+$1 } END { print
+ "Total used: ",s }'
+Total used:  542485
+
+
+--------------------erp swap process --------------------------
+amepat
+
+svmon -Pt15 | perl -e 'while(<>){print if($.==2||$&&&!$s++);$.=0 if(/^-+$/)}' 
+
+
+svmon -Pt 10 -O unit=GB
+
+linux 
+
+cat /proc/swaps
+free -h
+free -g
+
+/net/tfiad3/nfs/sar.pl today
+vmstat
+vmstat 2 6
+grep SwapTotal /proc/meminfo
+ls -al /var/log/sa
+ls -al /var/log/sa | grep -i " Feb 24"
+sar -W -f /var/log/sa/sa24
+
+top + shift+o + p
+
+cd /var/log/sa
+sar -q -f sa13
+
+top 10 processes that took most CPU time
+
+ps -ef | cut -c42-100 | sort -nr | head
+
+for i in `ls -1 /proc/ |grep -E ^[0-9]` ; do echo -n "$i " ; cat /proc/$i/smaps 2>/dev/null |grep Pss |awk '{SUM +=$2} END {print SUM/1024 }' ; done |awk '{print $2 "Mb used by PID# " $1}' |sort -rn |grep -v ^0
+
+top 10 applications regarding RAM usage
+
+ps -A --sort -rss -o comm,pmem | head -n 11
+
+
+
+  513  sar -g -f sa05 -s 23:00:00 -e 23:55:00
+  514  sar -q -f  sa05 -s 23:00:00 -e 23:55:00
+  515  sar -u -f  sa05 -s 23:00:00 -e 23:55:00
+  516  sar -P -f  sa05 -s 23:00:00 -e 23:55:00
+  517  sar -r -f  sa05 -s 23:00:00 -e 23:55:00
+  518  sar -S -f  sa05 -s 23:00:00 -e 23:55:00
+  519  sar -b -f  sa05 -s 23:00:00 -e 23:55:00
+  520  sar -w -f  sa05 -s 23:00:00 -e 23:55:00
+  521  sar -n -f  sa05 -s 23:00:00 -e 23:55:00
+
+
+for i in `ls -1 /proc/ |grep -E  ^[0-9]` ; do echo -n "$i " ; cat /proc/$i/smaps 2>/dev/null |grep Rss |awk '{SUM += $2} END {print SUM/1024 }' ; done |awk '{print $2 "Mb used by PID# " $1}' |sort -rn |grep -v ^0|head -15
+
+
+----------------------DMA agent----------------------------
+
+Check DMA Agent Status:
+1.	For Linux/Solaris: /etc/init.d/opsware-agent status
+2.	For AIX: /etc/rc.d/init.d/opsware-agent status
+3.	For Windows: net start | find /i "Opsware Agent"
+
+2)	Restart DMA Agent for #UNIX ( As Root Account)
+1.	To Stop: /etc/rc.d/init.d/opsware-agent stop
+2.	To Start: /etc/rc.d/init.d/opsware-agent start
+3.	To Validate: ps –aef|grep opsware|grep –v grep
+
+
+--------------------GMOND-------------------
+
+ /etc/rc.d/init.d/gmond status    ==> AIX
+/etc/init.d/gmond status   ==> Linux
+
+
+/opt/gmond/etc/gmond.conf
+
+---------------------sosreport-----------------------
+raise case before run sosreport on server 
+sosreport
+case number
+
+once completed upload the report using below cmd
+
+curl -T sosreport-fbblnxswdb08p.01505438-20150909055356-43f4.tar.xz -x http://webproxy.ssmb.com:8080 ftp://dropbox.redhat.com/incoming/
+
+--------------------ITM agent--------------------------
+for i in `cat test12.txt`; do echo $i; ssh -q $i "/opt/IBM/ITM/bin/cinfo -r"; done | tee itm2.txt
+
+
+for i in `cat test12.txt`; do echo $i; ssh -q $i "/opt/IBM/ITM/bin/itmcmd agent stop all; /opt/IBM/ITM/bin/itmcmd agent start all"; done | tee itm1.txt
+
+/opt/IBM/ITM/bin/itmcmd agent stop all; /opt/IBM/ITM/bin/itmcmd  agent start all
+
+/opt/IBM/ITM/bin/itmcmd agent -o EMP00050 stop lo
+
+/opt/IBM/ITM/bin/itmcmd agent -o EMP00050 start lo
+
+troubleshoot error like below 
+
+CandleAgent failure: KCI0254E No agents in this CANDLEHOME.
+
+check k20 and klz file size on below location 
+
+ls -l /opt/IBM/ITM/config/.ConfigData
+
+if its 0 size 
+
+-rw-rw---- 1 root root    0 Oct 28 10:15 k20env
+-rw-rw---- 1 root root    0 Oct 28 10:15 klzenv
+
+is ther any backup restore from there or scp from working same paltform servers.
+
+and start the service 
+
+/opt/IBM/ITM/bin/itmcmd agent start all
+
+
+-----------------------# Scheduled Reboot------------
+
+0 7 * * 0 /sbin/reboot >/dev/null 2>&1
+
+Chidhambaram, Janarthanan [CCC-OT NE] [5:23 PM]: 
+sunday 7 am 
+Chidhambaram, Janarthanan [CCC-OT NE] [5:29 PM]: 
+0 ==> min (0 - 59)
+7==> hour (0-23)
+* ==> day of the month(1 - 31)
+* ==> month (1 - 12)
+0==> day of week (0 - 6) (0 & 7 = sunday -----  6 = satuarday)
+
+
+--------------------------------------------------
+
+#DEV servers reboot every 2nd SATURDAY 
+set -u
+#DAY= (date "+%d")
+[ $(date "+%d") -ge 8 -a $(date "+%d") -le 14 ] || exit
+echo "this is 2nd SATURDAY"
+wall "Log off SECOND SATUADAY  DEV monthly reboot will start in 1 minute"
+sleep 60
+wall "Thanks. Server will reboot now"
+echo "server ccgfbpm30d is rebooting" |mail -s monthly_reboot_ccgfbpm30d dl.gfts.global.bpm.ste.support@imcnam.ssmb.com
+sleep 5
+/sbin/shutdown -r -t1 now
+
+#PROD servers reboot every 3rd Sunday
+set -u
+#DAY= (date "+%d")
+[ $(date "+%d") -ge 15 -a $(date "+%d") -le 21 ] || exit
+echo "this is Third Sunday"
+wall "Log off.. Third SUNDAY UAT monthly reboot will start in 1 minute"
+sleep 60
+wall "Thanks. Server will reboot now"
+sleep 5
+/sbin/shutdown -r -t1 now
+
+#!/bin/ksh
+#
+
+# This is for monthly reboot (3rd Sunday)
+#
+DATE=`date +"%d"`
+if [ $DATE -ge 15 ]
+ then
+  if [ $DATE -le 21 ]
+   then 
+    /bin/sync &
+    /bin/sleep 60
+    /usr/bin/reboot
+### If not going down in 3 minutes
+    /bin/sleep 180
+    /usr/bin/reboot -f
+  fi
+fi
+
+
+
+#PROD server reboot every 2nd SATURDAY 
+set -u
+[ $(date "+%d") -ge 8 -a $(date "+%d") -le 14 ] || exit
+echo "This is 2nd SATURDAY"
+wall "Log off the server, This is SECOND SATUADAY schedule monthly reboot will start in 1 minute"
+sleep 60
+wall "Thanks. Server will reboot now"
+sleep 5
+/sbin/shutdown -r -t1 now
+
+chmod 775 /sbin/sch_month_reboot.sh
+
+
+0 9 * * 6 /sbin/sch_month_reboot.sh > /dev/null 2>&1
+
+
+--------------sftp connectivity test ---------------------
+
+[UAT root @ swdcialisdb1u /tmp]
+# vi  test1.sh
+#su - webslicfid << EOF
+#id
+#sftp -vvv lg11927 --password=citi1234 securefiletransferuat.citigroup.net << EOF
+ sftp --user=lg11927 --password=citi1234 securefiletransferuat.citigroup.net << EOF
+ls
+pwd
+exit
+EOF
+
+scp -pBdr RCM_2427105 swgidb1c:/var/tmp/1/2/3/
+
+
+or 
+
+
+
+
+---------------------INC dispatch----------
+CTI GL CIS HIA DISPATCH
+
+
+CTI GL CIS HIA MISROUTED
+--------------skip-broken issue while update os---------------
+
+[IDENbuild root @ ctocomaiswx11p /net/stealth/export1/home1.localhost/sw/Linux]
+# cd /net/stealth/export1/home1.localhost/sw/Linux/soe6u6-x86_64
+[IDENbuild root @ ctocomaiswx11p /net/stealth/export1/home1.localhost/sw/Linux/soe6u6-x86_64]
+# ls -l  redhat-release-server-6Server-6.6*
+-rw-r--r--+ 1 root root 59112 Sep 16  2014 redhat-release-server-6Server-6.6.0.2.el6.x86_64.rpm
+_----------------------------------------------
+
+---------------------oracle 11.2.0.4 --------------------
+CITI_RedHat_Oracle_11.1.0.7_SOE_Install
+ation 
+
+CITI_AIX_IHS.oraI4CL-A.aix.64bit_11.2.0.4_1.0 
+
+or pls refer this
+ 
+http://ewiki.nam.nsroot.net/wiki/DCA_FAQ_Packaging	 
+you could find may oracle packages
+
+
+----------- to check how many disk are visible in fdisk -l-------
+
+fdisk -l 2>/dev/null | egrep '^Disk'|egrep -v 'dm-'|wc -l
+
+-------- cmd to check how many FC host ----
+ls /sys/class/fc_host
+
+------ to check how many SCSI controller------------
+ls /sys/class/scsi_host/
+
+-------Scan SCSI disks---------
+echo "- - -" > /sys/class/scsi_host/host1/scan
+
+or 
+
+/usr/bin/rescan-scsi-bus.sh
+
+or
+
+for i in `ls /sys/class/scsi_host/`
+do
+echo $i
+echo "rescaning $i scsi_host"
+echo "---------------------"
+echo "- - -" > /sys/class/scsi_host/$i/scan
+echo -e "\033[5;32mrescaning completed " "\033[0m"
+echo "---------------------"
+done
+
+partprobe
+--------------------fdisk -l disk free space-------------------
+
+[UAT root @ ctogcbcmwdb1u /dev/asmdisk]
+# multipath -ll | grep -i 'dm-' | wc -l
+84
+[UAT root @ ctogcbcmwdb1u /dev/asmdisk]
+# /net/ccuaweb3/export/scripts/WTS/total_san.lvm_asm.sh
+==========================
+SAN DETAILS FOR ctogcbcmwdb1u
+==========================
+Total Number of SAN disks (includes R2/BCV disk count) : 84
+R2 + BCV Disk count = 0 (0 + 0)
+Total SAN space  : 45315GB
+84 x 565678080KB
+LVM DISKS  : 12
+ASM DISKS  : 72
+[UAT root @ ctogcbcmwdb1u /dev/asmdisk]
+# ls |wc -l
+72
+
+
+to check ASM disk on linux server.
+
+/sbin/blkid | grep oracleasm | grep EXDATA
+
+[UAT root @ ctomsmwdb1u ~]
+# vgs
+  VG     #PV #LV #SN Attr   VSize   VFree  
+  oravg   11   3   0 wz--n- 370.86g      0 
+  rootvg   1   7   0 wz--n- 837.88g 720.97g
+[UAT root @ ctomsmwdb1u ~]
+# /net/ccuaweb3/export/scripts/WTS/total_san.lvm_asm.sh
+==========================
+SAN DETAILS FOR ctomsmwdb1u
+==========================
+Total Number of SAN disks (includes R2/BCV disk count) : 11
+R2 + BCV Disk count = 0 (0 + 0)
+Total SAN space  : 370GB
+11 x 35354880KB
+LVM DISKS  : 11
+ASM DISKS  : 28
+[UAT root @ ctomsmwdb1u ~]
+# fdisk -l 2>/dev/null | egrep '^Disk'|grep -i GB|wc -l
+174
+[UAT root @ ctomsmwdb1u ~]
+# fdisk -l 2>/dev/null | egrep '^Disk'|egrep "36.2 GB"|wc -l
+167
+[UAT root @ ctomsmwdb1u ~]
+# fdisk -l 2>/dev/null | egrep '^Disk'|grep -i GB |egrep -v "36.2 GB"|wc -l
+7
+[UAT root @ ctomsmwdb1u ~]
+# fdisk -l 2>/dev/null | egrep '^Disk'|grep -i GB |egrep -v "36.2 GB"
+Disk /dev/sda: 899.9 GB, 899899242496 bytes
+Disk /dev/mapper/rootvg-lv_swap1: 17.2 GB, 17179869184 bytes
+Disk /dev/mapper/oravg-optwarlv: 53.7 GB, 53687091200 bytes
+Disk /dev/mapper/oravg-backuplv: 339.2 GB, 339155615744 bytes
+Disk /dev/mapper/rootvg-lv_var: 18.3 GB, 18253611008 bytes
+Disk /dev/mapper/rootvg-lv_opt: 10.7 GB, 10737418240 bytes
+Disk /dev/mapper/rootvg-lv_var_crash: 68.6 GB, 68618813440 bytes
+[UAT root @ ctomsmwdb1u ~]
+# pvdisplay 2>/dev/null | egrep "PV Name" |wc -l
+12
+[UAT root @ ctomsmwdb1u ~]
+# pvdisplay 2>/dev/null | egrep "PV Name"
+[UAT root @ ctomsmwdb1u ~]
+# pvs
+
+# multipath -ll | grep -i mpath | wc -l
+39
+[UAT root @ ctomsmwdb1u ~]
+# cat /etc/udev/rules.d/99-oracle.rules | wc -l
+28
+[UAT root @ ctomsmwdb1u ~]
+# pvs | grep -i mpath | wc -l
+11
+[UAT root @ ctomsmwdb1u ~]
+# multipath -ll | more
+
+
+free disk in multipath
+
+
+multipath -ll | grep -i mpath | awk '{print $1 }' > /tmp/diskk.txt;
+
+cat /etc/udev/rules.d/99-oracle.rules | awk -F"mpath-" '{print $2}' | awk -F'"' '{print $1}'|while read a; do multipath -ll  | grep -i $a | awk '{print $1}'; done >> /tmp/diskk.txt;
+
+
+pvs | grep -i mpath|awk '{print $1}' |cut -d'/'  -f4|sed 's/p1//g' >> /tmp/diskk.txt;
+
+cat /tmp/diskk.txt| sort | uniq -u | wc -l ;
+cat /tmp/diskk.txt| sort | uniq -u | while read a; do multipath -ll | grep -A1 -i $a; done;
+
+
+multipath -ll |grep -i size | awk '{print $1}' | awk -F"=" '{print $2}'|tr -d "G" > /tmp/couuunt
+
+awk '{ sum += $1 } END { print sum }' /tmp/couuunt
+
+
+--------------to start MST agent ---------------------
+/opt/MSTAgent/bin/mstagent.sh status
+
+------------to check where df -h cmd get hang ----------
+Linux :
+
+strace df -h
+
+Look at strace. Run strace -ttTvfo /tmp/su.strace su - testuser:
+
+solaris :
+
+truss df -h
+
+
+mount | sed -n "s/^.* on \(.*\) type nfs .*$/\1/p" | while read mount_point ; do 
+  timeout 02 ls $mount_point >& /dev/null || echo "stale $mount_point" ; 
+done
+
+
+
+
+[root@malxcs2p ~]# mount | sed -n "s/^.* on \(.*\) type nfs .*$/\1/p" | while read mount_point ; do 
+>   timeout 02 ls $mount_point >& /dev/null || echo "stale $mount_point" ; 
+> done
+stale /opt/mr
+stale /home/tf22066
+stale /home/ss81280
+stale /home/mh44387
+[root@malxcs2p ~]# grep -v tracefs /proc/mounts | cut -d' ' -f2 | \
+>   while read m; do \
+>     timeout --signal=KILL 1 ls -d $m > /dev/null || echo "$m"; \
+>   done
+/opt/mr
+/opt/mr
+
+
+-------if server goes to maintance mode and error on FS fsck---
+
+efsck -a -y /****(Filesystem)
+
+
+aix
+
+root@erpstedb202c: fsck /dev/optware
+
+
+
+The current volume is: /dev/optware
+Primary superblock is valid.
+The file system is marked as being quiesced.
+; CLEAR? y
+J2_LOGREDO:log redo processing for /dev/optware                     
+j2_logredo.cpp: ERROR in j2_logredo line 677, log already redone!
+
+Primary superblock is valid.
+The file system is marked as being quiesced.
+; CLEAR? y
+*** Phase 1 - Initial inode scan
+*** Phase 2 - Process remaining directories
+*** Phase 3 - Process remaining files
+*** Phase 4 - Check and repair inode allocation map
+File system inode map is corrupt; FIX? y
+Superblock marked dirty because repairs are about to be written.
+*** Phase 5 - Check and repair block allocation map
+Block allocation map is corrupt; FIX? y
+File system is clean.
+Superblock is marked dirty; FIX? y
+All observed inconsistencies have been repaired.
+root@erpstedb202c: 
+root@erpstedb202c: 
+root@erpstedb202c: mount /dev/optware /optware
+
+
+----------------------------------------------------------------
+
+------------to check WWN for fscsi* in AIX and linux-------------
+to check how many HBA is there
+
+lsdev -Cc adapter | grep -i fcs
+
+lscfg -vl ent7 | egrep -i " ent7|network"| awk '{print $1 " " $2}'|sed -e 's/Network Address.............//g' | awk '{print $1}'
+
+or
+
+fcstat fcs0|grep -i world
+
+or 
+
+lscfg -vl fcs3|grep -i network
+
+or
+
+It can be obtained with "lscfg":
+# lscfg -vpl fcsX | grep Netw
+        Network Address.............21000025FF8338A0
+
+
+Storage Admins likes in this format:
+(with colons ':' and with small letters)
+# lscfg -vpl fcsX | grep Netw | cut -c 37-54 | tr '[A-Z]' '[a-z]' | sed 's/../&:/g;s/:$//'
+21:00:00:25:ff:83:38:a0
+
+
+
+
+linux
+
+/net/ccuaweb3/export/scripts/Linux/link_status.sh
+
+for i in 
+
+[Prod root @ ctocvamwap2p ~]
+# ls /sys/class/fc_host
+host5  host6  host7  host8
+[Prod root @ ctocvamwap2p ~]
+# cd  /sys/class/fc_host
+[Prod root @ ctocvamwap2p /sys/class/fc_host]
+# cat /sys/class/fc_host/host*/port_name
+0x10000090fa3d2cbe
+0x10000090fa3d2cbf
+0x10000090fa0dce52
+0x10000090fa0dce53
+[Prod root @ ctocvamwap2p /sys/class/fc_host]
+# cat /sys/class/fc_host/host5/port_name
+0x10000090fa3d2cbe
+
+----------------------create file in requested size------------
+
+dd if=/dev/zero of=<file.name> bs=1 count=0 seek=2G 
+
+dd if=/dev/zero of=<file.name> bs=1G count=1
+
+dd bs=1G count=1 seek=$((1024*1024*2-1)) if=/dev/zero of=<file.name>
+
+fallocate -l 1G <file.name>
+
+truncate -s 1G <file.name>
+
+xfs_mkfile 1024m <file.name>
+
+mkfile 1g <file.name>
+
+
+-----------------------script----------------------------------
+
+
+/net/ccua/export/scripts/AixLVM
+
+svmon.sh
+
+
+sar.sh
+
+
+CheckSpace
+
+
+Powerpath_check_script
+
+CheckPaths
+
+
+CheckDiskSize
+
+CheckLvSpace
+
+CheckDiskInfo
+
+
+createfs.sh
+
+
+dbstart.sh
+
+
+CheckDisks
+
+-----------------------to clear caches ------------------
+
+To free pagecache:
+    echo 1 > /proc/sys/vm/drop_caches
+To free dentries and inodes:
+    echo 2 > /proc/sys/vm/drop_caches
+To free pagecache, dentries and inodes:
+    echo 3 > /proc/sys/vm/drop_caches
+
+	
+echo 3 > /proc/sys/vm/drop_caches
+
+cmd is running slow or need to run fast run below cmd 
+
+ export INFOMGR_BYPASS_NONSA=1
+
+
+
+-----the parent directories /ace/fo1d/dev and /ace/fo1d are absent or empty today-------
+
+
+Pan, Baoning [CCC-OT] 8:42 PM
+cd /usr/share/fio/firmware
+
+then check/test it
+fio-update-iodrive -p ./ioaccelerator_3.2.8-20140508.fff
+
+if it has newer firmware, run
+fio-update-iodrive ./ioaccelerator_3.2.8-20140508.fff
+
+Chidhambaram, Janarthanan [CCC-OT NE] 8:44 PM
+if we run that its fix ?
+Pan, Baoning [CCC-OT] 8:45 PM
+yes.  it will update firmware,  then reboot the server.
+Chidhambaram, Janarthanan [CCC-OT NE] 8:45 PM
+thanks, baoning , why its came up when its auto reboot 
+why its not came up when its auto reboot
+Pan, Baoning [CCC-OT] 8:46 PM
+i did kernel update 2 weeks ago.   I think it was on old one, then reboot brought newer one.
+
+
+------------------------firmware---Bios--raid----ILO-----------------------------------------
+To check current firmware
+
+https://catecollaboration.citigroup.net/domains/platstor/distsrvrhdw/X86Documents/HPE_Firmware_Matrix.mht
+
+to check array
+
+# hpssacli ctrl all show |  awk '{ print $1 " " $2 " ""\033[5;41;1;37m"$3"\033[0m";}'
+  
+Smart Array P830i
+
+
+
+/net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/HP/PLATFORM
+
+new
+
+/net/cpsadm/share/firmware
+
+cd /net/ldnvnasnfsu0141.eur.nsroot.net/ldneqtv0052/eqtqt0052/HP/PLATFORM
+
+
+ln -s /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/ /repository	
+export GEN=`/net/cmbisnas/vol/vf07v01/fitqt105/FICC/users/ms32298/scripts/bios_ilo_smrt_array_get.sh|cut -d\; -f 2|awk '{print $2"."$3}'`;echo $GEN	
+cd /repository/eqtqt052/HP/PLATFORM/$GEN/	
+ 	
+./bios/current/hpsetup	
+./ilo/current/hpsetup	
+./raid/current/hpsetup	
+
+New path from DEC 2018
+
+"Firmware link
+ILO:
+/net/gicap41/stage/Linux/Firmware/ILO/
+ 
+BIOS:
+/net/gicap41/stage/Linux/Firmware/<server model>/[BIOS/bios]/
+ once in bios folder 
+
+#rpm -Uvh firmware-system-p65-2018.02.22-1.1.i386.rpm
+#/usr/lib/i386-linux-gnu/firmware-system-p65-2018.02.22-1.1/hpsetup
+follow instruction then
+ 
+RAID Array:
+/net/gicap41/stage/Linux/Firmware/Array/
+"
+
+
+
+	echo 3 > /proc/sys/vm/drop_caches;
+export INFOMGR_BYPASS_NONSA=1;
+
+dmidecode -t bios | egrep -i --color "BIOS Information|Release|Firmware";
+dmidecode -t bios | egrep -i --color "BIOS Information|Release Date|Firmware Revision";
+
+hpacucli ctrl all show detail | grep -i --color  "Firmware Version:";
+hpssacli ctrl all show detail | grep -i --color  "Firmware Version:";
+
+
+
+
+
+
+--------------------kernel issue------------------------------------------
+single user 
+
+init=/bin/bash
+
+udevchilds=128 
+
+
+
+1) Select the appropriate boot entry in the GRUB menu and press e to edit the line.
+2) Select the kernel line and press e again to edit it.
+3) Append init=/bin/bash at the end of line.
+4) Press Ctrl-X to boot (this change is only temporary and will not be saved to your menu.lst). After booting you will be at the bash prompt.
+5) Your root file system is mounted as readonly now, so remount it as read/write mount -n -o remount,rw /.
+6) Use the passwd command to create a new root password.
+7) Reboot by typing reboot -f and do not lose your password again!
+
+
+
+----------------------Duplicate-------------------------------
+
+=IF(ISERROR(MATCH(A1,$C$1:$C$979,0)),"","Duplicate")
+
+
+
+---------------------CRON log--------------------------------
+
+AIX
+
+/var/adm/cron/log
+
+
+---------------------NetProbe restart ---------------
+
+
+ps -ef | grep -i netprob|grep -v grep | awk '{print $2}' | xargs kill -9
+ps -ef | grep -i netp
+
+
+Request Type : Netprobe restart
+Server List :   fxfoxgzap1d-z5.eur.nsroot.net
+Port :  7137 ,7136
+Gateway : esca_emea_gb_uat
+
+Netprobe start Command : /opt/itrs/netprobe/scripts/start_netprobe -p <port>
+Output post restart : ps -ef | grep -i netprobe | grep -v grep
+
+Please provide netprobe logs after restart from : /var/opt/itrs/netprobe.
+
+/opt/itrs/ICGNetprobe/scripts/ports.txt 
+
+/opt/itrs/ICGNetprobe/scripts
+
+ ps -ef | grep -i netp
+
+/opt/itrs/ICGNetprobe/scripts/stop_netprobe
+/opt/itrs/ICGNetprobe/scripts/start_netprobe
+
+
+/opt/itrs/netprobe/scripts/start_netprobe -p 7136
+/opt/itrs/netprobe/scripts/start_netprobe -p 7137 clueorap
+
+
+Below commands needs to be executed using FID “icggeams” to stop/start netprobs 	
+
+stop_netprobe
+start_netprobe
+
+
+cd /etc/rc.d/init.d
+
+./netprobe.icggeams stop
+./netprobe.icggeams start
+
+or
+
+./netprobe stop
+./netprobe start
+
+
+---------------------reserve_enable=no------------------------
+
+/usr/sbin/chdev -l powerpath0 -a reserve_enable=no
+chdev -l powerpath0 -a reserve_enable=no -P
+
+--------------------Stop Cluster-----------------------------
+
+
+root@cccmai211u.nam.nsroot.net: smitty clstop
+                                                                                     Stop Cluster Services
+
+Type or select values in entry fields.
+Press Enter AFTER making all desired changes.
+
+                                                        [Entry Fields]
+* Stop now, on system restart or both                 now                                                                                                                                   +
+  Stop Cluster Services on these nodes               [cccmai110u,cccmai211u]                                                                                                                +
+  BROADCAST cluster shutdown?                         false                                                                                                                                 +
+* Select an Action on Resource Groups                 Bring Resource Groups Offline 
+
+
+/usr/es/sbin/cluster/utilities/clRGinfo
+/usr/es/sbin/cluster/utilities/clRGinfo 
+
+root@cccmai211u.nam.nsroot.net: clRGinfo 
+-----------------------------------------------------------------------------
+Group Name     Group State                  Node           
+-----------------------------------------------------------------------------
+aiemep_rg      OFFLINE                      cccmai211u     
+               RELEASING                    cccmai110u  
+
+
+root@cccmai211u.nam.nsroot.net: lssrc -ls clstrmgrES
+Current state: ST_INIT
+sccsid = "@(#)36    1.135.1.100 src/43haes/usr/sbin/cluster/hacmprd/main.C, hacmp.pe, 53haes_r610, 1049A_hacmp610 9/30/10 11:12:02"
+
+
+to start 
+
+smitty clstart
+
+
+To change the online node 
+
+smitty cspoc
+
+
+
+To start cluster services on a resource group that is manually managed:
+Enter smitty hacmp
+System Management (C-SPOC) > Manage HACMP Services or Resource Groups and Applications > Bring Resource Group Online.
+Select the node where your application is running.
+Press Enter.
+
+
+
+/net/kalihp/export/WORK.dir/chk_Kcluster.sh #fix "shutdown -hF" problem
+/usr/sbin/rsct/bin/hags_stopdms -s cthags  ## Add to /etc/rc.d/rc2.d/Kcluster
+
+
+
+--------------------------Cluster freeze----------------------------
+
+*	hagrp -freeze service_group 
+
+*	hagrp -unfreeze service_group 
+
+hagrp -switch GSR_DB_SG_N1 -to gsrswdb1c
+
+hagrp -switch GSR_DB_SG_N2 -to gsrswdb2c
+
+hagrp -online GSR_DB_SG_N2 -sys gsrswdb2c
+
+
+
+ hagrp -flush GSR_CFS_SG -sys gsrswdb1c
+hagrp -flush GSR_CFS_SG -sys gsrswdb2c
+hagrp -flush GSR_CFS_SG -sys gsrswdb3c
+
+ ls -ltr /var/VRTSvcs/log/engine_A.log
+
+
+hagrp -unfreeze GSR_CFS_SG;
+hagrp -unfreeze GSR_DB_SG_N1;
+hagrp -unfreeze GSR_DB_SG_N2;
+hagrp -unfreeze GSR_DB_SG_N3;
+
+Freeze a service group (disable onlining and offlining)	
+hagrp -freeze <group> [-persistent]
+
+note: use the following to check "hagrp -display <group> | grep TFrozen"
+
+Unfreeze a service group (enable onlining and offlining)	
+hagrp -unfreeze <group> [-persistent]
+
+note: use the following to check "hagrp -display <group> | grep TFrozen"
+
+
+---------------------------IBM case-----------------------------
+
+IBM Customer no:  1740749 (ICN)
+Support no:  (900) 18004267378 / (0001)919-864-3512and select option 2 (IBM App support) >> 90725 >> select option 1 > 2 > 1 (AIX)
+
+IBM For AIX
+https://www-947.ibm.com/support/servicerequest/Home.action?lnk=msdTS-srap-usen (Run in IE) 
+
+-----------------------net backup ------------------
+cat /usr/openv/netbackup/exclude_list
+
+/etc/opt/netbackup/bp.conf
+/etc/opt/netbackup/exclude_list
+/etc/opt/netbackup/include_list
+
+/usr/openv/netbackup/bin/bp
+
+--------------------- Net backup - restart ---------------------
+AIX
+/etc/rc.netbackup.aix stop;
+/etc/rc.netbackup.aix start
+
+Linux
+/etc/init.d/netbackup stop
+/etc/init.d/netbackup start
+
+
+ps -ef  | grep -i bpbkar
+
+ps -ef | grep -i /usr/openv/netbackup/bin/bp
+
+----------------backup list and restored -----------------------
+/usr/openv/netbackup/bin/bpclimagelist -U -client gckycai31u -server tinbubm3400p -t ANY
+
+/usr/openv/netbackup/bin/bpclimagelist -U -client gckycai31u -server tinbubm3400p -t FULL
+
+
+./bplist -C gftsadm1 -S crebm2500 -t 0 -R 3 -b -l -unix_files -s 02/20/2015 -e 03/14/2015 /var/tmp
+
+cd /usr/openv/netbackup/bin
+bprestore -s 04/01/93 06:00:00 -e 04/10/93 18:00:00 /usr/user1/file1 
+
+ 
+bprestore -s 04/01/93 06:00:00 -e 04/10/93 18:00:00 /usr/user1/file1 
+/usr/openv/netbackup/bin/bplist -help USAGE: bplist [-A | -B] [-C client] [-S server] [-t client_type] [-k class] [-keyword "keyword phrase"] [-F] [-R [n]] [-b | -c | -u] [-l] [-r] [-T] [-s mm/dd/yy hh:mn:ss] [-e mm/dd/yy hh:mn:ss] [filename] 
+
+eg:-
+
+syntax " change sourcepath to destinationpath "
+
+echo "change /abinitio/data/CitiTech/serial/ to /abinitio/data/restore_serial" > /var/tmp/net
+.txt
+
+/usr/openv/netbackup/bin/bprestore -B -C epslnxswai01p -S crebm4700 -s 06/06/2017 00:00:01 -e 06/09/2017 23:59:59 -R /var/tmp/netbackup.txt -L /var/tmp/restore3.log /abinitio/data/CitiTech/serial/
+
+----------------------to start webserver-------------------------
+/opt/sows/61sp12/https-admserv/nostart
+
+------------------------host bus adapter --------------------
+
+lspci -vv |grep -i GB 
+lspci -nn | grep -i "fibre channel"
+ll /sys/class/fc_host/
+ls -ltr /sys/class/scsi_host/
+
+-----------------------------server access info's ------------
+
+/repository/Tools/server_info eqaprdc1u
+/repository/Tools/icg_access_check jc38549
+
+----------------------startup script-------------------
+/etc/rc.d/rc3.d/
+----------------------wscansw (tad4d (tlm))
+/etc/rc.d/init.d/tlm stop
+/etc/rc.d/init.d/tlm start
+
+-------------------------SSH restart in AIX ----
+lssrc -a | grep -i ssh
+
+stopsrc -s sshd
+startsrc -s sshd
+
+stopsrc -s ssh-tectia-server
+startsrc -s ssh-tectia-server
+-------------------------SSH restart in solaris ----
+# svcs -v ssh 
+online - 12:23:17 115 svc:/network/ssh:default 
+
+To stop the service: 
+#svcadm disable network/ssh 
+
+To start the service: 
+#svcadm enable network/ssh 
+
+To restart the service: 
+# svcadm restart network/ssh 
+
+--------------swapvol , rootvol & metada--------
+
+
+vxprint -hrt swapvol
+vxprint -hrt rootvol
+vxprint -hrt rootdisk7vol
+metastat -c
+vxdg list
+vxprint -h -g rootdg
+vxinfo -g rootdg
+vxinfo -g rootdg -p
+iostat -En | grep -i c0t10d0
+iostat -En | grep -p c0t10d0
+iostat -En c0t10d0s0
+vxprint -h -g rootdg
+
+-----------------ERROR LOGGING BUFFER OVERFLOW ------------------
+
+/usr/lib/errdemon -l 
+
+
+
+1. Log in: smit errdemon
+2. Change the size of the memory buffer size (the size must be a multiple of 4096)
+[Entry Fields] 
+LOGFILE [/ var / adm / ras / errlog] 
+* Maximum LOGSIZE [1048576] 
+ Memory Buffer Size [65536] 
+Duplicate Detection Error [true] 
+Duplicate Time Interval [10000] 
+in milliseconds 
+Error Duplicate maximum [1000] 
+Command: OK stdout: yes stderr: no 
+
+Before command completion, additional instructions May Appear below. 
+The Error log memory buffer size you supplied will be rounded up 
+to a multiple of 4096 bytes. 
+
+3. Stop and lift the errdemon
+
+3.1. /usr/lib/errstop
+
+3.2. /usr/lib/errdemon
+
+4. Verify that the errdemon is running with the new settings
+
+/usr/lib/errdemon -l 
+
+
+
+
+----------------------------Set ACL in AIX------------------------
+
+
+The numeric value corresponding to SUID bit has value 4
+The numeric value corresponding to SGID bit has value 2
+
+
+------------------------list of users/FID with their groups having access and locked --------------------------------------
+
+  getent passwd | egrep '^[a-z]{2}[0-9]{5}'
+  getent passwd | egrep '^[a-z]{2}[0-9]{5}' > /var/tmp/user1.out
+  cat /var/tmp/user1.out | awk {' print $1 '} > /var/tmp/1.out
+  more /var/tmp/1.out
+
+  cat /var/tmp/user1.out | cut -d: -f1 > /var/tmp/2.out
+
+  cd /var/tmp
+  chmod 755 2.out
+for i in `cat 2.out`
+  
+do
+  
+id $i > user.lst
+
+  more user.list 
+
+cat users.list | mail -s "edartsftp01p_users_list" janarthanan.chidhambaram@iuo.citi.com
+
+to reset the account after crossing MaxAuthTries
+
+pam_tally2 --reset --user <USERNAME>
+
+"pam_tally --reset" (or pam_tally2 --reset) that will do all users.
+
+To temporarily address this issue until things can be fully addressed as noted elsewhere,
+you can reset a user's PAM tally so they can try again:
+
+pam_tally --reset --user <USERNAME>
+pam_tally2 --reset --user <USERNAME>
+
+
+
+
+easier method to list locked accounts than the below (for centralized accounts like ldap)
+
+[root@someserver ~]# getent passwd | grep -v nologin | cut -d : -f 1 |  perl -ne 'chomp;system("passwd -S $_ | grep  locked")'
+elvis LK 2014-03-24 0 99999 7 -1 (Password locked.)
+
+
+
+
+
+-------------------------------------------------------------------------------------- CHECK SCSI ID -------
+
+dmsetup info -c | grep -i mpathdz
+
+--------------SSH key when key in local path--------------------
+
+for i in `cat pub_keys.txt` 
+do
+echo $i
+
+scp $i isgswwbc2n2.nam.nsroot.net:/etc/ssh2/keys/xmcapi/$i;
+
+ssh -q isgswwbc2n2.nam.nsroot.net "cd /etc/ssh2/keys/xmcapi/;cp authorization authorization_`date +%d%b%y`;echo "Key $i">>authorization";
+
+ssh -q isgswwbc2n2.nam.nsroot.net echo ' Options command=\"eval \$SSH_ORIGINAL_COMMAND\", allow-from=\"mcslnx1c-phys.nam.nsroot.net\">> /etc/ssh2/keys/xmcapi/authorization'
+
+ssh -q isgswwbc2n2.nam.nsroot.net "hostname;cd /etc/ssh2/keys/xmcapi/;cat authorization|grep -i $i";
+
+echo ---------------------;
+done > out8.txt
+
+
+---------------- Dump check ------------------------
+
+/usr/lib/ras/dumpcheck -p
+
+lslv lg_dumplv
+
+extendlv lg_dumplv 5
+
+/usr/lib/ras/dumpcheck -p
+		
+if error throw like below
+
+ # /usr/lib/ras/dumpcheck -p
+The access to the dump device is currently unavailable
+
+Dump Device      primary
+
+steps :
+
+# sysdumpdev -l
+primary -
+secondary /dev/sysdumpnull
+copy directory /var/adm/ras
+forced copy flag TRUE
+always allow dump TRUE
+dump compression ON
+type of dump traditional
+
+#sysdumpdev -p /dev/lg_dumplv
+
+# sysdumpdev -l
+primary              /dev/lg_dumplv
+secondary            /dev/sysdumpnull
+copy directory       /var/adm/ras
+forced copy flag     TRUE
+always allow dump    TRUE
+dump compression     ON
+type of dump         traditional
+
+#/usr/lib/ras/dumpcheck -p
+
+
+
+if output of sysdumpdev -l like below. do troubleshoot
+
+fs01aix009(OLTP2):/> sysdumpdev -l
+primary              -
+secondary            -
+copy directory       /var/adm/ras
+forced copy flag     TRUE
+always allow dump    FALSE
+dump compression     ON
+type of dump         traditional
+fs01aix009(OLTP2):/> 
+
+
+fs01aix009(OLTP2):/> lsvg -l rootvg|grep sysdump
+lg_dumplv           sysdump    5       5       1    closed/syncd  N/A
+fs01aix009(OLTP2):/> 
+
+fs01aix009(OLTP2):/> ls -ltr /dev/lg_dumplv
+brw-rw----    1 root     system       10, 10 Jul 12 2015  /dev/lg_dumplv
+fs01aix009(OLTP2):/>
+
+fs01aix009(OLTP2):/> sysdumpdev -p /dev/lg_dumplv
+sysdumpdev:
+Unable to get the physical volume name for  from ODM.
+fs01aix009(OLTP2):/>
+
+fs01aix009(OLTP2):/> ls -ltr /dev/sysdu*
+crw-------    1 root     system        7,  2 Jul 12 2015  /dev/sysdumpnull
+crw-------    1 root     system        7,  3 Jul 12 2015  /dev/sysdumpfile
+crw-------    1 root     system        7,  1 Jul 12 2015  /dev/sysdumpctl
+crw-------    1 root     system        7,  0 Jul 12 2015  /dev/sysdump
+
+
+fs01aix009(OLTP2):/> sysdumpdev -P -s /dev/sysdumpnull
+sysdumpdev:
+Unable to get the physical volume name for  from ODM.
+
+
+fs01aix009(OLTP2):/> synclvodm -v rootvg
+synclvodm: Physical volume data updated.
+synclvodm: Logical volume hd5 updated.
+synclvodm: Logical volume hd6 updated.
+synclvodm: Logical volume hd8 updated.
+synclvodm: Logical volume hd4 updated.
+synclvodm: Logical volume hd2 updated.
+synclvodm: Logical volume hd9var updated.
+synclvodm: Logical volume hd3 updated.
+synclvodm: Logical volume hd1 updated.
+synclvodm: Logical volume hd10opt updated.
+synclvodm: Logical volume lg_dumplv updated.
+synclvodm: Logical volume lv_gcb updated.
+synclvodm: Logical volume lv_mqm updated.
+synclvodm: Logical volume lv_server updated.
+synclvodm: Logical volume fwdump updated.
+synclvodm: Logical volume hd11admin updated.
+synclvodm: Logical volume livedump updated.
+
+
+fs01aix009(OLTP2):/> sysdumpdev -P -p /dev/sysdumpnull
+primary              /dev/sysdumpnull
+secondary            /dev/sysdumpnull
+copy directory       /var/adm/ras
+forced copy flag     TRUE
+always allow dump    FALSE
+dump compression     ON
+type of dump         traditional
+fs01aix009(OLTP2):/> sysdumpdev -P -p /dev/lg_dumplv -s /dev/sysdumpnull
+primary              /dev/lg_dumplv
+secondary            /dev/sysdumpnull
+copy directory       /var/adm/ras
+forced copy flag     TRUE
+always allow dump    FALSE
+dump compression     ON
+type of dump         traditional
+fs01aix009(OLTP2):/> 
+fs01aix009(OLTP2):/> 
+fs01aix009(OLTP2):/> sysdumpdev -l
+primary              /dev/lg_dumplv
+secondary            /dev/sysdumpnull
+copy directory       /var/adm/ras
+forced copy flag     TRUE
+always allow dump    FALSE
+dump compression     ON
+type of dump         traditional
+fs01aix009(OLTP2):/> /usr/lib/ras/dumpcheck -p
+fs01aix009(OLTP2):/> 
+fs01aix009(OLTP2):/> 
+
+
+Examples
+To check dump resources and have the results printed to standard output rather than logged, type:
+/usr/lib/ras/dumpcheck -p
+To make this change permanently; that is, to have it made in the crontab entry, type:
+/usr/lib/ras/dumpcheck -p -P
+To have dumpcheck run at 9:00 am and 3:00 pm Monday through Friday, type:
+/usr/lib/ras/dumpcheck -t "0 9,15 * * 1-5"
+To return to the default, type:
+
+/usr/lib/ras/dumpcheck -t "0 15 * * *"
+You may also use SMIT to configure the times when dumpcheck executes.
+
+To discontinue running this feature, type:
+/usr/lib/ras/dumpcheck -r
+You may also use SMIT for this task.
+
+
+
+
+------------------------------------platform_dump--------------------
+
+-c      Check the dump size estimate against available space.
+-d      Delete platform dump space.
+-e      Provide a dump size estimate
+-f      Reserve disk space for the platform dumps.
+        The fstype must be a valid file system type,
+        see the crfs command.
+-F      Grant/don't grant permission to create space for the dump.
+        p must be 1 to grant permission, and 0 if not granted.
+        -F1 is the default.
+-l      List the current platform dump configuration.
+-L      Log errors instead of displaying them.
+-q      Check if platform dump is supported.
+-s seq  Save the dump indicated by the error log entry with
+        sequence number seq.
+-S      Save scanout data.
+Only one of -c, -d, -e, -f, -F, -l, -q, -s, and -S may be specified.
+
+
+# platform_dump -l
+
+# platform_dump -e
+1078201856
+
+
+# platform_dump -c
+
+# platform_dump -q   
+
+
+
+
+platform_dump -c
+
+
+Exit Status
+0
+On successful completion.
+1
+Returned if -c was specified, and there is insufficient space to save platform dumps.
+255
+Returned if platform dumps are not supported on the system.
+3
+Returned if platform dumps has been disabled.
+2
+Returned in an error is encountered.
+
+
+
+------------------------upstream restart ---------------
+
+[UAT root @ acedbgt1u ~]
+# ps -ef | grep -i upstream| grep -v grep
+
+[UAT root @ acedbgt1u ~]
+# /etc/rc.d/init.d/fdrupstream status
+uscmd1 is stopped
+
+[UAT root @ acedbgt1u ~]
+# /etc/rc.d/init.d/fdrupstream start
+Starting fdrupstream daemon fdrupstream:                   [  OK  ]
+
+
+[UAT root @ acedbgt1u ~]
+# /etc/rc.d/init.d/fdrupstream statusu ~]
+# ps -ef | grep -i upstream| grep -v grep
+root     45986     1  0 18:47 ?        00:00:00 /opt/fdrupstream/usdaemon parameter=rmtparm.dat configfile=upstream.cfg
+root     45987 45986  0 18:47 ?        00:00:00 /opt/fdrupstream/uscmd1 parameter=rmtparm.dat configfile=upstream.cfg
+[UAT root @ acedbgt1u ~]
+
+------------------------DATA Centre------------------------------
+
+SWDC - 931 Litsey Rd, Roanoke TX 
+RUTH - 700 EDWIN L. WARD, Rutherford NJ 
+SSDC - 12401 PROSPERITY DRIVE, Silver Spring, MD 
+MWDC - 306 GREIF PARKWAY, Delaware, OH 
+390G - 390 Greenwich St, New York, NY 
+GTDC - 201 BLUE RIDGE DRIVE, Georgetown, TX clearclea
+RDC - 66 Molesworth Street, London, United Kingdom 
+CGC1 - 33 Canada Square, London, United Kingdom 
+FDC - Heinrich-Lanz-Allee 47, Frankfurt, Deutschland 
+Meerbusch - Düsseldorfer Straße 71B, Meerbusch, Deutschland 
+CGC2 - 25 Canada Square, London, United Kingdom 
+
+----------------To check FS share to other servers --------------
+
+exportfs
+
+in AIX
+
+Commands:
+
+/etc/xtab                       <--shows what are currently exported, after 'exportfs' this file is updated (remove an entry with exportfs -u)
+/etc/rmtab                      <--contains a list of clients, which are mounting resources from server (showmount command is using this file)
+                                (client entry will only be removed from this file, if 'umount' command is given on client)
+
+exportfs                        <--lists the content of /etc/xtab (this file never should be edited manually)
+exportfs -a                     <--exports all directories in the /etc/exports file
+exportfs /directory             <--exports only the given directory
+exportfs -u /dir                <--unexports the given directory
+exportfs -u -a                  <--unexports all directories in /etc/exports file
+
+showmount -e <nfs server>       <--you can check from a client what dirs are exported on given nfs server
+showmount -a <nfs server>       <--shows which clients are currently mounting resources from the given nfs server
+
+mknfsexp -d dir                 <--exports the given directory (it inserts a line in /etc/exports)
+mknfsmnt -f <mount point> -d <remote dir> -h <nfs server> -A -E <--add entry to /etc/filesystems, so nfs mounts can be automatically mounted
+                                                                (-A: auto mount, -E: alloows keyboard interrupts on hard mounts)
+
+-------------------basic pre-check on AIX server-----------------
+
+uname -a;df -g;df -g | wc -l;lsvg |lsvg -il;uname -Mu;date;uptime;oslevel -s;lppchk -vm3;bootinfo -b;bootlist -m normal -o;lspv | grep -i rootvg;lspv ;lspv |wc -l;lspv | grep -i hdiskpower;lspv | grep -i hdiskpower|wc -l;lsvg;lsvg -o;lsvg |wc -l;lsvg -o | wc -l;ifconfig -a;netstat -rn;uname -Mu;lparstat -i;prtconf;prtconf -m;lsps -a;lsps -s;lsrsrc IBM.MCP;lsdev -c adapter;ps -ef | grep -i smon;ps -ef | grep -i pmon;ps -ef | grep -i cyb;ps -ef | grep -i ndm;ps -ef | grep -i wily;ps -ef | egrep -v "root|daemon|netprobe|icggeams|vg89361|perform"
+
+
+uptime;
+df -g;df -g |wc -l;
+lspv;
+lspv|wc -l;
+lspv |grep -i hdiskpower;
+powermt display;
+powermt display dev=all;
+lsdev;
+lsvg;
+lsvg -o;
+lsvg rootvg;
+lsvg |lsvg -il;
+lparstat -i;
+lsrsrc IBM.MCP;
+uname -Mu;
+oslevel -s;
+bootinfo -b;
+bootlist -m normal -o;
+lspv | grep -i rootvg;
+ifconfig -a;
+netstat -rn;
+errpt;
+cd /opt/SANinfo/bin;
+./inq;
+ps -ef |grep -i pmon;
+ps -ef |grep -i smon;
+ps -ef |grep -i crs;
+ps -ef |grep -i asm;
+ps -ef |grep -i db2;
+cd /dev;ls -lrt;
+
+
+powerpath start
+
+/etc/init.d/PowerPath start
+
+
+----------------------DMA & ulimt-----------------------
+
+
+MemoryError during DMA Software Policy remediation for AIX 
+For Root User. Check if "ulimit –a|grep data" is less then 524288 then increase ulimt to 524288 using "ulimit -d 524288" 
+Restart SA/DMA 10 agent using "/etc/rc.d/init.d/opsware-agent restart" 
+Update DMA Software Policy using below command 
+/opt/opsware/agent/bin/python /opt/opsware/agent/pylibs/cog/remediate.pyc 
+
+
+---Refresh IHS web instance using below stop and start commands--
+
+/opt/software/IHS70019/instance/autofxweb/stop
+/opt/software/IHS70019/instance/autofxweb/start
+
+-----------------------udeploy agent -------------------
+
+/opt/udeploy/agent/bin/udagent stop
+/opt/udeploy/agent/bin/udagent start
+
+ps -ef | grep -i udeploy
+
+for new one 
+
+/opt/udeployha/agent/bin/agent stop
+/opt/udeployha/agent/bin/agent start
+
+/opt/applications/udeployha/agent/bin/agent stop
+/opt/applications/udeployha/agent/bin/agent start
+
+
+udeploy agent version 6.2 on your server (https://collaborate.citi.net/docs/DOC-371753 ) 
+
+--------------------veritas resources -------------------
+
+
+/opt/VRTSvcs/bin/hastatus -summ
+/opt/VRTSvcs/bin/hastatus -summ
+
+Resource Operations
+ 
+Online a resource 	hares -online <resource> [-sys]	   
+Offline a resource	hares -offline <resource> [-sys]	   
+display the state of a resource( offline, online, etc) 	hares -state 	   
+display the parameters of a resource 	hares -display <resource> 	   
+Offline a resource and propagate the command to its children	hares -offprop <resource> -sys <sys> 	   
+Cause a resource agent to immediately monitor the resource	hares -probe <resource> -sys <sys>	   
+Clearing a resource (automatically initiates the onlining)	hares -clear <resource> [-sys]	 
+
+for flush the resource 
+
+hagrp -flush -force rfai_sg -sys ctocrcaiswx10p
+
+ ls -ltr /var/VRTSvcs/log/engine_A.log
+  521  sar 1 5 
+  522  sar 1 5 
+  523  sar -u
+  524  hastatus -summ
+  525  hagrp -resources  GSR_DB_SG_N2
+  526  hares -state IP-oraRes2
+  527  hares -state lsnrgsrd2res
+  528  hares -state dbgsrd2res
+  529  hares -clear dbgsrd2res -sys gsrdbdevn1
+  530  hares -state dbgsrd2res
+  531  hares -clear dbgsrd2res -sys gsrdbdevn2
+  532  hares -state dbgsrd2res
+  533   hastatus -summ
+  534  hagrp -online GSR_DB_SG_N2 -sys gsrdbdevn1
+  535   hastatus -summ
+
+  
+  
+  fsck -t vxfs /dev/vx/rdsk/cvaprod_nSRDF/vol01
+  
+  [Prod root @ cvap3-phys ~]
+# fsck -t vxfs /dev/vx/rdsk/cvaprod_nSRDF/vol01
+fsck 1.39 (29-May-2006)
+log replay in progress
+log replay failed to clean file system
+file system is not clean, full fsck required
+full file system check required, exiting ...
+
+# fsck -t vxfs -o full /dev/vx/rdsk/cvaprod_nSRDF/vol01
+  
+  
+------------------------remove the cluster resource --------------------------
+
+  485  /opt/VRTSvcs/bin/hasttaus
+  486  /opt/VRTSvcs/bin/hastatus -summ
+  487  hares -state qffxptqa7_I1
+  488  /opt/VRTSvcs/bin/hares -state qffxptqa7_I1
+  489  hagrp -resources qffqa7_sw
+  490  /opt/VRTSvcs/bin/hagrp -resources qffqa7_sw
+  491  /opt/VRTSvcs/bin/hares -disp qffxptqa7_I1
+  492  cp /etc/VRTSvcs/conf/config/main.cf /etc/VRTSvcs/conf/config/main.cf_bkp_20092016
+  493  /opt/VRTSvcs/bin/hares -delete qffxptqa7_I1
+  494  /opt/VRTSvcs/bin/haconf -makerw
+  495  /opt/VRTSvcs/bin/hares -delete qffxptqa7_I1
+  496  /opt/VRTSvcs/bin/haconf -makero
+  497  /opt/VRTSvcs/bin/haconf -dump -makero
+  498  /opt/VRTSvcs/bin/hastatus -summ
+
+  to fix the REMOTE_BUILD in cluster
+
+ 694  gabconfig -a
+  695  cat /etc/sysconfig/vxfen 
+  696  cat /etc/llthosts
+  697  cat /etc/VRTSvcs/conf/config/main.cf |wc -l
+  698  haconf -dump -makero
+  699  hastart
+  700  haconf -dump -makero
+  701  gabconfig -c -x
+  702  cat /etc/llthosts
+  703  tail -100 /var/VRTSvcs/log/engine_A.log 
+  704  cat /etc/redhat-release 
+
+  705  /opt/VRTSvcs/vxfen/bin/vxfenclearpre 
+  706  hastart
+  707  hasys -state
+  708  /opt/VRTSvcs/vxfen/bin/vxfenclearpre
+  709  passwd
+  710  sync;
+  711  reboot
+  
+
+-----------------------TPM --------------------------------------
+
+1. Check if the TCA package is installed properly
+Check the TCA Deamon(Unix) is running on the endpoint.
+Check if the TCA port socket is listening i.e. netstat ¡Vna|grep 9510
+
+Check TCA parameter, make sure file exist and correspond to your server 
+Unix - /var/tmp/citi_tcaregdata.xml
+
+/var/tmp/citi_tcaregdata.xml
+
+/opt/tivoli/ep/citi/citi_tcaregdata.xml
+
+2. Restart the TCA agent. Wait for about 20 minutes for server to report in TPM
+
+Certificate Reset 
+
+/opt/tivoli/ep/runtime/agent/bin/endpoint.sh stop
+/opt/tivoli/ep/citi/resetcerts
+/opt/tivoli/ep/citi/status
+
+
+NAM 	https://dca.nam.nsroot.net/maximo
+ 	 	 	 	 	 	
+ 	 	 	 	 	 	 	
+EMEA      https://dca.eur.nsroot.net/maximo 
+
+LATAM	https://dcalatpm.nam.nsroot.net/maximo	
+ 	 	 	 	
+
+
+ASPAC      https://dca.apac.nsroot.net/maximo 
+
+----------------------LDAP restart--------------------------
+ps -fe | grep -i ldap
+cat /etc/inittab | grep ldap
+/usr/sbin/start-secldapclntd
+
+solaris
+
+tail /var/tmp/slapd_startup.log
+/etc/rc3.d/S99zeusldap start
+/etc/rc3.d/S99zeusldap stop
+
+
+-------------------multipath  failed--------------------------
+
+Please run below and if the failed devices are only BCV devices, you can ignore.. BCVs are NR to host can show failed.
+
+We have emphasized this many times to your team and you keep sending these emails for BCVS. If the devices failed are not BCVS. You can request help from us.
+
+inq -et -nodots | grep BCV
+
+
+inq -et -nodots | grep BCV|awk '{print $1}'|awk -F"/" '{print $3}' > /tmp/test2
+
+for i in `cat /tmp/test2`; do inq -et -nodots | grep $i; done
+
+
+multipath -ll | grep -i failed | awk '{print $3}' > /tmp/test1
+
+for i in `cat /tmp/test1`; do inq -et -nodots | grep $i; done
+
+
+------------------------ power path issue -----------------------
+
+
+lspath | grep -i failed
+
+lspath -l hdisk**
+
+lsmpio
+
+lsmpio -Sdl hdisk2
+hi
+
+
+
+to delete the path 
+
+rmpath -d -l hdisk** -p fscsi**
+
+
+cfgmgr
+
+to enable 
+
+chpath -l hdisk** -p fscsi** -s enable
+
+or
+
+smitty mpio
+
+MPIO Path Management
+
+Enable Paths
+
+Enable Selected or All Paths
+
+
+All Paths
+
+
+Linux:
+vxdisk path|grep -v ENABLED
+vxdisk path|grep -v ENABLED | wc -l 
+vxdisk path| wc -l 
+vxdisk list emcpoweraz
+vxdmpadm getsubpaths dmpnodename=emcpoweraz
+lspci 
+vxdmpadm listenclosure
+vxdisk -e list
+vxdmpadm listctlr all
+vxdmpadm getctlr emcp
+vxddladm list hbas
+vxddladm list ports
+vxddladm list targets
+vxddladm list devices
+vxdisk path|grep -v ENABLED
+
+to enable===
+
+vxdisk list stor1_42
+c1t20140080E518D5C0d26s2 state=disabled type=primary
+
+vxdmpadm enable path=c1t20140080E518D5C0d26s2
+
+vxdisk list stor1_42
+
+To disable the disabled a HBA port 
+
+vxdisk list
+vxdmpadm listctlr all  <----list all dmp controllers.
+vxdmpadm disable ctlr=c5
+vxdmpadm listctlr all  
+vxdmpadm enable ctlr=c5
+
+cd /opt/HBAinfo/bin
+./gethbainfo
+
+or
+
+ more /sys/class/fc_host/host?/port_name
+
+
+---------to check the ETHERNET and Hypervisor -----------
+entstat -d ent2 | egrep -i "failed|fail|false"
+
+entstat -d ent2 | egrep "STATISTICS|Active|Backup"
+
+netstat -v | grep -i hyper
+
+ifconfig -a | grep HWaddr;ifconfig -a | grep HWaddr | grep -v bond0 | awk '{print $1}' | xargs -i ethtool {} |egrep "eth|Speed"
+
+ETHERNET STATISTICS (en4) :
+Active channel: backup adapter
+ETHERNET STATISTICS (ent0) :
+Backup adapter - ent2:
+ETHERNET STATISTICS (ent2) :
+
+lscfg -vp | grep -p Ethernet
+
+lsattr -El ent2
+
+entstat -d ent2 | grep -i flow
+
+to set 
+
+chdev -l ent2 -a min_buf_tiny=1024 -P
+chdev -l ent2 -a min_buf_small=2048 -P
+
+
+chdev -l ent0 -a min_buf_small=2048 -a max_buf_small=4096 -P
+chdev -l ent0 -a min_buf_medium=512 -a max_buf_medium=1024 -P
+chdev -l ent0 -a min_buf_large=128-a max_buf_large=256 -P
+
+
+
+0. Reset Root password
+1. Below Commands for ent0 and ent2
+
+chdev -l ent0 -a min_buf_small=2048 -a max_buf_small=4096 -P
+chdev -l ent0 -a min_buf_medium=512 -a max_buf_medium=1024 -P
+chdev -l ent0 -a min_buf_large=128-a max_buf_large=256 -P
+
+2. Reboot the server
+3. Perform Pre-Post Checkouts and release the server.
+
+
+bash-4.2# lsattr -El ent0 | egrep "min_buf_small|min_buf_medium|min_buf_large" 
+min_buf_large 128 Minimum Large Buffers True 
+min_buf_medium 512 Minimum Medium Buffers True 
+min_buf_small 2048 Minimum Small Buffers True 
+
+
+
+no -o use_isno
+ifconfig ent2
+
+chdev -l ent2 -a tcp_sendspace=262144
+chdev -l ent2 -a tcp_recvspace=262144
+chdev -l ent2 -a rfc1323=1
+
+
+nfs0 -F -a |egrep "threads|socketsize"
+
+
+for linux 
+
+
+cat /proc/net/bonding/bond0 
+ifconfig -a|grep bond|awk '{print $1}'|xargs -i cat /proc/net/bonding/{}
+head -10 /etc/modprobe.conf 
+cat /etc/sysconfig/network-scripts/ifcfg-bond0 
+cat /etc/sysconfig/network-scripts/ifcfg-eth1
+watch -n .1 cat /proc/net/bonding/bond0 
+head -10 /etc/modprobe.conf 
+head -20 /etc/modprobe.conf 
+
+its has to be mode=1 in below conf file if it not edit it and restart the network service 
+
+head -20 /etc/modprobe.conf 
+
+alias bond0 bonding
+options bond0 miimon=100 mode=1 downdelay=200 updelay=200
+
+
+service network restart 
+
+
+
+To IP plumb your device, you may run the command:
+
+ifconfig bond0:1 172.16.5.1
+
+
+ifconfig bond0 192.168.0.1 netmask 255.255.255.0
+ifconfig bond0:1 172.16.5.1 netmask 255.255.255.0
+
+To Assign a Netmask to Network Interface
+
+ifconfig eth0 netmask 255.255.255.224
+
+ifconfig eth0 172.16.25.125 netmask 255.255.255.224 broadcast 172.16.25.63
+
+ifconfig eth0 hw ether AA:BB:CC:DD:EE:FF
+
+
+
+for up
+
+[root@tecmint ~]# ifconfig eth0 up
+OR
+[root@tecmint ~]# ifup eth0
+
+for down
+
+[root@tecmint ~]# ifconfig eth0 down
+OR
+[root@tecmint ~]# ifdown eth0
+
+
+
+Method 2# IP plumb 
+
+cd /etc/sysconfig/network-scripts/
+
+ cp ifcfg-bond0:1 ifcfg-bond0:5
+ 
+ # cat ifcfg-bond0:1
+DEVICE=bond0:1
+IPADDR="169.179.33.122"
+NETMASK="255.255.255.0"
+ONBOOT=yes
+BOOTPROTO=none
+USERCTL=no
+BONDING_OPTS="miimon=100 mode=5 downdelay=200 updelay=2000"
+
+ Just update DEVICE and IPADDR then save the file.
+ 
+ # cat ifcfg-bond0:5
+DEVICE=bond0:5
+IPADDR="169.179.33.6"
+NETMASK="255.255.255.0"
+ONBOOT=yes
+BOOTPROTO=none
+USERCTL=no
+BONDING_OPTS="miimon=100 mode=5 downdelay=200 updelay=2000"
+
+after run this cmd 
+
+#ifup bond0:5
+
+
+
+
+
+-------------------------------miitool----------------------
+
+
+/proc/net/bonding/bond0
+
+mii-tool eth*
+
+-----------------vi edit---------------------
+
+vi abcd
+/se nu
+1,5sed 's/^/#/g'
+cat /opt/gmond/etc/gmond.conf_0208|sed 's/lib64/lib/g' >  /opt/gmond/etc/gmond.conf
+
+
+-----------------vi Edit file without opening it--------------------
+
+Syntax:
+
+vi -c 'COMMAND|wq' /path/of/file
+
+'%s/KEYWORD/NEW_KEYWORD/g'
+
+
+# vi -c "%s/example/trick/g|wq" /tmp/test
+
+----------------RSCD agent  installation using TPM-------------------------        
+
+CITI_RedHat_BMC_RSCD_8.3.2_Agent_3.0 
+
+
+https://catecollaboration.citigroup.net/domains/deveng/rlmcoe/Pages/RLM-Agent-installation.aspx
+
+
+-----------------SAN STACK trouble shoot----------------------
+
+root@corpai100c: /opt/SANinfo/bin/sanstack_verify -s
+INFO: Using updated SAN Stack configurations from CSBE website v2.1.8W
+INFO: Latest SAN Stack for AIX 6100 is AIX SAN Stack v7.2.
+INFO: It will be used as the baseline.
+INFO: Running HBAinfo...(this could take a while)
+ERROR: ECC Agent is not properly installed and/or has not been configured.
+ERROR: Installed SAN Stack does NOT match AIX SAN Stack v7.2, please remedy all errors.
+INFO: SAN Stack v7.2 Solution Guide: https://catecollaboration.citigroup.net/domains/platstor/gdse/products/services/SANStacks/CSBE-14062-SG.pdf
+INFO: End of Support Date: TBD
+# Rinfo: NS
+
+to fix install below package through TPM
+
+CITI_AIX_IHS.ecc.magent.rte_6.0.1.2
+and check Datacenter
+and then
+cd /opt/ecc/exec
+./citisetup
+	select datacenter
+	y
+	y
+	y
+then check status
+/opt/SANinfo/bin/sanstack_verify -V
+
+------------SFTP connectivity issue (broker issue ) -------------
+issue 1:
+
+service ssh-serverg3 status
+
+ls -l /tmp/ssh*
+
+mv /tmp/ssh-epssftpu /tmp/ssh-epssftpu_bkp
+
+ps -ef | grep -i broker
+
+kill -9 18199
+
+issue 2 :
+
+clueuat@clueswu2>sftp srpfutg1@mwoptapp1u
+ksh: sftp:  not found
+
+if the error through like that just 
+
+set path in their fid .profile for sftp
+sftp="/usr/local/bin/sftp"; export sftp
+
+
+----------------RPM issue -------------------------
+
+if we get rpm locked issue 
+
+
+cd /var/lib/rpm
+ls -ltr __db.0
+rm __db.0*
+
+
+rpm --rebuilddb
+
+# mkdir /var/lib/rpm/backup
+# cp -a /var/lib/rpm/__db* /var/lib/rpm/backup/
+# rm -f /var/lib/rpm/__db.[0-9][0-9]*
+# rpm --quiet -qa
+# rpm --rebuilddb
+# yum clean all
+
+
+and try now installation 
+
+----------------------TCPDUMP------------------
+
+tcpdump -v -i bond0 -w /tmp/capture1.pcap
+
+tcpdump -v -i bond0 -c 100000 -w /tmp/capture1.pcap
+tcpdump -ni eth1 -s0 -c 100000 -w /tmp/capture1.pcap
+
+
+--------------------Mointor thread set -----------------------
+
+/opt/IBM/ITM/config/K20_MON_DISK.cfg 
+
+----------------------CCP CMP link-------------------
+
+
+
+-----------------------thread dump ------------------------------
+
+cat /proc/36326/status
+
+cat /proc/process-id/status
+
+------------------TOP process --------------------------
+
+for i in `ls -1 /proc/ |grep -E ^[0-9]` ; do echo -n "$i " ; cat /proc/$i/smaps 2>/dev/null |grep Pss |awk '{SUM += $2} END {print SUM/1024 }' ; done |awk '{print $2 "Mb used by PID# " $1}' |sort -rn |grep -v ^0
+
+
+------------------passwd age --------------------------
+aix:
+lsuser -f root | grep -i expires
+tdsmprn
+
+
+To list LDAP user in Aix
+
+lsuser -R LDAP ALL
+
+
+lsuser -R LDAP ALL | grep 30100 | grep ":/home/" | grep -v "ora" | grep -v "was" | grep -v rvb | grep -v cts* 
+
+lsldap passwd -a| grep -i an14244
+
+
+lsldap passwd -a| grep -i "/home" | grep -v "ora" | grep -v "was" |wc -l
+
+
+lsldap passwd -a| grep -i "/home" > /tmp/opsasmwp51_ldap_list.txt
+
+lsldap -a passwd | egrep "uid:|uidNumber:|gidNumber:|homeDirectory:" | xargs -n8 | grep  "gidNumber: 30100" | grep "/home/"
+
+Linux
+getent passwd | grep 30100 | grep ":/home/" | grep -v "ora" | grep -v "was" | grep -v rvb | grep -v cts* 
+
+
+to change that non expires 
+just edit /etc/security/user, change "expires" value to 0 for root and save the file.
+or
+chuser expires=0 root
+
+
+cat authlog|grep "Session-Id: 695"|grep "Mar 13"
+
+To change the expiration date for the davis user account to 
+8 a.m., 1 May, 1995, type:
+chuser expires=0501080095 davis
+
+time formate 
+0312000018 ==> date 03,month 12 , time 0000 and year 18 
+
+
+or 
+
+ smit chuser
+
+
+Solaris
+
+passwd -s username
+
+passwd -S -a | awk '{print "Login:"$1 "\tLast Password Change:"$3 "\tInactivity(in days):"$7}'
+
+or
+
+logins -x -l <username>
+
+
+linux 
+
+chage -l  < username>
+
+passwd -S -a | awk '{print "Login:"$1 "\tLast Password Change:"$3 "\tInactivity(in days):"$7}'
+
+LK - password locked 
+NP - no password 
+PS - password set
+
+getent passwd | grep -v nologin | cut -d : -f 1 |  perl -ne 'chomp;system("passwd -S $_ | grep  locked")'
+
+For RHEL5
+
+for i in `cat /etc/passwd |cut -d: -f1`; do passwd -S $i; done
+
+
+For RHEL4
+
+for i in `cat /etc/passwd |cut -d: -f1`; do echo "$i `passwd -S $i`"; done
+
+
+
+For RHEL6.
+
+cat /etc/passwd | cut -d : -f 1 | awk '{ system("passwd -S " $0) }'
+
+passwd -S -a | grep LK | cut -d " " -f1
+
+passwd -S -a |awk '/LK/{print $1}'
+
+
+
+
+
+------------------ netstat-------------------------------------
+
+netstat -an | grep LISTEN | nawk '{$0=$1;gsub(".*\\.","");print}' | sort -un
+
+
+netstat -tulnp | egrep -i "7521|7522|7501|9301|7601"
+netstat -tunap | grep -i 23456
+ 
+netstat -tulpn | grep 46001 
+netstat -tulpn | grep -i 46001 
+netstat -an | grep -i 46001 
+netstat -an | grep -i 46002
+fuser 46002/tcp
+ps -ef | grep -i 19628
+fuser 46001/tcp
+ls -ltr /proc/19628/exe
+pwdx  19628
+ps aux | grep 19628
+ps -eo pid,user,group,args,etime,lstart | grep  19628
+grep --color -w -a USER /proc/19628/environ
+lsof -i :46001
+grep 46001  /etc/services
+ netstat -nlp | grep 46001
+netstat --tcp --programs
+netstat --tcp --programs | grep 46001
+lsof -t -itcp:46001
+
+-----------------------------------------------------------------
+
+
+
+Physical Drive SSD Gas Gauge Status Change: Slot 0 Port 2I Box 2 Bay 5.Status is now Unknown----------------
+
+
+hpssacli ctrl all show status
+
+hpssacli ctrl all show config detail
+
+hpacucli controller slot=0 physicaldrive all show
+hpacucli ctrl slot=0 pd all show status
+hpacucli ctrl slot=0 pd 1I:1:3 show detail
+
+hpssacli ctrl all show config | grep -i --color Failed
+
+hpssacli ctrl slot=0 show detail
+
+hpssacli ctrl slot=0 show detail | grep -i --color Status
+
+or
+
+hpssacli
+
+ ==> ctrl slot=0 show
+
+hpacucli ctrl all show config detail
+hpacucli ctrl all show status
+
+=> ctrl all show status
+=> ctrl all show
+=> ctrl all show config detail
+
+
+hpasmcli -s "show powersupply"
+
+to check mem
+
+ hpasmcli -s "SHOW DIMM" | grep Size | cut -d, -f2 | sort | uniq -c
+ 
+ hpasmcli -s "SHOW DIMM" | grep Size | cut -d, -f2 | sort | uniq -c | while read i j k l ; do tot=`expr $i \* $k / 1024`; echo "$tot GB";done
+ 
+ used DIMM slot count
+ 	dmidecode -t memory | grep -c -Po '^\tSize: (?!\No Module Installed$\)'
+
+free DIMM slot count
+	dmidecode -t memory | grep -c  -Po 'No Module Installed$'
+
+Total DIMM slot count
+	dmidecode -t memory | grep -c '^Memory Device$'
+
+Maximum Capacity memory
+	dmidecode |grep -i "Maximum Capacity:" | uniq
+
+Total Max Cap Mem , DIMM slot & used/free DIMM slot 
+	dmidecode | grep -A 8 'Memory' | egrep -i "Capacity|Devices|Size" | egrep -v "page|Range"|sort
+
+ 
+ to check the each physicaldrive serial number 
+ 
+ hpacucli
+ 
+ => ctrl all show config
+
+Smart Array P420i in Slot 0 (Embedded)    (sn: 5001438021153FC0)
+
+   array A (SAS, Unused Space: 0  MB)
+
+
+      logicaldrive 1 (558.7 GB, RAID 1+0, Interim Recovery Mode)
+
+      physicaldrive 1I:2:1 (port 1I:box 2:bay 1, SAS, 300 GB, Failed)
+      physicaldrive 1I:2:2 (port 1I:box 2:bay 2, SAS, 300 GB, Failed)
+      physicaldrive 1I:2:3 (port 1I:box 2:bay 3, SAS, 300 GB, OK)
+      physicaldrive 1I:2:4 (port 1I:box 2:bay 4, SAS, 300 GB, OK)
+
+   SEP (Vendor ID PMCSIERA, Model SRCv8x6G) 380 (WWID: 5001438021153FCF)
+
+=> ctrl slot=0 pd all show status
+
+   physicaldrive 1I:2:1 (port 1I:box 2:bay 1, 300 GB): Failed
+   physicaldrive 1I:2:2 (port 1I:box 2:bay 2, 300 GB): Failed
+   physicaldrive 1I:2:3 (port 1I:box 2:bay 3, 300 GB): OK
+   physicaldrive 1I:2:4 (port 1I:box 2:bay 4, 300 GB): OK
+
+=> ctrl slot=0 pd 1I:2:1 show detail
+
+Smart Array P420i in Slot 0 (Embedded)
+
+   array A
+
+      physicaldrive 1I:2:1
+         Port: 1I
+         Box: 2
+         Bay: 1
+         Status: Failed
+         Last Failure Reason: Mark bad failed
+         Drive Type: Data Drive
+         Interface Type: SAS
+         Size: 300 GB
+         Rotational Speed: 15000
+         Firmware Revision: HPD3
+         Serial Number: Z2K0A0C3FRP81251
+         Model: HP      EH0300FCBVC     
+         Maximum Temperature (C): 37
+         PHY Count: 2
+         PHY Transfer Rate: 6.0Gbps, Unknown
+         Drive Authentication Status: Not Applicable
+
+
+   
+ 
+-----------------------------------------------------------------
+
+Logical adapter Failed in linux
+
+ifconfig
+dmesg | grep eth
+ip link show
+ethtool eth0
+ethtool eth0 | grep Link 
+
+
+cat /sys/class/net/eth0/operstate
+cat /sys/class/net/eth0/carrier
+
+for i in `ifconfig | grep -i eth|awk '{print $1}'`; do mii-tool $i; done
+
+for i in `ifconfig | grep -i eth|awk '{print $1}'`; do mii-tool -v $i; done
+
+ethernet to blink on mother board (led blink)
+
+ethtool -p eth6
+
+---------------heartbeat-----------------------
+
+lltstat -n
+lltstat -nvv|head
+gabconfig -a
+
+netstat -I interface shows traffic
+lltstat -nvv | grep -i open
+
+------------------------adapter Defined ----------------------
+
+lsdev -Cc adapter
+
+any Defined state in adapter like below 
+
+fcs1   Defined   00-01 8Gb PCI Express Dual Port FC Adapter (df1000f114108a03)
+
+run below cmd 
+
+cfgmgr -vl fcs1
+
+----------------------root permission to others------------------------
+how to give root permission to others.
+
+# cd /etc/opt/SSHtectia 
+# cp -p ssh-server-config.xml ssh-server-config.xml.orig 
+# cp -p ssh-server-config-default.xml ssh-server-config.xml 
+# service ssh-server-g3 restart 
+
+reset root password to Welcome1 and provide it to Virtualization team
+
+---------------------home directory issue----------------------
+
+id fid
+
+#  id fid
+uid=123456789(fid) gid=300238(abinitio) groups=300238(abinitio)
+
+cat /etc/auto.home
+
+* /abinitio/home/
+
+
+cd /abinitio/home/
+
+mkdir fid
+
+
+# service autofs status
+automount dead but subsys locked
+
+ls -ltr /var/lock/subsys/autofs
+
+
+rm  /var/lock/subsys/autofs
+
+
+service autofs restart
+Starting automount:        [  OK  ]
+
+
+if its throws below 
+
+service autofs restart
+Starting automount: automount: program is already running.[ OK  ]
+
+# service autofs status
+automount dead but subsys locked
+
+R, Ranjulal [CCC-OT NE]
+here is the plan
+1) comment out auto.home in /etc/auto.master
+2) comment out all lines in /etc/auto.home
+3) reboot the box
+4) mv home home.old
+ln -s /abinitio/home /home
+
+and check the status 
+
+-----------------------------------------------------------------
+--> to check priority
+
+lspath -AE -l hdisk2 -p vscsi2 
+
+priority 2 Priority True
+
+
+lspath -F "name status parent" | grep vscsi | while read disk status parent; do priority=`lspath -AE -l $disk -p $parent | awk '{print $2}'`;  echo "chpath -l $disk -a priority=$priority -p $parent";  done
+
+
+lspath -F "name status parent"| while read disk status parent; do echo " $disk    $parent `lspath -AE -l $disk -p $parent`"; done
+
+
+--> to change priority
+
+chpath -l hdisk2 -a priority=1 -p vscsi3   
+
+priority 1 Priority True
+
+chpath -l hdisk0 -a priority=1 -p vscsi0;
+chpath -l hdisk1 -a priority=1 -p vscsi0;
+chpath -l hdisk2 -a priority=1 -p vscsi0;   
+
+
+lspath -F "name status parent" | grep vscsi | while read disk status parent; do echo "chpath -l $disk -a priority=1 -p $parent"; chpath -l $disk -a priority=1 -p $parent;  done
+
+
+--------------------------------------------------------
+
+multipathd show paths format "%w %i %t_%T" | sort
+
+------------------------------------------------------------
+
+
+The following command will display all files and folders sorted by MegaBytes.
+du --max-depth=1 | sort -n | awk 'BEGIN {OFMT = "%.0f"} {print $1/1024,"MB", $2}'
+
+du -sk * | awk '{sum += $1}END{print sum}'
+
+lsof | grep '(deleted)$' | sort -rnk 7
+
+quota -v
+quota -v $user | grep $filesystem | awk '{ print $2 }'
+
+du -h <dir> | grep '[0-9\.]\+G'
+
+to see which processes are using the open files in the /mount/nfs_partition directory and refresh every 2 seconds you would use:
+lsof -Nr 2 -- /mount/nfs_partition
+
+
+dubig() { [ -z "$1" ] && echo "usage: dubig sizethreshKB [duargs]" && return du $2 | awk '{ if ($1 > '$1') { print $0} }' }
+
+
+
+
+find /home -type f -size +500000k -exec ls -lh {} \; | awk '{ print $9 ": " $5 }'
+
+
+A way to check what files are hogging space would be to check their sizes: most unlinked files are only a few bytes. 
+
+for i in $( ls -la /proc/*/fd/* 2>/dev/null \ | grep deleted \ | sed -e 's/.*\(\/proc\S*\) -.*/\1/g' ); do wc -c $i | tr "\n" "="; readlink $i done | grep -v "^0 " | sort -rn
+
+-------------------remount cmd solaris--------------------------
+
+ mount -o remount,rw SHARED_41p/var_opt_oracle       /var/opt/oracle
+
+ 
+-------------------------RPM --------------------------------------
+
+To check file name which installed from package.
+
+rpm -ql RSCD89_CTO-1.0_A0-46568.x86_64
+
+/opt/RSCD89_CTO
+/opt/RSCD89_CTO/RSCD89-LIN64.sh
+/opt/RSCD89_CTO/exports_Linux_CTO
+/opt/RSCD89_CTO/rscd
+/opt/RSCD89_CTO/rscd.service
+/opt/RSCD89_CTO/users.local_Linux_CTO
+
+To check package name fron the file name.
+
+# rpm -qf /opt/RSCD89_CTO/users.local_Linux_CTO
+RSCD89_CTO-1.0_A0-46568.x86_64
+
+
+# yum whatprovides /opt/RSCD89_CTO/users.local_Linux_CTO
+2019Q1/filelists_db                                                                                                                                                     | 1.7 MB     00:00     
+soe6gdeproducts/filelists_db                                                                                                                                            | 174 kB     00:00     
+RSCD89_CTO-1.0_A0-46568.x86_64 : RSCD package
+Repo        : installed
+Matched from:
+Other       : Provides-match: /opt/RSCD89_CTO/users.local_Linux_CTO
+
+
+ 
+-------------------------ENV------------------------------------
+linux:
+rpm -qa|egrep -i '^(DEV|UAT|PROD|COB|IDENbuild|admin)-'|awk -F '-' '{ print $1 }'|egrep -i --color "DEV|UAT|PROD|COB|IDENbuild|admin"
+
+aix:
+
+lslpp -cl|grep -i "UNIX SOE"|awk -F ":" '{ print $2 }'|egrep -i  --color "DEV|UAT|PROD|COB|IDENbuild|admin"`
+
+solaris:
+
+pkginfo|egrep -i "UNIX SOE ID Package"|awk '{ print $2 }'|egrep -i "DEV|UAT|PROD|COB|IDENbuild|admin"
+
+-------------------------------------------
+
+for u in $( who | awk '{print $1;}' | sort -fu)
+do
+echo $u
+done
+
+-----------------------------------------------
+
+df -h | grep -v '^Filesystem|tmpfs|cdrom' | awk '{ print $5 " " $1 }'
+
+
+#!/bin/sh
+df -h | grep -v '^Filesystem|tmpfs|cdrom' | awk '{ print $5 " " $1 }' | while read output;
+do
+  echo $output
+  usep=$(echo $output | awk '{ print $1}' | cut -d'%' -f1  )
+  partition=$(echo $output | awk '{ print $2 }' )
+  if [ $usep -ge 90 ]; then
+    echo "Running out of space \"$partition ($usep%)\" on $(hostname) as on $(date)" |
+     mail -s "Alert: Almost out of disk space $usep%" you@somewhere.com
+  fi
+done
+
+---------------------------------------------
+
+& sleep 5 ; kill $!
+
+
+
+truss -o /tmp/output.txt  df -h && sleep 2 ; kill $!
+
+
+truss -o /tmp/output.txt  df -h & sleep 2 ; kill $!
+
+
+cat /tmp/output.txt | grep -i sleeping |sed 's/(/ /g' |tr -d '",'| awk   '{print $2}'
+
+
+-----------------------------------------------
+
+Bold off	color	Bold on	color
+0;30	Balck	1;30	Dark Gray
+0;31	Red	1;31	Dark Red
+0;32	Green	1;32	Dark Green
+0;33	Brown	1;33	Yellow
+0;34	Blue	1;34	Dark Blue
+0;35	Magenta	1;35	Dark Magenta
+0;36	Cyan	1;30	Dark Cyan
+0;37	Light Gray	1;30	White
+
+
+ANSI CODE	Meaning
+0	Normal Characters
+1	Bold Characters
+4	Underlined Characters
+5	Blinking Characters
+7	Reverse video Characters
+
+
+printf "\033[1;31mThis is red text\033[0m\n"
+
+echo -e "file system is stale on \033[5;31m $STATUS " "\033[0m"
+
+
+cat mylog | sed ''/START/s//`printf "\033[32mSTART\033[0m"`/''
+
+
+
+[Prod root @ gminfra2p  ~]
+# function sgrep { sed ''/$1/s//`printf "\033[32m$1\033[0m"`/'' $2 ; }
+[Prod root @ gminfra2p  ~]
+# sgrep down  /tmp/test
+
+
+
+esc=$(printf '\033')
+echo "test" | sed "s,.*,${esc}[31m&${esc}[0m,"
+
+# cat >  /tmp/test.sh
+#!/bin/sh
+echo "Word: "
+read word
+echo  "CMD: "
+read CMD
+echo "-----------------------------"
+$CMD | sed ''/$word/s//`printf "\033[5;32m$word\033[0m"`/''
+
+
+
+
+-----------------------------------------------------------
+
+strace -o /tmp/out.txt df -h
+
+cat  /tmp/out.txt | grep statfs | awk '{print $1}'|sed -e 's/statfs(//g'|tr -d '",'|wc -l
+
+
+
+----------------------------------------------------------------
+
+troubleshoot powermt display issue
+
+root@corpdb106p.nam.nsroot.net RC=0 # powermt display
+Symmetrix logical device count=32
+Hitachi logical device count=47
+==============================================================================
+----- Host Bus Adapters ---------  ------ I/O Paths -----  ------ Stats ------
+###  HW Path                       Summary   Total   Dead  IO/Sec Q-IOs Errors
+==============================================================================
+   0 fscsi0                        optimal     158      0       -     0      0
+   1 fscsi1                        optimal     158      0       -     0      0
+   2 fscsi2                        optimal      64      0       -     0      0
+   3 fscsi3                        optimal     158      0       -     0      0
+
+
+
+powermt display paths
+cfgmgr
+powermt config
+powermt display 
+
+root@corpdb106p.nam.nsroot.net RC=0 # powermt display
+Symmetrix logical device count=32
+Hitachi logical device count=47
+==============================================================================
+----- Host Bus Adapters ---------  ------ I/O Paths -----  ------ Stats ------
+###  HW Path                       Summary   Total   Dead  IO/Sec Q-IOs Errors
+==============================================================================
+   0 fscsi0                        optimal     158      0       -     0      0
+   1 fscsi1                        optimal     158      0       -     0      0
+   2 fscsi2                        optimal     158      0       -     0      0
+   3 fscsi3                        optimal     158      0       -     0      0
+
+
+------------Display Sockets Summary Linux----------------------------------
+ss -s 
+Display All Open Network Ports
+ss -l
+Type the following to see process named using open socket:
+# ss -pl
+Display All TCP Sockets
+# ss -t -a
+Display All UDP Sockets
+# ss -u -a
+Display All RAW Sockets
+# ss -w -a 
+Display All UNIX Sockets
+# ss -x -a 
+
+
+
+Display All Established SMTP Connections
+
+
+# ss -o state established '( dport = :smtp or sport = :smtp )'
+
+Display All Established HTTP Connections
+
+
+# ss -o state established '( dport = :http or sport = :http )'
+
+Find All Local Processes Connected To X Server
+
+
+# ss -x src /tmp/.X11-unix/*
+
+List All The Tcp Sockets in State FIN-WAIT-1
+
+List all the TCP sockets in state -FIN-WAIT-1 for our httpd to network 202.54.1/24 and look at their timers:
+
+# ss -o state fin-wait-1 '( sport = :http or sport = :https )' dst 202.54.1/24
+
+
+How Do I Filter Sockets Using TCP States?
+
+The syntax is as follows:
+
+
+## tcp ipv4 ##
+ss -4 state FILTER-NAME-HERE
+ 
+## tcp ipv6 ##
+ss -6 state FILTER-NAME-HERE
+ 
+
+Where FILTER-NAME-HERE can be any one of the following,
+1.established
+2.syn-sent
+3.syn-recv
+4.fin-wait-1
+5.fin-wait-2 
+6.time-wait 
+7.closed
+8.close-wait
+9.last-ack
+10.listen
+11.closing
+12.all : All of the above states
+13.connected : All the states except for listen and closed
+14.synchronized : All the connected states except for syn-sent
+15.bucket : Show states, which are maintained as minisockets, i.e. time-wait and syn-recv.
+16.big : Opposite to bucket state.
+
+
+to reduce time_wait
+
+echo 1 > /proc/sys/net/ipv4/tcp_tw_recycle
+
+normaly it has to be 0 
+
+cat /proc/sys/net/ipv4/tcp_tw_recycle
+0
+
+change need for that to set permently
+
+to set permently
+
+sysctl -a | grep -i recyc
+
+net.ipv4.tcp_tw_recycle = 0   it has to be change 1 like this 
+
+net.ipv4.tcp_tw_recycle = 1 
+
+for that add entry in /etc/sysctl.conf file and run the sysctl -p 
+
+
+--------geting warning error in sftp/ssh connectivity -----------
+
+to check old host key 
+
+$ /opt/SSHtectia/bin/ssh-keygen-g3 -H -F <IP>
+
+or go to home dir of the user 
+
+getent passwd FID
+
+# getent passwd mdss
+mdss:x:32014:103:MDSS group home:/opt/mds/mdss:/bin/bash
+
+then 
+
+/opt/mds/mdss/.ssh2/hostkeys
+
+ls -ltr 
+
+ls -ltgr *destination hostname*
+
+or
+
+grep destination hostname keys_*
+
+and then 
+
+[Prod root @ mdsnjlmu1-fn /opt/mds/mdss/.ssh2/hostkeys]
+#  grep -i eersprod keys_*
+keys_4fef0b121c0a2563b87ecfdf7d4985788030bf8d:Subject: eersprod.nam.nsroot.net
+[Prod root @ mdsnjlmu1-fn /opt/mds/mdss/.ssh2/hostkeys]
+# ls -ltr keys_4fef0b121c0a2563b87ecfdf7d4985788030bf8d
+-rw------- 1 mdss mdsss 1203 Oct  8  2012 keys_4fef0b121c0a2563b87ecfdf7d4985788030bf8d
+[Prod root @ mdsnjlmu1-fn /opt/mds/mdss/.ssh2/hostkeys]
+# mv keys_4fef0b121c0a2563b87ecfdf7d4985788030bf8d old_bkp
+
+and try the connectivity now 
+
+if you get below error.
+
+client server #su - Soruce FID
+bash-4.1$ sftp FID@D-server 
+Error: Could not connect to broker: Connect failed: No such file or directory (2) / Failed to connect to broker socket `/tmp/ssh-fxcpapp/ssh-broker'. / Broker initialization failed: /etc/ssh2/ssh-broker-config.xml:31: XML error: Invalid attribute name first character. / XML parse error 2. / Configuration file did not match the DTD. / Failed to read global configuration file: /etc/ssh2/ssh-broker-config.xml / Failed to start on-demand Broker. 
+
+Then copy the /etc/ssh2/ssh-broker-config.xml file from the working server into this source server.
+
+and try the connectivity now 
+
+
+
+
+---------------------------------------------------------
+
+to check ur cmd error code 
+
+echo $?
+
+
+-------------Ethernet network speed change----------------
+
+# ethtool -s eth0 speed 100 duplex full
+# ethtool -s eth0 speed 10 duplex half
+vi /etc/sysconfig/network-scripts/ifcfg-eth0
+ETHTOOL_OPTS="speed 1000 duplex full autoneg off"
+# /etc/init.d/network restart
+ETHTOOL_OPTS="speed 1000 duplex full autoneg on"
+
+for permanent change check below notepad in DOC folder
+
+ethernet_network_speed_permanent_change
+
+
+
+-----------------------TOKEN----------------------------------------
+
+You can find it on icgadmineur1u in /var/tmp/mm73433/ directory.
+
+Help:
+[UAT root @ icgadmeur1u /var/tmp/mm73433]
+# s  -h
+usage: waisgenerator.py [-h] SOEID hostname ticket
+
+positional arguments:
+  SOEID       Your SOEID
+  hostname    Host you want to login to
+  ticket      Ticket number, only INCs supported for now
+
+optional arguments:
+  -h, --help  show this help message and exit
+
+Example usage:
+./waisgenerator.py mm73433 CAIAPP42P-NODE1 INC0029362688
+Password: your SSO password ( it is not showing while writing so don’t worry )
+2451AB2454
+
+Don’t worry about:
+/usr/lib/python2.6/site-packages/urllib3/connectionpool.py:769: InsecureRequestWarning: Unverified HTTPS request is being made. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.org/en/latest/security.html
+  InsecureRequestWarning) 
+It’s same worning as in browser while opening WAIS page.
+
+-------------- Disk in maintenance found in SVM on -----------------
+
+  495  metastat -c
+  496  metastat
+  497  df -h
+  498  metastat 
+  499  metastat -c
+  500  date
+  501  metastat -p 
+  502  iostat -En
+  503  metastat -c
+  504  iostat -En
+  505  metastat -c
+  506  eeprom | grep boot
+  507  echo | format
+  508  metadettach d1 d21
+  509  metadb -i
+  510  metadetach d1 d21
+  511  metadetach d0 d20
+  512  metastat -c
+  513  metastat -c
+  514  metastat -c
+  515  metadb -i
+
+  metasync d1
+  metasync d0
+  
+  metadb -i
+----------------to find UUid in linux on powerpath---------------------
+
+  /opt/SANinfo/bin/inq -et -nodots -sym_wwn
+  scsi_id --whitelist --device=/dev/emcpowerr
+  
+  
+  find /dev/disk/by-uuid -type l -exec sh -c 'basename $(readlink {}); basename {}; echo' \;
+  or
+  
+
+
+  -----------------------------------------------------------------------
+  
+  rpm -ivh sharutils-4.6.1-2.i386.rpm
+  
+  
+  --------------------extend logical volume in AIX-------------------------------------
+  
+  0516-787 extendlv: Maximum allocation for logical volume sybtempdb
+        is 1500.
+	lslv sybtempdb | grep -i lp
+	
+MAX LPs:            1500                  PP SIZE:        128 megabyte(s)
+LPs:                1320                   PPs:            1320
+
+  
+  chlv -x 2200 sybtempdb
+  
+  
+  	lslv sybtempdb | grep -i lp
+	
+MAX LPs:            2200                  PP SIZE:        128 megabyte(s)
+LPs:                1320                   PPs:            1320
+
+
+-------------------extend logical volume in AIX cluster------------------------
+
+
+/usr/es/sbin/cluster/sbin/cl_extendvg -cspoc -n'fdcgtsmfaad01u,fdcgtsmfaad02u' -R'fdcgtsmfaad01u' mfaGBT4datavg hdiskpower836
+
+
+
+----------------------------solaris NIC status----------------------------
+
+dladm show-link;
+kstat -p :::link_up;
+dladm show-dev;
+
+netstat -nr
+more /etc/hostname.vnet0 
+
+fmadm faulty
+
+How to Identify Which CPUs Are Offline
+Display information about the CPUs.
+% /usr/sbin/psrinfo 
+
+
+
+prtdiag -v == > CPUs,mem,io,h/w etc..
+
+# cat >  /tmp/test.sh
+#!/bin/sh
+echo "Word: "
+read word
+echo  "CMD: "
+read CMD
+echo "-----------------------------"
+$CMD | sed ''/$word/s//`printf "\033[5;32m$word\033[0m"`/''
+
+
+--------------------Linux NIC status----------------
+
+
+  501  hplog -v
+  502  dmidecode | egrep -i "PCI|Available|in use"
+  503  dmidecode | grep -i "NIC"
+  504  ip link show 
+  505  dmidecode --type 8 
+  506  lspci | grep -i ethernet
+  507  ip link show up | grep eth0
+  508  ip link show up 
+  509  dmidecode -t slot  
+
+
+
+-------------------current values for RefuseLA and QueueLA---------------------------
+
+cat /etc/mail/sendmail.cf | egrep "RefuseLA|QueueLA"
+
+
+-------------------mail issue------------------------------------
+
+pkill df
+
+pkill lsof
+
+ps aux | grep D
+
+ps aux | awk '$8 ~ /D/'
+
+ !echo
+echo " hi hellooooo" | mailx -v -s " swdcialisbat1u_test" janarthanan.chidhambaram@iuo.citi.com
+
+
+echo " hi hellooooo" | mailx -v -s "'uname -n`_test" janarthanan.chidhambaram@iuo.citi.com
+
+----------------------Manitance - solaris---------------------------------------------
+
+
+svcs -l  svc:/network/ftp:default
+
+svcs -a |grep -i ftp
+
+svcs -a|grep -i inetd
+
+
+svcadm enable ftp
+
+inetadm | grep ftp
+
+inetadm -e ftp #enable
+inetadm -d ftp #disable[/bash]
+
+
+
+svcs -p svc:/system/system-log:rsyslog
+
+to check the log 
+
+svcs -l svc:/system/system-log:rsyslog
+
+svcs -p svc:/system/system-log:rsyslog
+pfexec svcadm clear rsyslog
+svcs -xv rsyslog
+tail /var/svc/log/system-system-log:rsyslog.log
+cat /var/run/syslog.pid
+rm /var/run/syslog.pid
+pfexec svcadm clear rsyslog
+svcs -xv rsyslog
+svcs -p svc:/system/system-log:rsyslog
+
+
+------------------------FTP connectivity------------------------
+
+ftp <machinename> 
+
+machinename FTP server ready.
+Name (machinename:root): <username> 
+331 Password required for <username>.
+Password:
+
+ftp>
+
+cat /etc/services | grep ftp
+netstat -antlp | grep ftp
+nmap localhost or IPADDRESS
+
+
+You only need to add the following line to your /etc/ssh/sshd_config file:
+Subsystem sftp /usr/libexec/openssh/sftp-server
+
+
+or 
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+
+
+-----------Hitachi luns under powerpath -------------
+
+To take the Hitachi luns under powerpath control: 
+
+/etc/powermt set policy=ad dev=all class=hitachi 
+
+/etc/powermt manage class=hitachi 
+
+/etc/powermt unmanage class=symm (optional – if SA don’t want to remove EMC devices) 
+
+/etc/powermt config 
+
+/etc/powermt save reboot
+
+
+--------------------------------------------------------
+
+Yum provides function is used to find which package a specific file belongs to. For example, 
+if you would like to know the name of the package that has the /etc/httpd/conf/httpd.conf.
+
+# yum provides /etc/httpd/conf/httpd.conf
+
+--------------------physical slot--------------------------------------
+
+dmidecode -t 9 | grep -E "DMI type"\|Usage\|Type
+-----------------------oracle ASM disk-------------------------------
+multipath
+su - oracle -c "/optware/oracle/11.2.0.4/db_1/bin/kfod disks=all status=true asm_diskstring='/dev/asmdisk/*'"
+
+su - oracle -c "/optware/oracle/11.2.0.4/db_1/bin/kfod disks=all status=true asm_diskstring='/dev/asmdisk/*'"  | grep -i candidate
+
+powerpath
+su - oracle -c "/optware/oracle/11.2.0.4/db/bin/kfod disks=all status=true asm_diskstring='/dev/'"  | grep -i candidate
+
+
+su - oracle -c "kfod disks=all status=true asm_diskstring='/dev/emcpower*'" 2>&1 | egrep -v "ORA|Error|Additional"
+
+
+su - oracle -c "/optware/oracle/11.2.0.4/db/bin/kfod disks=all status=true"
+su - oracle 
+sqlplus / as sysdba
+sql > select path,os_mb/1024,header_Status from v$asm_Disk where header_Status!='MEMBER';
+
+
+for i in `ls /dev/mapper/mpath*`; do printf "%s %s\n" "$i" "$(udevadm info --query=all --name=$i | grep -i dm_uuid)"; done
+
+to check the quorum disk state
+
+/optware/grid/11.2.0.4/bin/crsctl query css votedisk 
+
+
+SQL> select name , open_mode , database_role from v$database;
+
+NAME OPEN_MODE DATABASE_ROLE
+--------- -------------------- ----------------
+GSRP2 READ ONLY WITH APPLY PHYSICAL STANDBY
+
+SQL> SELECT THREAD#, LOW_SEQUENCE#, HIGH_SEQUENCE# FROM V$ARCHIVE_GAP;
+
+
+
+
+----------------------glibc issue------------------------------------------
+
+rpm -e --justdb glibc-devel-2.5-123.el5_11.1.i386 glibc-headers-2.5-123.el5_11.1.x86_64 glibc-devel-2.5-123.el5_11.1.x86_64 --nodeps
+
+
+
+144     ipmpstat -pn
+145     netstat -nr
+146     ls -ltr /etc/hostname*
+147     more /etc/hostname.vnet1
+148     uptime
+149     snoop -d vnet1
+150     netstat -nr
+151     ifconfig -a
+
+error like this when uninstall use --noscripts option 
+
+error: %preun(was7002564-7.0.0.25_64-x86_64.x86_64) scriptlet failed, exit status 1 
+
+rpm -e was7003164-7.0.0.31_64-x86_64.x86_64 --noscripts
+
+
+capturing snoop output running the following on global zone cdastxu15
+
+# snoop -o /var/tmp/SNOOP/cdasswq41z1snoop.out -qr 165.203.9.68 144.215.114.102 port 7916 
+
+After enough info is captured, CRTL+C to end snoop.
+
+
+------------------------------------Linux san stack ---------------------------
+
+Yes you can do this , however , you will need to exclude the controllers that are connected to EMC storage from DMP control .
+
+Add the controller in the file /etc/vx/vxdmp.exclude 
+
+then make sure it is excluded by running #vxdmpadm listexclude
+
+then rerun vxdctl enable
+
+--------------------------------------passwd--------------------------
+
+echo -e "abc@123\nabc@123" | passwd --stdin root ; yum update SSHtectia\*
+
+--------------------------alert disable-----------------------------
+
+# mkdir /var/adm/errorFilter 
+# cd /var/adm/errorFilter
+# vi errorFilter (Add the following entry)
+ 
+= DC73C03A:
+Report = False
+Log = False
+ 
+# errupdate errorFilter
+# mv errorFilter.undo errorFilter.`date "+%Y%m%d%H%M"`.undo
+
+-------------------------------to remove partition -----------------
+
+[Prod root @ ctoglrsswdbpn1 /dev/mapper]
+# fdisk mpathba
+
+WARNING: DOS-compatible mode is deprecated. It's strongly recommended to
+         switch off the mode (command 'c') and change display units to
+         sectors (command 'u').
+
+Command (m for help): d
+Selected partition 1
+
+Command (m for help): w
+The partition table has been altered!
+
+Calling ioctl() to re-read partition table.
+
+WARNING: Re-reading the partition table failed with error 22: Invalid argument.
+The kernel still uses the old table. The new table will be used at
+the next reboot or after you run partprobe(8) or kpartx(8)
+Syncing disks.
+
+# vi /tmp/part-list
+mpathbf
+mpathau
+mpathbl
+mpathba
+mpathbu
+mpathbj
+
+
+[Prod root @ ctoglrsswdbpn1 /dev/mapper]
+# for i in `cat /tmp/part-list`
+> do
+> echo "d
+> w
+> "|fdisk $i;done 
+
+
+[Prod root @ ctoglrsswdbpn1 /dev/mapper]
+# ls -ltr /dev/mapper/mpathbg*
+lrwxrwxrwx 1 root root 8 Jul 19 18:33 /dev/mapper/mpathbgp1 -> ../dm-78
+lrwxrwxrwx 1 root root 8 Jul 19 19:24 /dev/mapper/mpathbg -> ../dm-75
+[Prod root @ ctoglrsswdbpn1 /dev/mapper]
+# partprobe mpathbg
+[Prod root @ ctoglrsswdbpn1 /dev/mapper]
+# ls -ltr /dev/mapper/mpathbg*
+lrwxrwxrwx 1 root root 8 Jul 19 19:25 /dev/mapper/mpathbg -> ../dm-75
+
+
+
+[Prod root @ ctoglrsswdbpn1 /dev/mapper]
+# for i in `cat /tmp/disk-list`
+> do
+> partprobe $i
+> done
+
+
+
+powermt display dev=hdiskpower404
+
+
+-------------------------------------------------
+
+/net/ccua/export/scripts/ca02038/compare_after_reboot_on_this_server.sh | grep -i now| awk 'NF > 0'| awk '{print $4":"$5 " " $6}'| grep -v not|while read i
+> do
+> mount -o nosuid $i
+> done
+
+-----------------------enable  print queue----------------------
+
+
+check (lpstat –W )and enable the print queues if you see these kind of requests  going forward(#enable  print queue name , ex: # enable HP_DEPASS_05))
+
+----------------------------SAR enable in crontab----------------------------------
+
+# Collect measurements at 10-minute intervals
+0,10,20,30,40,50   * * * *   /usr/lib/sa/sa1
+# Create daily reports and purge old files
+0                  0 * * *   /usr/lib/sa/sa2 -A
+
+---------------------------------crontab -e ---------------------------
+crontab -e
+is not through only some 4 or 5 digit number run below one and check crontab -e
+
+setenv EDITOR vi
+
+or
+
+export EDITOR=vi
+
+
+--------------------------to set reserved space is user unusable space --------------------------------------------
+
+Check the reserved block percentage of an Ext2/3/4 filesystem
+
+dumpe2fs -h /dev/sda1 2> /dev/null | awk -F ':' '{ if($1 == "Reserved block count") { rescnt=$2 } } { if($1 == "Block count") { blkcnt=$2 } } END { print "Reserved blocks: "(rescnt/blkcnt)*100"%" }'
+
+tune2fs -l /dev/sda1 2> /dev/null | awk -F ':' '{ if($1 == "Reserved block count") { rescnt=$2 } } { if($1 == "Block count") { blkcnt=$2 } } END { print "Reserved blocks: "(rescnt/blkcnt)*100"%" }'
+
+
+
+
+/dev/mapper/ora--icgrecon06u--vg-oradata
+                       3271494 3039388     65946  98% /oradata
+
+
+# tune2fs -m 2 /dev/mapper/ora--icgrecon06u--vg-oradata
+tune2fs 1.41.12 (17-May-2010)
+Setting reserved blocks percentage to 2% (17017733 blocks)
+[UAT root @ icgrecon06u ~]
+# df -h /oradata
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/ora--icgrecon06u--vg-oradata
+                      3.2T  2.9T  162G  95% /oradata
+
+					  
+# tune2fs -m 0.5 /dev/mapper/ora--icgrecon06u--vg-oradata
+tune2fs 1.41.12 (17-May-2010)
+Setting reserved blocks percentage to 0.5% (4254433 blocks)
+[UAT root @ icgrecon06u ~]
+# df -h /oradata
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/ora--icgrecon06u--vg-oradata
+                      3.2T  2.9T  211G  94% /oradata
+
+------------------------PV clear ----------------------------------
+
+chdev -l hdisk2 -a pv=clear
+
+-------------------------- OS bit for AIX ---------------------------
+
+getconf KERNEL_BITMODE
+getconf HARDWARE_BITMODE
+bootinfo -y
+bootinfo -K
+ls -l /unix
+/usr/sbin/prtconf -c
+/usr/sbin/prtconf -k
+------------------------syslog issue -----------------------------
+
+To fix the syslog issue please run:
+symlink ln -s /bin/logger /usr/bin/logger
+
+
+AIX
+
+/etc/syslog.conf	Controls the output of syslogd.
+/etc/syslog.pid	Contains the process ID.
+
+lssrc -a | grep -i sysl
+stopsrc -s syslogd
+chssys -s syslogd -a ""
+or
+startsrc -s syslogd -a "-d"
+startsrc -s syslogd
+
+-----------------date time of file and folder -----------
+
+du -ha --time /home/
+
+total size 
+
+du -ch /home/
+
+which used for 
+
+apropos " disk"
+
+apropos "list directory"
+dir                  (1)  - list directory contents
+ls                   (1)  - list directory contents
+ls                   (1p)  - list directory contents
+vdir                 (1)  - list directory contents
+
+
+export HISTTIMEFORMAT="%d/%m/%y %T "
+source ~/.bashrc
+
+asb:iopf
+
+ powermt set dev=all mode=active force
+ powermt set mode=active hba=0 force;
+ powermt set mode=active hba=1 force;
+ powermt set mode=active hba=2 force;
+root@erpsteap120u: powermt set mode=active hba=3 force;
+root@erpsteap120u: powermt display dev=all | grep -i ASB
+
+
+
+---------------Total file and folders count -----------------------
+
+
+ls -l |perl -e 'while(<>){$h{substr($_,0,1)}+=1;} END {foreach(keys %h){print "$_ $h{$_}\n";}}'
+
+find . -type d | wc -l
+
+find . -type f | wc -l
+
+find . -type f -ls | wc -l
+
+find .//. ! -name . -print | grep -c //
+
+
+for i in `ls -1`; do echo $i : `ls -1 $i|wc -l`; done
+
+for D in *; do echo $D; find $D -type f| wc -l; done
+
+ls -alR | grep -c ^-
+
+find . -type f ! -name ".??*" | wc -l
+find . -type f ! -name ".*" | wc -l
+
+
+
+
+find . -type f -exec wc -l {} \; | awk '{total += $1} END{print total}'
+
+
+to find the others not have execute permission-------
+
+find /imgdoc/imgdcp/imgprod -type d ! -perm /o=x -ls;
+
+to find  the others not have execute permission and set execute permission ------
+
+find /imgdoc/imgdcp/imgprod -type d ! -perm /o=x -exec chmod o+x -ls {} \;
+
+--------------------FS permission -ro / rw-------------------
+
+grep "\sro[\s,]" /proc/mounts 
+
+awk '$4~/(^|,)ro($|,)/' /proc/mounts
+
+grep ' ro ' /proc/mounts
+In some instances you may want to skip any remote mounts which may be RO by design
+
+grep ' ro ' /proc/mounts | grep -v ':'
+You also may want to skip things that are mounted via automount
+
+grep ' ro ' /proc/mounts | egrep -v 'automount|autofs'
+
+cat /proc/mounts|sort|awk '{print $1 "\011" toupper(substr($4,0,2))}'
+
+-------------------------------AIX--------------------------------------
+amepat
+
+Displaying top CPU_consuming processes:
+#ps aux | head -1; ps aux | sort -rn +2 | head -10
+
+Displaying top 10 memory-consuming processes:
+#ps aux | head -1; ps aux | sort -rn +3 | head -10
+
+Displaying process in order of being penalized:
+#ps -eakl | head -1; ps -eakl | sort -rn +5
+
+Displaying process in order of priority:
+#ps -eakl | sort -n +6 | head
+
+Displaying process in order of nice value
+#ps -eakl | sort -n +7
+
+Displaying the process in order of time
+#ps vx | head -1;ps vx | grep -v PID | sort -rn +3 | head -10
+
+Displaying the process in order of real memory use
+#ps vx | head -1; ps vx | grep -v PID | sort -rn +6 | head -10
+
+Displaying the process in order of I/O
+#ps vx | head -1; ps vx | grep -v PID | sort -rn +4 | head -10
+
+Displaying WLM classes
+#ps -a -o pid, user, class, pcpu, pmem, args
+
+Determinimg process ID of wait processes:
+#ps vg | head -1; ps vg | grep -w wait
+
+Wait process bound to CPU
+#ps -mo THREAD -p <PID>
+
+Cpu usage with priority levels
+#topas -P
+
+-----------------------------------------------------------------
+
+
+logicaldrive 2 (6.5 TB, RAID 5, Failed)
+
+
+ mount | grep ace
+  488 touch a
+  489 fuser -vm /ace
+  490 cd
+  491 fuser -vm /ace
+  492 umount /ace
+  493 hpssacli ctrl slot=0 ld 2 modify reenable
+  494 hpssacli ctrl all show config
+  495 mount -a
+  496 df -h
+  497 cd /ace
+
+  
+-----------------------------migratelp ----------------------------------------
+copy the script 
+migratelp.pl
+
+If we wanted to free up 1 PP's per hdisk in the testvg volume group we would run the script like this:
+
+# ./vgbalance.pl testvg 1  
+
+If we wanted to free up 3 PP's per hdisk in the testvg volume group we would run the script like this:
+
+# ./vgbalance.pl testvg 3  
+
+-------------------------Run Level Commands:------------------------
+Shutdown:
+	init 0
+	shutdown -h now
+		-a: Use file /etc/shutdown.allow
+		-c: Cancel scheduled shutdown.
+halt -p
+	-p: Turn power off after shutdown.
+poweroff
+
+Reboot:
+	init 6
+	shutdown -r now
+	reboot
+Enter single user mode:
+	init 1
+Check current runlevel: runlevel
+-------------------Dead / Zombie process------------------------
+
+ps aux | awk '$8 ~ /D/'
+
+ps aux | awk '$8 ~ /D/ { print $0 }'
+
+ps axo stat,ppid,pid,comm | grep -w defunct
+
+ps aux | awk '"[Zz]" ~ $8 { printf("%s, PID = %d\n", $8, $2); }'
+
+# ps aux | awk {'print $0'}|grep -c Z
+
+# ps aux | awk '{ print $8 " " $2 }' | grep -wc Z
+
+# ps aux | awk {'print $8'}|grep Z|wc -l
+
+
+ps aux | awk '{ print $8 " " $2 }' | grep -w Z
+
+pstree -paul 1885
+
+ ps axo stat,ppid,pid,comm | grep -w defunct
+
+
+to kill zombies 
+
+ ps -ef | grep defunct | grep -v grep | cut -b8-20 | xargs kill -9
+ 
+ kill -HUP $(ps -A -ostat,ppid | grep -e '[zZ]'| awk '{ print $2 }')
+
+to kill the parent process zombies process
+
+parents_of_dead_kids=$(ps -ef | grep [d]efunct | awk '{print $3}' | sort | uniq | egrep -v '^1$'); echo "$parents_of_dead_kids" | xargs kill
+
+
+dead & zombies in Aix
+
+ps -efk | grep -i defunct
+
+ps -el | grep 'Z'
+
+ps -eo stat,pid | egrep "^Z" | wc -l
+
+
+
+---------------------Change the prompt-----------------------
+
+if [ "$LOGNAME" = "root" ]
+then
+PS1="UAT root @  `uname -n` # " ; export PS1
+else
+PS1="$LOGNAME @ `uname -n` # " ; export PS1
+fi
+
+
+UAT root @  istgfsswddbu01
+
+
+if [ "$LOGNAME" = "root" ]
+then
+PS1='ROOT@`uname -n`: $PWD # '; export PS1
+else
+PS1='$LOGNAME@`uname -n`: $PWD # '; export PS1
+fi
+
+------change prompt color in linux-------------
+
+*****set to green****
+export PS1="\e[0;32m[\u@\h \W]\$ \e[m "
+
+*****set to brown***
+export PS1="\e[0;31m[\u@\h \W]\$ \e[m "
+
+*****set to yellow***
+
+export PS1="\e[1;33m[\u@\h \W]\$ \e[m "
+
+*****set backgroup color****
+export PS1="\e[5;33m[\u@\h \W]\$ \e[m "
+
+
+-------------------------Port and proccess -------
+for i in `ls /proc`
+do
+pfiles $i | grep AF_INET | grep 14777
+if [ $? -eq 0 ]
+then
+echo Is owned by pid $i
+fi
+done
+
+ netstat -tunap | grep -i 23456
+ 
+ 
+  for i in `cat /tmp/t`; do ab=`ls /proc/$i/fd/|wc -l 2>/dev/null`; echo "$ab files opened by PID $i"; done |sort -rnk 1 |head -50
+
+  
+ 
+for AIX
+
+
+#!/bin/bash
+# Get the process which listens on port
+# $1 is the port we are looking for
+
+if [ $# -lt 1 ]
+then
+echo "Please provide a port number parameter for this script"
+echo "e.g. $0 22"
+exit
+fi
+
+echo "Greping for your port, please be patient (CTRL+C breaks) ... "
+
+for i in `ls /proc`
+do
+pfiles $i | grep AF_INET | grep $1
+if [ $? -eq 0 ]
+then
+echo Is owned by pid $i
+fi
+done 
+
+
+
+netstat -Aan | grep LISTEN | grep 1334 
+rmsock f100050000b05bb8 tcpcb
+
+
+
+
+for i in $( ls -la /proc/*/fd/* 2>/dev/null \
+            | grep deleted \
+            | sed -e 's/.*\(\/proc\S*\) -.*/\1/g' ); do
+    wc -c $i | tr "\n" "="; readlink $i
+done | grep -v "^0 " | sort -rn
+
+
+
+ls -la /proc/*/fd/* | grep deleted
+
+
+
+  ------------------------------------------------------
+
+ldapsearch -x -s one
+------------------------to check the header--------------
+
+od --format=c --read-bytes=512 /dev/mapper/disk
+
+-------------------------------------------------------------
+
+# su - sybase
+could not open session
+
+# grep  -i sybase /etc/security/limits.conf
+sybase soft fsize unlimited
+sybase hard fsize unlimited
+sybase soft data unlimited
+sybase hard data unlimited
+sybase soft stack 32768
+sybase hard stack 32768
+sybase soft core unlimited
+sybase hard core unlimited
+sybase soft nofile unlimited
+sybase hard nofile unlimited
+sybase soft memlock unlimited
+sybase hard memlock unlimited
+
+change the ulimit value in 65536 for nofile and try to connect
+
+# grep  -i sybase /etc/security/limits.conf
+sybase soft fsize unlimited
+sybase hard fsize unlimited
+sybase soft data unlimited
+sybase hard data unlimited
+sybase soft stack 32768
+sybase hard stack 32768
+sybase soft core unlimited
+sybase hard core unlimited
+sybase soft nofile 65536 
+sybase hard nofile 65536 
+sybase soft memlock unlimited
+sybase hard memlock unlimited
+
+---------------------------remove old file / folder-------------
+
+find /path/to/files* -mtime +5 -exec rm {} \;
+find /home/amit/log/ -mtime +30 -exec rm {} \; 
+
+find . -mtime +30 | xargs rm
+find . -type f -mtime +30 | xargs rm
+
+remove the file in the directory older than 60 days
+
+find /path/to -type f -mtime +60 -exec rm {} \;
+
+find /path/to/files* -mtime +365 -exec rm {} \;
+
+find /the/dir/to/start/in -type f -mtime +365 -ls -exec rm -f -- {} \;
+find . -type f -mtime +365 | perl -lne unlink
+
+find /path/to/files* -mtime +1095 -exec rm {} \;
+find /rec -mtime +365 -print0 | xargs -0 rm -f
+find /path/to/files* -type f -mtime +1095 -exec rm {} \;
+
+remove the file in the directory older than 90 days with the extension/name .
+
+ find /tmp/backup -type f -mtime +90 -name "*.tar" -exec rm {} \;
+
+-----------------------sybase raw-------------------------------
+disk size on AIX
+
+getconf DISK_SIZE /dev/regpd_vol58
+
+check the staus of raw device 
+
+tctl -f /dev/regpd_vol58 status
+
+in linux 
+
+getconf -a /dev/nydrmsuat6vg/lv_vol30 | grep -i size
+----------------------------------------------------------
+
+TAD4D Troubleshooting
+Two most common issues that cause TAD4D exceptions are missing/corrupted configuration files and missing/incorrect startup scripts. To troubleshoot TAD4D exceptions perform below steps:
+1.	Make sure proper TAD4D packages are installed (see http://ewiki.nam.nsroot.net/wiki/TAD4D for details). If package(s) are missing it must be installed.
+
+2.	Make sure proper /etc/tlmagent.ini configuration file exists
+
+# more /etc/tlmagent.ini  |grep -v ^#|egrep "^server|port" 
+server = gtamtadap2p.nam.nsroot.net
+port = 9988
+proxy_port = 3128
+secure_port = 9999
+
+If file is missing it should be restored from backup or proper TAD4D packages should be reinstalled.
+
+3.	Make sure tlmagent process is running
+
+# ps -ef |grep tlm
+root     14072     1  0 Oct18 ?        00:00:09 /opt/tad4d/itlm/tlmagent.bin
+
+If process is missing make sure proper startup scripts exist and start the agent. If startup scripts are missing or corrupted either create/fix the script or reinstall TAD4D packages
+
+LINUX:	
+# ls -l /etc/rc3.d/S??tlm /etc/init.d/tlm
+-rwx------ 1 root root 2192 Jul  7  2014 /etc/init.d/tlm
+lrwxrwxrwx 1 root root   13 May 18  2013 /etc/rc3.d/S20tlm -> ../init.d/tlm
+# /etc/init.d/tlm start
+CODAG001I Agent started successfully.
+
+SOLARIS:
+# ls -l /etc/rc2.d/S??tlm /etc/init.d/tlm  
+-rwx------   1 root     other       1671 Jan 21  2014 /etc/init.d/tlm
+lrwxrwxrwx   1 root     other         15 Aug 27  2014 /etc/rc2.d/S01tlm -> /etc/init.d/tlm
+# /etc/init.d/tlm start
+CODAG001I Agent started successfully.
+AIX:
+	# grep tlmagent /etc/inittab
+tlmagent:2:once:/usr/bin/startsrc -s tlmagent
+
+## There was a bug in earlier versions of TAD4D for AIX in which inittab entry was incorrect and stated "tlmagent:2:once:/usr/bin/startsrc" only. In such case either install newer version of TAD4D package for AIX, or simply correct inittab entry with 
+## mkitab –i srcmstr "tlmagent:2:once:/usr/bin/startsrc -s tlmagent"
+
+## Start the agent
+# startsrc –s tlmagent
+0513-059 The tlmagent Subsystem has been started. Subsystem PID is 5177392.
+
+
+4.	Test the agent
+
+## list the status of the agent
+## Each subsection lists the last successful and next scheduled events
+# /opt/tad4d/itlm/tlmagent -cmds
+
+## test the connection to collector server defined in the tlmagent.ini file
+## if it fails, check for potential network/firewall issues
+# /opt/tad4d/itlm/tlmagent -p
+
+## If connection is fine run scan manually 
+## Scan is not intrusive, but FOR PRODUCTION SERVERS DO IT IN GREENZONE 
+# /opt/tad4d/itlm/tlmagent -hw
+# /opt/tad4d/itlm/tlmagent -sw
+
+The synchronization of TAD4D agent data to Aperture/reporting infrastructures is not real-time. TAD4D scans are scheduled at weekends; the status of an agent can be confirmed using "tlmagent -cmds" command. The aggregating, transmitting and processing of the data can take up to 8-9 days after an agent is installed/repaired until it appears in the Aperture report. If the agent appears in exception reports, ensure enough time has been allowed for collection, aggregation and processing. If exception persist escalate issue to SME team who will troubleshoot further and reach out to GTAM support if needed.
+
+-----------------------mysql -----------------------------------
+ 
+to find the log file for mysql
+ls -l `pgrep mysqld | sed 's@.*@/proc/&/fd/@'` | grep log
+
+
+If you would like to read the error log file, try this command:
+
+sudo tail -f $(mysql -Nse "SELECT @@GLOBAL.log_error")
+
+
+to start mysql
+1.cat  /etc/my.cnf | grep -i log
+
+[mysqld]
+log=/tmp/mysql.log
+2.restart the computer or the mysqld service
+
+service mysqld restart
+
+if
+
+[Prod root @ ctop2pswdbvm1p ~]
+# service mysql status 
+ ERROR! MySQL (Percona XtraDB Cluster) is not running, but PID file exists
+
+[Prod root @ ctop2pswdbvm1p /var/lib/mysql/mysql]
+# /etc/init.d/mysql start --wsrep_provider="/usr/lib/libgalera_smm.so"
+ SUCCESS! MySQL (Percona XtraDB Cluster) running (31610)
+[Prod root @ ctop2pswdbvm1p /var/lib/mysql/mysql]
+# 
+[Prod root @ ctop2pswdbvm1p /var/lib/mysql/mysql]
+# service mysql status 
+ SUCCESS! MySQL (Percona XtraDB Cluster) running (31610)
+
+
+
+Using log_slow_queries will cause your service mysql restart or service mysql start to fail
+
+
+# mysqladmin flush-logs
+
+
+# mv host_name.err-old backup-directory
+
+
+to enable general log for mysql
+
+mysqld --general-log --general-log-file=/var/log/mysql.general.log
+
+to enable general and error log for mysql
+
+mysqld --general-log --general-log-file=/var/log/mysql.general.log --log-error=/var/log/mysql.error.log
+
+---------------------------------------------------
+to find the log file for the process in linux
+
+ls -l `pgrep mysqld | sed 's@.*@/proc/&/fd/@'` | grep log
+
+--------------------TTY---------------------
+ps ax | grep $$ | awk '{ print $2 }'
+or
+tty | sed -e "s/.*tty\(.*\)/\1/"
+
+$ ps -p 6947010
+      PID    TTY  TIME CMD
+  6947010  pts/0  0:00 ksh
+
+$ ps -p 6947010 -F tty=
+ pts/0
+Here is how you could determine to allow or deny access to a particular process:
+
+You first determine who owns the process and which pts device started it by using:
+
+$ ps -p <PID> -F tty=,user=
+ pts/X  <username>
+
+
+
+echo "HAHAHAHAHAHAHAHA" | write mmrozek pts/3
+
+------------------packet loss in linux-----------------
+
+netstat -s | egrep -i 'loss|retran'
+
+
+The sender on the other hand isn't reporting any packet drop. Shouldn't the drop reported by the recipient reported by the sender as well as sent packet drop?
+
+
+
+ethtool -g eth0
+
+ethtool -G eth0 rx 4096
+
+----------------------JDK--------------------------
+yum list all |grep jdk
+rpm -qa |grep jdk
+jdk-1.7.0_95l64-linux.x86_64
+jdk-1.7.0_15l64-linux.x86_64
+jdk-1.8.0_51l64-linux.x86_64
+jdk-1.8.0_91l64-linux.x86_64
+
+-----------------background job-----------------
+
+while sleep 1; do (./foo.sh &) ; done
+
+-------------------CICS------------------
+to find
+# which cicscp
+/usr/lpp/cics/bin/cicscp
+
+to check the status
+
+/usr/lpp/cics/bin/cicscp -v status all
+
+to start one region 
+
+cicscp -v start region <region name> StartType=cold
+
+cicscp -v start region u06cics StartType=cold
+
+
+to start all CICS region
+
+cicscp -v start region all
+
+or 
+
+/etc/cluster/scripts/CodeRStartCics.sh &
+
+
+--------------------------99-oracle.repo-------------
+
+cat /tmp/disk| sort | uniq -u | while read i; do dmsetup info -c | grep -i $i; done | awk {'print $8 " " $1'} | while read a b ; do echo 'KERNEL=="dm-*",ENV{DM_UUID}=="'$a'",NAME="asmdisk/'$b'", OWNER="oracle", GROUP="dba", MODE="0640"'; done > /tmp/test2
+
+----------------------mailq----------------
+QIDS="$(mailq | grep -B1 'example.com' | grep '^[a-z]'  | awk  '{print $1}' | sed  's/\*$//')"
+for q in $QIDS
+do
+  /usr/local/bin/qtool.pl -C /etc/mail/sendmail.cf -d /var/spool/mqueue/$q
+done
+
+
+First, find and kill the multiple sendmail processes if they have gone havoc.
+
+# ps -ef | grep sendmail
+ 
+# kill -9 SENDMAIL_PIDS 
+
+Then, stop sendmail cleanly (the commands depend of your OS. This one works only on IBM AIX).
+
+# stopsrc -s sendmail  
+
+You may check the number of messages that are in the queue, which will give you an idea of the time it will take to process the queue:
+
+# sendmail -bp 
+
+Check that there are no longer any sendmail processes running:
+
+# ps -ef | grep sendmail
+ 
+# kill -9 SENDMAIL_PIDS
+
+Rename the current mailqueue to another directory:
+
+# mv /var/spool/mqueue /var/spool/omqueue 
+
+Restart sendmail
+
+# startsrc -s sendmail
+0513-059 The sendmail Subsystem has been started. Subsystem PID is 62118
+ 
+
+Now process the old queue (may take time, depending upon the number of messages to process):
+
+# /usr/sbin/sendmail -oQ/var/spool/omqueue -q -v
+
+Running /var/spool/omqueue/m7HKkOM60666 (sequence XXXX of XXXXX)
+Running /var/spool/omqueue/m7HKkOM60666 (sequence XXXX+1 of XXXXX)...
+etc... 
+
+Now, you may safely delete all messages in the old queue:
+
+# rm -rf /var/spool/omqueue
+
+Create a new mailqueue directory.
+
+# mkdir /var/spool/mqueue
+
+Stop and start sendmail:
+
+# stopsrc -s sendmail
+
+# startsrc -s sendmail
+
+
+-------------------------linux SAN stack--------------------
+
+https://catecollaboration.citigroup.net/domains/platstor/gdse/products/ConfigMatrices/supported_linux_config.pdf
+
+---------------------replace file content--------------------
+
+cat /tmp/test11 | awk '{ gsub("/dev/m", "#/dev/m") ; print $0 }'
+
+
+
+1 ==> /tmp/test1
+2 ==> cp /tmp/test1 /tmp/test11
+3 ==> cat /tmp/test11 | awk '{ gsub("/dev/m", "#/dev/m") ; print $0 }' > /tmp/test1 
+
+
+---------------subnet mask count--------------------
+
+ip -o -f inet addr show | awk '/scope global/ {print $4}'
+
+
+----------------to generate ADU report on linux------------
+
+hpacucli 
+
+
+ all diag file=/tmp/ADUReport.zip
+
+ 
+ hpssacli ctrl all diag file=/tmp/adu_report.zip ris=on xml=on zip=on
+ 
+ 
+
+---------------------check ping------------------
+
+ ping  -c 10  -i  0.2  -w 3 <hostname>
+
+----------------- disable and enable HBA port --------------
+
+vxdisk list
+vxdmpadm listctlr all  <----list all dmp controllers.
+vxdmpadm disable ctlr=c5
+vxdmpadm listctlr all  
+vxdmpadm enable ctlr=c5
+
+cd /opt/HBAinfo/bin
+./gethbainfo
+
+or
+
+ more /sys/class/fc_host/host?/port_name
+
+ 
+ devices with offline paths found in vxdmpadm getsubpaths
+ 
+ 393  vxdmpadm
+  394  vxdmpadm -h
+  395  vxdmpadm listctlr all
+  396  vxdctl enable
+  397  vxdmpadm listctlr all
+  398  vxdmpadm getsubpaths all
+  399  cd /opt
+  400  ls
+  401  cd SAtools
+  402  ls
+  403  cd SANpathchk
+  404  ls
+  405  ./san_path_check
+  406  cd /opt/SSPV
+  407  ls
+  408  cd bin
+  409  ls
+  410  ./gethbainfo
+  411  vxdmpadm -h
+  412  vxdmpadm listctlr all
+  413  vxdmpadm enable path=c1
+  414  vxdmpadm enable ctlr=c1
+  415  vxdmpadm listctlr all
+  416  vxdmpadm listctlr all
+  417  vxdmpadm getsubpaths all
+  418  vxdmpadm listctlr all
+
+  
+  echo 1 >/sys/class/fc_host/host1/issue_lip
+vxdmpadm listctlr all
+vxdisk scandisks
+vxdmpadm listctlr all
+vxdmpadm enable ctlr=c1
+vxdmpadm listctlr all
+
+
+----------------------kill process---------------
+
+ps -ef | awk '/https-csfastxu51/ && !/awk/ {print $2}'| xargs kill -9
+
+---------------------ASR -------------------------------
+Automatic Server Recovery
+
+ASR has to be Disable on server.
+
+hpasmcli -s "show ASR "
+
+hpasmcli -s "DISABLE ASR"
+
+hpasmcli -s "ENABLE ASR"
+
+
+----------------------FAN ------------------------
+
+hpasmcli -s 'SHOW FAN; SHOW TEMP'
+
+
+-------------------count / sum / total value in file------
+
+awk '{ sum += $1 } END { print sum }' /tmp/couuunt # DO NOT USE THIS!!
+
+$1 ==> is column 
+
+awk '{s+=$1} END {print s}' /tmp/couuunt # DO NOT USE THIS!!
+
+awk '{s+=$1} END {printf "%.0f", s}' /tmp/couuunt # USE THIS INSTEAD
+
+paste -s -d+ /tmp/couuunt | bc
+
+dc -f /tmp/couuunt -e '[+z1<r]srz1<rp'
+
+perl -lne '$x += $_; END { print $x; }' < /tmp/couuunt
+
+cat /tmp/couuunt  | xargs  | sed -e 's/\ /+/g' | bc
+
+cat /tmp/couuunt| perl -lpe '$c+=$_}{$_=$c'
+
+sed 's/^/.+/' /tmp/couuunt| bc | tail -1
+
+
+---------------------encrpy-----------------
+
+
+stty sane; setterm -reset;
+
+or
+
+echo -e "\033c" ; stty sane; setterm -reset; reset; tput reset; clear
+
+or
+
+echo -e "\033c"
+
+or
+
+reset
+
+
+
+------------------------------------------------------------
+
+Script to show if your AIX HBA / hdisk settings are actually in effect
+
+Here is the script to check the HBA settings:
+ 
+#!/usr/bin/ksh
+FC=`lsdev -Cc adapter | grep -i fc`
+OS=`oslevel`
+
+if [ -z "$FC" ]; then
+    echo "Sorry you have no FC adapters installed"
+    exit 1
+fi
+
+if ! [ "$OS" = "6.1.0.0" -o "$OS" = "7.1.0.0" ]; then
+    echo "Script requires AIX 6.1 or 7.1"
+    exit 2
+fi
+ 
+echo "                ODM       Running   ODM      Running  ODM          Running"
+echo "fscsi   status  fastfail  fastfail  dyntrk   dyntrk   num_cmd_el   num_cmd_el"
+echo "-----------------------------------------------------------------------------"
+for fscsi in `lsdev | grep ^fscsi | grep Available | awk '{print $1}'` ; do
+        lsattr -El $fscsi | grep ^dyntrk | awk '{print $2}' | grep -qi yes && odm_dyn=Yes || odm_dyn=No
+        lsattr -El $fscsi | grep ^fc_err_recov | awk '{print $2}' | grep -qi fast_fail && odm_ff=Yes || odm_ff=No
+        odm_cmd_elems=`lsattr -El $(echo $fscsi | sed 's/fscsi/fcs/') -a num_cmd_elems | awk '{print $2}'`
+        ddi=`echo efscsi $fscsi | kdb | grep efscsi_ddi | awk '{print $5}'`
+        ddi20=$(echo "obase=16; ibase=16; $(echo $ddi | sed 's/0x//' | tr -d ';') + 20" | bc )
+        kdb=`echo "dd ${ddi}+20 2" | kdb | grep $ddi20`
+        echo $kdb | awk '{print $2}' | cut -c9-10 | grep -q "02" && kdb_ff=Yes || kdb_ff=No
+        echo $kdb | awk '{print $2}' | cut -c11-12 | grep -q "01" && kdb_dyn=Yes || kdb_dyn=No
+        kdb_cmd_elems=$(( 16#`echo $kdb | awk '{print $3}' | cut -c1-8`))
+        kdb_cmd_elems=`expr $kdb_cmd_elems + 20`
+        status=OK
+        [ "$odm_dyn" = "$kdb_dyn" ] || status="DIFF!"
+        [ "$odm_ff" = "$kdb_ff" ] || status="DIFF!"
+        [ "$odm_cmd_elems" = "$kdb_cmd_elems" ] || status="DIFF!"
+        printf "%-7s %-7s " $fscsi $status
+        printf "%-9s %-9s " $odm_ff $kdb_ff
+        printf "%-8s %-8s " $odm_dyn $kdb_dyn
+        printf "%-12s %-12s\n" $odm_cmd_elems $kdb_cmd_elems
+done
+ 
+Here is the script to check the hdisk Queue Depth's:  
+ 
+#!/usr/bin/ksh
+OS=`oslevel`
+
+if ! [ "$OS" = "6.1.0.0" -o "$OS" = "7.1.0.0" ]; then
+    echo "Script requires AIX 6.1 or 7.1"
+    exit 2
+fi
+echo "Disk         Status   ODM_Config     Running_Config"
+for disk in `lspv | awk '{print $1}'`; do
+        odm=`lsattr -El $disk | grep ^queue_depth | awk '{print $2}'`
+        run=$(( 16#`echo scsidisk $disk | kdb | grep queue_depth | awk '{print $4}' | tr -d ';' | sed 's/0x//'` ))
+        [ "$odm" = "$run" ] && status=OK || status="DIFF!"
+        printf "%-12s %-8s %-14s %-14s\n"  $disk $status $odm $run
+done
+ 
+----------------------------------------------------
+The vscsi_err_recov attribute for vscsi0 is NOT set to fast_fail!
+
+
+
+[Prod root @ amwttscmdbn2p  /root]
+# lsattr -El vscsi0  -a vscsi_err_recov
+vscsi_err_recov delayed_fail N/A True
+[Prod root @ amwttscmdbn2p  /root]
+# chdev -l vscsi0  -a vscsi_err_recov=fast_fail
+vscsi0 changed
+[Prod root @ amwttscmdbn2p  /root]
+# chdev -l vscsi1  -a vscsi_err_recov=fast_fail
+vscsi1 changed
+[Prod root @ amwttscmdbn2p  /root]
+# lsattr -El vscsi0  -a vscsi_err_recov
+vscsi_err_recov fast_fail N/A True
+[Prod root @ amwttscmdbn2p  /root]
+# 
+
+
+The vscsi_path_to attribute for vscsi0 is NOT set to 60!
+
+[Prod root @ amwttscmdbn2p  /root]
+# lsattr -El vscsi0
+rw_timeout      0         Virtual SCSI Read/Write Command Timeout True
+vscsi_err_recov fast_fail N/A                                     True
+vscsi_path_to   0         Virtual SCSI Path Timeout               True
+[Prod root @ amwttscmdbn2p  /root]
+# chdev -l vscsi0 -a vscsi_path_to=60 -P
+vscsi0 changed
+[Prod root @ amwttscmdbn2p  /root]
+# lsattr -El vscsi0
+rw_timeout      0         Virtual SCSI Read/Write Command Timeout True
+vscsi_err_recov fast_fail N/A                                     True
+vscsi_path_to   60        Virtual SCSI Path Timeout               True
+[Prod root @ amwttscmdbn2p  /root]
+
+
+
+
+[Prod root @ amwttscmdbn2p  /root]
+# lspath
+Enabled   hdisk0   sas0
+Enabled   hdisk1   sas0
+Available ses0     sas0
+Available ses1     sas0
+Enabled   hdisk2   sas1
+Enabled   hdisk3   sas1
+Available ses2     sas1
+Available ses3     sas1
+Defined   hdisk384 vscsi0
+Defined   hdisk385 vscsi0
+Defined   hdisk384 vscsi1
+Defined   hdisk385 vscsi1
+[Prod root @ amwttscmdbn2p  /root]
+
+
+
+
+[Prod root @ amwttscmdbn2p  /root]
+# /net/ccuaweb3/export/scripts/AixLVM/lparcheck
+lparcheck: Version 1.3
+http://fmwiki.nam.nsroot.net/index.php/lparcheck
+Checking Virtual Adapters
+Collecting Disk Paths
+Check path attributes
+Checking Disk Paths
+        One or more paths are not Enabled
+Defined hdisk384 vscsi0
+Defined hdisk385 vscsi0
+Defined hdisk384 vscsi1
+Defined hdisk385 vscsi1
+Check disk attributes
+hdisk384: hcheck_interval is not set to 60.
+hdisk385: hcheck_interval is not set to 60.
+Collecting network interfaces ...
+Checking test addresses ...
+
+
+
+[Prod root @ amwttscmdbn2p  /root]
+# lsattr -El hdisk384
+PCM             PCM/friend/vscsi Path Control Module        False
+algorithm       fail_over        Algorithm                  True
+hcheck_cmd      test_unit_rdy    Health Check Command       True+
+hcheck_interval 0                Health Check Interval      True+
+hcheck_mode     nonactive        Health Check Mode          True+
+max_transfer    0x40000          Maximum TRANSFER Size      True
+pvid            none             Physical volume identifier False
+queue_depth     3                Queue DEPTH                True+
+reserve_policy  no_reserve       Reserve Policy             True+
+[Prod root @ amwttscmdbn2p  /root]
+# 
+[Prod root @ amwttscmdbn2p  /root]
+# chdev -l hdisk384 -a hcheck_interval=60 -U
+hdisk384 changed
+[Prod root @ amwttscmdbn2p  /root]
+# chdev -l hdisk385 -a hcheck_interval=60 -U
+hdisk385 changed
+[Prod root @ amwttscmdbn2p  /root]
+# /net/ccuaweb3/export/scripts/AixLVM/lparcheck
+lparcheck: Version 1.3
+http://fmwiki.nam.nsroot.net/index.php/lparcheck
+Checking Virtual Adapters
+Collecting Disk Paths
+Check path attributes
+Checking Disk Paths
+Check disk attributes
+Collecting network interfaces ...
+Checking test addresses ...
+
+
+
+-----------------------TIscan----------------------
+
+/opt/TIscan/bin/scan -c /opt/TIscan/etc/scan.cfg -t &
+
+
+---------------errpt log clear----
+
+To delete all entries from the error log, enter:
+errclear 0
+
+To delete all entries in the error log classified as software errors, enter:
+errclear -d S 0
+
+To clear all entries from the alternate error-log file /var/adm/ras/errlog.alternate, enter:
+errclear -i /var/adm/ras/errlog.alternate 0
+
+To clear all hardware entries from the alternate error-log file /var/adm/ras/errlog.alternate, enter:
+errclear -i /var/adm/ras/errlog.alternate -d H 0
+
+
+To clear all the errpt error logs.
+
+# errclear 0
+To clear the particular errors logs from errpt output.
+
+All the day error will be clear
+
+# errclear -j BC3BE5A3 0
+
+Only Keep today error, remaining will be clear.
+
+# errclear -j BC3BE5A3 1
+
+ Only Keep today and yesterday error, remaining will be clear
+
+# errclear -j BC3BE5A3 2
+
+All the day error will be clear by name
+
+# errclear -N pmand 0
+
+-----------------------ctrl M / ^M --------
+
+ Convert and replace a.txt. Convert and replace b.txt.
+
+              dos2unix a.txt b.txt
+
+              dos2unix -o a.txt b.txt
+
+
+       Convert and replace a.txt in ASCII conversion mode.
+
+              dos2unix a.txt -c iso b.txt
+
+
+       Convert and replace b.txt in ISO conversion mode.
+
+              dos2unix -c ascii a.txt -c iso b.txt
+
+
+       Convert c.txt from Mac to Unix ascii format.
+
+
+              dos2unix -c mac c.txt b.txt
+
+
+       Convert and replace a.txt while keeping original date stamp.
+
+              dos2unix -k a.txt
+
+              dos2unix -k -o a.txt
+
+
+       Convert a.txt and write to e.txt.
+
+              dos2unix -n a.txt e.txt
+
+
+       Convert a.txt and write to e.txt, keep date  stamp  of  e.txt  same  as
+       a.txt.
+
+              dos2unix -k -n a.txt e.txt
+
+
+       Convert and replace a.txt. Convert b.txt and write to e.txt.
+
+              dos2unix a.txt -n b.txt e.txt
+
+              dos2unix -o a.txt -n b.txt e.txt
+
+
+       Convert  c.txt  and write to e.txt. Convert and replace a.txt.  Convert
+       and replace b.txt. Convert d.txt and write to f.txt.
+
+              dos2unix -n c.txt e.txt -o a.txt b.txt -n d.txt f.txt
+
+eg:- dos2unix sciticolbog@laccolbogvas002.pub abc.pub
+
+bash-3.2# dos2unix sciticolbog@laccolbogvas002.pub abc.pub
+could not open /dev/kbd to get keyboard type US keyboard assumed
+could not get keyboard type US keyboard assumed
+
+
+# yum provides */dos2unix
+# yum search dos2unix
+# yum install dos2unix
+
+
+
+----------------------to take a snapshot of the disks in redhat linux----------
+
+
+lvcreate --size 100M --snapshot --name snap /dev/vg00/lvol1
+
+--------------------------snapshot
+
+echo "Running backsnap for RHEL6 ..." 
+ rpm -q backsnap >/dev/null || yum -y install backsnap
+ backsnap --snap
+ backsnap --status
+
+
+----------------------------speed ent1-----
+
+
+# ip link set dev eth0 up
+# ip link set dev eth0 down
+
+# /sbin/ifconfig eth0 up
+# /sbin/ifconfig eth0 down
+
+
+------------------------------------------------------------
+
+to stop the below from the output of PVS in linux 
+
+  Configuration setting "activation/thin_check_executable" unknown.
+  Configuration setting "activation/thin_check_options" unknown.
+
+
+Resolution
+
+Make the following changes in /etc/lvm/lvm.conf file.
+Change
+
+from 
+
+thin_check_executable = "/usr/sbin/thin_check"
+thin_check_options = [ "-q" ]
+
+to
+
+#thin_check_executable = "/usr/sbin/thin_check"
+#thin_check_options = [ "-q" ]
+
+
+and run the below cmd 
+
+lvm dumpconfig --validate
+
+
+--------------------------------------------------------
+
+to check UUID and disk type which are blocked 
+
+blkid
+
+
+
+-----------------------------to change backup adapter to primary---------------------------------
+
+/usr/lib/methods/ethchan_config -f ent2
+
+ ent2 is running on  backup adapter
+
+ entstat -d ent2 | egrep "STATISTICS|Active|Backup"
+
+
+---------------My admin script --------------------
+
+/net/ccuaweb3/export/scripts/jc38549/script/free_disk.sh
+
+/net/ccuaweb3/export/scripts/jc38549/sanity/sanity.sh
+
+/net/ccuaweb3/export/scripts/jc38549/sanity/chk_after_reb.sh
+
+/net/ccuaweb3/export/scripts/jc38549/script/free_disk1.sh
+
+
+
+/net/ccuaweb3/export/scripts/jc38549/OS/patch-2017Q1_A2.sh
+/net/ccuaweb3/export/scripts/jc38549/OS/patch-2017Q4.sh
+/net/ccuaweb3/export/scripts/jc38549/OS/patch-2018Q1-A0.sh
+/net/ccuaweb3/export/scripts/jc38549/OS/patch-2018Q1-A0_exclude-ESMclnt.sh
+/net/ccuaweb3/export/scripts/jc38549/OS/checkFirmware.sh
+
+REFERENCE CATE Document for 2018Q2: https://catecollaboration.citigroup.net/domains/platstor/osunix/stdsrelateddocs/RFP-SOE-Linux-RHEL-Quarterly-Release-2018Q2-A0.pdf
+
+/net/ccuaweb3/export/scripts/jc38549/OS/patch-2018Q2-A0_exclude-ESMclnt.sh
+
+/net/ccuaweb3/export/scripts/jc38549/OS/patch-2019Q1-A0_exclude-ESMclnt.sh
+
+cd /var/tmp/checker;
+./checker;
+
+/net/ccuaweb3/export/scripts/jc38549/sanity/chk_after_reb.sh
+
+
+----------------Free disk list------------------------
+
+Multipath 
+multipath -ll |grep -i mpath |awk '{print $1}' > /tmp/disk123
+
+pvs |grep -i mpath |awk '{print $1}'| awk -F"/" '{print $4}' | sed 's/p1//g' >> /tmp/disk123
+
+cat /etc/udev/rules.d/99-oracle.rules |awk -F'mpath-' '{print $2}' | awk -F'"' '{print $1}'|while read a; do multipath -ll |grep -i $a |awk '{print $1}' >> /tmp/disk123; done
+
+cat /tmp/disk123 | sort | uniq -u | while read a; do lvmdiskscan |grep -i $a;done
+
+
+Powerpath
+
+/opt/SANinfo/bin/inq -nodots | grep -i power|awk '{print $1}' |awk -F"/" '{print $3}' > /tmp/disk123
+
+pvs | grep -i power |awk '{print $1}'| awk -F"/" '{print $3}' >> /tmp/disk123
+
+cat /etc/udev/rules.d/99-oracle.rules | grep -i "power" | awk -F'"' '{print $2}' | awk -F'"' '{print $1}' | tr -d "1" >> /tmp/disk123 
+
+cat /tmp/disk123 | sort | uniq -u | while read a ; do lvmdiskscan | grep -w $a; done
+
+-----------------------alias ----------------------------
+alias p="ping localhost"
+
+--------------------------------sunidm--------------------------------
+
+pwdadm -c sunidm
+echo "sunidm:Welcome1" |chpasswd -c ; chuser rlogin=true sunidm ; chuser account_locked=false sunidm
+lslpp -l | grep -i ihs.idm
+----------------------------------------------------------------------------------
+
+SecShSockDir/secsh_sockdir.c:156/ssh_create_socket_dir: Bad owner or user permissions for socket directory /tmp/ssh-amaiprg.
+Can't allocate socket remote_addr name.
+Error: Could not connect to broker: Broker connection failed: Out of memory / Failed to start on-demand Broker.
+
+), where the permissions of /tmp/ssh-<fid> got changed from 700 to 755 on 7th May. In both the cases, on changing the permissions back to 700, jobs started working fine
+
+$ ls -ld /tmp/ssh-lsaiprg
+drwxr-xr-x 2 lsaiprg abinitio 4096 May  7 09:26 /tmp/ssh-lsaiprg
+
+$ ls -ld /tmp/ssh-amaiprg
+drwx------ 2 amaiprg abinitio 4096 May  9 06:00 /tmp/ssh-amaiprg  
+
+-----------------------------------------------------------------------------------
+
+
+/opt/VRTSvcs/bin/hatype  -display  |grep FaultOnMonitorTimeout |egrep "CVM|CFS|Disk"
+
+------------------------------------------------------------------------------------------
+   To shut down the HBA port in linux
+   
+/opt/SANinfo/bin/inq -hba
+
+0 ==> disable
+1 ==> enable
+
+hbacmd SetPortEnabled 10:00:00:00:C9:F3:FF:9E 0
+
+hbacmd Reset 10:00:00:00:C9:F3:FF:9E 
+
+
+
+ 347  /opt/SANinfo/bin/inq -hba
+  348  powermt display
+  349  echo 1 >/sys/class/fc_host/host5/issue_lip 
+  350  powermt display
+  351  echo "- - -" >/sys/class/scsi_host/host5/scan 
+  352  powermt display
+  353  echo "- - -" >/sys/class/scsi_host/host6/scan 
+  354  echo "- - -" >/sys/class/scsi_host/host4/scan 
+  355  echo 1 >/sys/class/fc_host/host5/issue_lip 
+  356  powermt display
+  357  powermt config
+  358  powermt display
+  359  hbacmd PortEnableStatus 10:00:00:00:C9:AF:EC:C0 0
+  360  hbacmd help
+  361  hbacmd SetPortEnabled 10:00:00:00:C9:AF:EC:C0 0
+  362  hbacmd reset 10:00:00:00:C9:AF:EC:C0 
+  363  hbacmd SetPortEnabled 10:00:00:00:C9:AF:EC:C0 1
+  364  hbacmd reset 10:00:00:00:C9:AF:EC:C0 
+  365  powermt display
+  366  powermt config
+  367  powermt display
+  368  echo 1 >/sys/class/fc_host/host5/issue_lip 
+  369  powermt display
+  370  powermt config
+  371  powermt display
+  372  /opt/SANinfo/bin/inq -hba
+  373  df -h
+  374  echo "- - -" >/sys/class/scsi_host/host6/scan 
+  375  powermt display
+  376  powermt config
+
+
+-------------------------------------------------------------------------
+to IP config 
+
+cd /etc/sysconfig/network-scripts/
+
+ls -ltr ifcfg-*
+
+ifconfig -a
+
+vi ifcfg-bond0
+
+change ip adress,gatewaye,mac address.
+
+service network restart
+
+----------------------------------------------------------
+
+/opt/chef/bin/chef-client -o "cti_rhel_push_jobs::restart_clients"
+
+
+/opt/chef/citi/stop
+/opt/chef/citi/uninstall
+ps -ef | grep chef  # kill all the stale PIDs
+ps  -ef | grep push  # kill all the stale PIDs
+yum --enablerepo=soe*products* -y install citi-chef-automation
+/opt/chef/citi/chef-config --force
+chef-client
+/opt/chef/citi/restart
+/opt/chef/citi/status 
+
+------------------------------------------------------------
+
+in Aix
+
+Commands:
+
+/etc/xtab                       <--shows what are currently exported, after 'exportfs' this file is updated (remove an entry with exportfs -u)
+/etc/rmtab                      <--contains a list of clients, which are mounting resources from server (showmount command is using this file)
+                                (client entry will only be removed from this file, if 'umount' command is given on client)
+
+exportfs                        <--lists the content of /etc/xtab (this file never should be edited manually)
+exportfs -a                     <--exports all directories in the /etc/exports file
+exportfs /directory             <--exports only the given directory
+exportfs -u /dir                <--unexports the given directory
+exportfs -u -a                  <--unexports all directories in /etc/exports file
+
+showmount -e <nfs server>       <--you can check from a client what dirs are exported on given nfs server
+showmount -a <nfs server>       <--shows which clients are currently mounting resources from the given nfs server
+
+mknfsexp -d dir                 <--exports the given directory (it inserts a line in /etc/exports)
+mknfsmnt -f <mount point> -d <remote dir> -h <nfs server> -A -E <--add entry to /etc/filesystems, so nfs mounts can be automatically mounted
+                                                                (-A: auto mount, -E: alloows keyboard interrupts on hard mounts)
+																
+
+
+------------------------------------------------------------
+
+in Linux
+
+
+How to rename / change the PowerPath (mpath) device names ?
+
+first check wwn id on both node 
+
+/opt/SANinfo/bin/inq -et -nodots -sym_wwn | grep -i emcpowercj
+or
+/opt/SANinfo/bin/sandevlist | grep -i emcpowercj
+or
+  scsi_id --whitelist --device=/dev/emcpowercj
+
+Then change name as node one as same in node two
+
+emcpadm renamepseudo -s emcpowercj -t emcpowerou
+
+
+
+
+How to rename / change the multipathed (mpath) device names ?
+
+Resolution
+1. make sure that the device is not in use (deactivate VGs or umount filesystems for example)
+2. if you want to change a user friendly name edit the bindings file (default location is /var/lib/multipath/bindings)
+3. flush the path:
+
+Raw
+   # multipath -f <multipath_device_name>
+4. edit multipath.conf
+5. reload and recreate path:
+
+Raw
+   # service multipathd reload
+   # multipath -v2
+   # multipath <new name>
+6. Rebuild initrd image to persist the changes across system reboot.
+
+
+Rebuild initrd image 
+
+1. Rebuilding the initrd (RHEL 3, 4, 5)
+2. Rebuilding the initramfs (RHEL 6, 7)
+3. Checking initramfs (RHEL 7)
+4. Working with backups (RHEL 3, 4, 5, 6)
+
+
+1. REBUILDING THE INITRD (RHEL 3, 4, 5)
+
+It is recommended you make a backup copy of the initrd in case the new version has an unexpected problem:
+
+Raw
+    # cp /boot/initrd-$(uname -r).img /boot/initrd-$(uname -r).img.$(date +%m-%d-%H%M%S).bak
+Now build the initrd:
+
+Raw
+   # mkinitrd -f -v /boot/initrd-$(uname -r).img $(uname -r)
+The -v verbose flag causes mkinitrd to display the names of all the modules it is including in the initial ramdisk.
+The -f option will force an overwrite of any existing initial ramdisk image at the path you have specified
+If you are in a kernel version different to the initrd you are building (including if you are in Rescue Mode) you must specify the full kernel version, without architecture:
+
+Raw
+    # mkinitrd -f -v /boot/initrd-2.6.18-348.2.1.el5.img 2.6.18-348.2.1.el5
+	
+2. REBUILDING THE INITRAMFS (RHEL 6, 7)
+
+It is recommended you make a backup copy of the initramfs in case the new version has an unexpected problem:
+
+Raw
+   # cp /boot/initramfs-$(uname -r).img /boot/initramfs-$(uname -r).img.$(date +%m-%d-%H%M%S).bak
+Now rebuild the initramfs for the current kernel version:
+
+Raw
+    # dracut -f -v
+If you are in a kernel version different to the initrd you are building (including if you are in Rescue Mode) you must specify the full kernel version, including architecture:
+
+Raw
+    # dracut -f /boot/initramfs-2.6.32-220.7.1.el6.x86_64.img 2.6.32-220.7.1.el6.x86_64
+	
+	
+3. CHECKING INITRAMFS (RHEL 7)
+
+In RHEL 7, if the initramfs for a kernel is missing, be certain that the /etc/grub2.cfg and /boot/grub2/grub.cfg includes the reference to the newly installed initramfs, or is rebuilt to include this reference.
+
+Raw
+# grep initrd /etc/grub2.cfg
+    initrd16 /initramfs-3.10.0-514.6.1.el7.x86_64.img
+    initrd16 /initramfs-3.10.0-514.el7.x86_64.img
+    initrd16 /initramfs-0-rescue-29579289bce743ebbf3d42aa22ebd5fe.img
+
+# grep "menuentry " /boot/grub2/grub.cfg
+menuentry 'Red Hat Enterprise Linux Server (3.10.0-514.6.1.el7.x86_64) ...'
+menuentry 'Red Hat Enterprise Linux Server (3.10.0-514.el7.x86_64) ... '
+menuentry 'Red Hat Enterprise Linux Server (0-rescue-29579289bce743ebbf3d42aa22ebd5fe) ...'
+To rebuild the /boot/grub2/grub.cfg file:
+
+On BIOS-based machines, issue the following command as root:
+
+Raw
+# grub2-mkconfig -o /boot/grub2/grub.cfg
+On UEFI-based machines, issue the following command as root:
+
+Raw
+# grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
+
+
+4. WORKING WITH BACKUPS (RHEL 3, 4, 5, 6)
+
+As mentioned previously, it is recommended that you take a backup of the previous initrd in case something goes wrong with the new one. If desired, it is possible to create a separate entry in /boot/grub/grub.conf for the backup initial ramdisk image, to conveniently choose the old version at boot time without needing to restore the backup. This example configuration allows selection of either the new or old initial ramdisk image from the grub menu:
+
+Raw
+title Red Hat Enterprise Linux 5 (2.6.18-274.el5)
+     root (hd0,0)
+     kernel /vmlinuz-2.6.18-274.el5 ro root=LABEL=/ 
+     initrd /initrd-2.6.18-274.el5.img
+title Red Hat Enterprise Linux 5 w/ old initrd (2.6.18-274.el5)
+     root (hd0,0)
+     kernel /vmlinuz-2.6.18-274.el5 ro root=LABEL=/ 
+     initrd /initrd-2.6.18-274.el5.img.bak
+Alternatively, you can enter edit-mode in grub if you need to choose the old initrd and did not make a separate entry in grub.conf before rebooting. To do so:
+
+If grub is secured with a password, press p and enter the password
+Use the arrow keys to highlight the entry for the kernel you wish to boot
+Press e for edit
+Highlight the initrd line and press e again
+Change the path for the initrd to the backup copy you made (such as /initrd-2.6.18-274.el5.img.bak)
+Press Enter to temporarily save the changes you have made
+Press b for boot
+
+
+-----------------------------------------------------------------
+
+
+What is semaphore ?
+
+Semaphore can be described as counters used to control access to shared resources by multiple processes, They are most often used as a locking mechanism to prevent processes from accessing a particular resource while another process is performing operations on it.
+
+Semaphore can be used when number of processes try to access the shared resource or same file,Semaphore stored in kernel, so that it can be accessed by all the processes,
+
+ Semaphore can be identified unique id in linux kernel and it can be deleted using semdelete function,
+semaphore values can be incremented or decremented by using functions wait and signal,   
+If we are using ONFS (Oracle over network file system) in linux, we need to increase the kernel.sem value to improve system performance
+
+How to Increase semaphore value in linux?
+
+To increase semaphore value we need to increase the value of kernel.sem.
+
+[root@server ~]# sysctl -A | grep kernel.sem
+kernel.sem = 250        32000   32      128
+
+[root@server ~]# ipcs -ls
+
+------ Semaphore Limits --------
+max number of arrays = 128
+max semaphores per array = 250
+max semaphores system wide = 32000
+max ops per semop call = 32
+semaphore max value = 32767
+
+Increase semop value from 32 to 100, it can be increased upto 250 which is equal to semaphores per array,
+
+Add the following line into /etc/sysctl.conf file,
+
+#vi /etc/sysctl.conf
+
+kernel.sem = 250 32000 100 128
+
+or 
+
+#sysctl -w "kernel.sem = 250 32000 100 128"
+
+or
+
+#sysctl -w "kernel.sem=4096 512000 1600 2048" 
+   
+
+kernel.sem: max_sem_per_id max_sem_total max_ops_sem_call max_sem_ids
+
+Now we have modified the kernel.sem value,
+
+Please run the following command to update the changes 
+
+[root@server ~]# sysctl -p
+
+Now semaphore value got changed on server.you can verify using ipcs command.
+
+
+
+other way (or)
+
+
+Setting Semaphore Parameters
+To determine the values of the four described semaphore parameters, run:
+/sbin/sysctl -a | grep sem
+
+or
+
+# cat /proc/sys/kernel/sem
+250     32000   32      128
+These values represent SEMMSL, SEMMNS, SEMOPM, and SEMMNI.
+
+Alternatively, you can run:
+# ipcs -ls
+All four described semaphore parameters can be changed in the proc file system without reboot:
+# echo 250 32000 100 128 > /proc/sys/kernel/sem
+
+Alternatively, you can use sysctl(8) to change it:
+sysctl -w kernel.sem="250 32000 100 128"
+
+To make the change permanent, add or change the following line in the file /etc/sysctl.conf. This file is used during the boot process.
+echo "kernel.sem=250 32000 100 128" >> /etc/sysctl.conf
+
+-------------------------------------------------------------------------------------
+
+su: cannot set user id: Resource temporarily unavailable
+
+
+/etc/security/limits.conf
+
+user   soft    nproc     10240    <== add
+user   hard    nproc     10240    <== add
+
+---------------------------------------------------------------------------------
+
+Extending a volume size	vxresize <volume> <new length>
+vxresize -g <group> <volume> +100m       - increase the volume by 100Mb	
+Shrinking a volume size	vxresize <volume> <new length> 
+vxresize -g <group> <volume> -100m       - decrease the volume by 100Mb	
+use vxresize -g
+
+------------------------------------------------------------------
+				ssl certificate location
+				
+ls -ltr /etc/ssl/certs 
+	
+"/etc/pki/tls/certs/ca-bundle.crt",                  // Fedora/RHEL 6
+
+
+------------------------------------------------------------------
+
+Mounting over NFS NAS filer. 
+When doing a du on the NFS directory the du command as it enters the .snapshot directory , it trips over with the below message:
+
+du: WARNING: Circular directory structure.
+This almost certainly means that you have a corrupted file system.
+NOTIFY YOUR SYSTEM MANAGER.
+The following directory is part of the cycle:
+  `/var/tpsd/.snapshot/hourly.8'
+
+Only two way to avoid this error. I recommended to use 2nd option.
+
+1 ) Either turn off the .snapshot directory on the NetApp (NAS).   
+2 ) use the "--exclude" option of du
+     eg:  "du -a 
+--exclude .snapshot| sort -n -r | head -n 10"
+	 
+	 
+----------------------------------------------------------------------
+CFX restart
+
+this process should perform through user "orbit"
+
+/cfxwebsp/middleware/cfx/cfx_Runtime/profiles/cfxCell/stopcfx
+/cfxwebsp/middleware/cfx/cfx_Runtime/profiles/cfxCell/startcfx
+	 
+----------------------------------------------------------------------
+Server map access
+
+cat /etc/samba/users.map 
+jb78385 = eur\jb78385
+ms32220 = eur\ms32220
+as07487 = eur\as07487 
+al98639 = eur\al98639
+
+chkconfig --list | grep -i smb
+
+service smb reload
+
+
+
+
+ 229  2017-03-17 20:13:56 yum install samba -y
+  230  2017-03-17 20:19:36 cd /etc/samba
+  231  2017-03-17 20:19:36 mv  smb.conf  smb.conf.STARY
+  232  2017-03-17 20:19:37 vi smb.conf
+  233  2017-03-17 20:24:06 mkdir /var/log/samba
+  234  2017-03-17 20:24:32 net ads join -S  eurdcln020.eur.nsroot.net  -s /etc/samba/smb.conf -U ah35117
+  235  2017-03-17 20:25:27 /etc/rc.d/init.d/smb start
+  236  2017-03-17 20:25:27 /etc/rc.d/init.d/nmb start 
+
+--------------------------------------------------------------------
+
+pidof bpbkar
+
+pgrep bpbkar
+--------------------------------------------------------------------------------
+to give Y option to remove package from solaris
+
+	yes | pkgrm pkgname
+
+to give Y option to add package from solaris
+
+ echo y |pkgadd -d ./packagename.pkg all
+----------------------------------------------------------------------------
+
+[COB root @ tfilpdb11c  /root]
+# grep -i guardium /etc/group
+guardium:!:204:
+[COB root @ tfilpdb11c  /root]
+# grep -i guardium /etc/passwd
+guardium:x:204:204::/home/guardium:/bin/bash
+[COB root @ tfilpdb11c  /root]
+
+
+[COB root @ tfilpdb11c  /root]
+# grep -i 204 /etc/passwd
+snapp:*:204:15:snapp login user:/usr/sbin/snapp:/usr/sbin/snappd
+guardium:x:204:204::/home/guardium:/bin/bash
+[COB root @ tfilpdb11c  /root]
+ 
+
+[COB root @ tfilpdb11c  /root]
+# grep -i guardium /etc/group
+guardium:!:207:
+[COB root @ tfilpdb11c  /root]
+# grep -i guardium /etc/passwd
+guardium:x:207:207::/home/guardium:/bin/bash
+[COB root @ tfilpdb11c  /root]
+
+
+
+vi /etc/passwd
+
+guardium:x:210:210::/home/guardium:/bin/bash
+
+grep -i guardium /etc/group
+
+guardium:!:210:
+
+ex:
+
+[IDENbuild root @ xpmdb15 /home]
+# grep -i guardium /etc/group
+#guardium:!:204:
+guardium:!:207:
+
+
+-----------------------------------------------------------------------------
+to mount mvfs file system
+
+[Dev root @ ctoccswap2d /var/tmp/checker]
+# ls -ltr /opt/rational/clearcase/etc/clearcase
+-r-xr-xr-x 1 root root 19372 Nov 18  2015 /opt/rational/clearcase/etc/clearcase
+[Dev root @ ctoccswap2d /var/tmp/checker]
+# 
+[Dev root @ ctoccswap2d /var/tmp/checker]
+# /opt/rational/clearcase/etc/clearcase status
+ClearCase is stopped
+[Dev root @ ctoccswap2d /var/tmp/checker]
+# 
+[Dev root @ ctoccswap2d /var/tmp/checker]
+# /opt/rational/clearcase/etc/clearcase start
+ClearCase is stopped
+Starting ClearCase
+ClearCase daemons: albd_server Mounting public VOBs...
+[Dev root @ ctoccswap2d /var/tmp/checker]
+# /opt/rational/clearcase/etc/clearcase status
+ClearCase (pid 9019) is running...
+[Dev root @ ctoccswap2d /var/tmp/checker]
+# ct mount -all
+
+ 
+ --------------------------mmfs/gpfs---------------------
+ 
+ 
+ps -ef | grep mmfs
+
+mmgetstate -aLs
+
+mmlsmount all
+
+mmstartup -a
+
+mmgetstate -aLs
+ 
+ -----------------------------dos2unix---------------------------------
+ 
+ # yum provides */dos2unix
+# yum search dos2unix
+# yum install dos2unix
+
+EXAMPLES
+Get input from stdin and write output to stdout.
+
+dos2unix
+
+ 
+
+Convert and replace a.txt. Convert and replace b.txt.
+
+dos2unix a.txt b.txt
+
+dos2unix -o a.txt b.txt
+
+ 
+
+Convert and replace a.txt in ASCII conversion mode. Convert and replace b.txt in ISO conversion mode. Convert c.txt from Mac to Unix ascii format.
+
+dos2unix a.txt -c iso b.txt
+
+dos2unix -c ascii a.txt -c iso b.txt
+
+dos2unix -c mac a.txt b.txt
+
+ 
+
+Convert and replace a.txt while keeping original date stamp.
+
+dos2unix -k a.txt
+
+dos2unix -k -o a.txt
+
+ 
+
+Convert a.txt and write to e.txt.
+
+dos2unix -n a.txt e.txt
+
+ 
+
+Convert a.txt and write to e.txt, keep date stamp of e.txt same as a.txt.
+
+
+dos2unix -k -n a.txt e.txt
+
+ 
+
+Convert and replace a.txt. Convert b.txt and write to e.txt.
+
+dos2unix a.txt -n b.txt e.txt
+
+dos2unix -o a.txt -n b.txt e.txt
+
+ 
+
+Convert c.txt and write to e.txt. Convert and replace a.txt. Convert and replace b.txt. Convert d.txt and write to f.txt.
+
+dos2unix -n c.txt e.txt -o a.txt b.txt -n d.txt f.txt
+
+------------------------------------------------------------------------
+
+niminit -a name=xpmdb15 -a master=aixnimswdc2.nam.nsroot.net -a connect=nimsh
+niminit -a name=xpmdb15 -a master=aixnimswdc2 -a pif_name=en2 -a platform=chrp -a netboot_kernel=up
+
+cat /etc/niminfo
+niminit -a name=xpmdb15 -a master=aixnimswdc2 -a connect=ksh
+
+
+---------------------------MQseries-----------------------
+
+fs01aix009(OLTP2):/> dspmq
+QMNAME(BR_HUB9)                                           STATUS(Running)
+
+
+---------------------Logical drive replace for raid 0-------------------------------------
+
+http://www.thegeekstuff.com/2014/07/hpacucli-examples/?utm_source=feedburner&utm_medium=feed&utm_campaign=Feed%3A+TheGeekStuff+%28The+Geek+Stuff%29%20%3Chttp://www.thegeekstuff.com/2014/07/hpacucli-examples/?utm_source=feedburner&utm_medium=feed&utm_campaign=Feed:+TheGeekStuff+%28The+Geek+Stuff%29%3E
+
+Log in Doc location
+
+
+--------------------------------------
+
+ps axo user,pcpu,pmem,rss --no-heading | awk '{pCPU[$1]+=$2; pMEM[$1]+=$3; sRSS[$1]+=$4} END {for (user in pCPU) if (pCPU[user]>0 || sRSS[user]>10240) printf "%s %.1f%% of total CPU,@%.1f%% of total MEM@(%.2f GiB used)\n", user, pCPU[user], pMEM[user], sRSS[user]/1024/1024}' | column -ts@ | sort -rnk2
+
+root 5.4% of total CPU,      44.1% of total MEM  (2.57 GiB used)
+icggeams 0.0% of total CPU,  0.0% of total MEM   (0.01 GiB used)
+icgadmin 0.0% of total CPU,  0.1% of total MEM   (0.09 GiB used)
+
+
+top -b -H -u cd -n 1 | wc -l
+
+----------------------clear clone_disk flag --------
+
+
+Run the following commands:
+
+# vxdisk scandisks
+# vxdisk list | egrep "udid_mismatch|clone_disk"
+
+Or, run the following command:
+
+# vxdisk -o alldgs list | egrep "udid_mismatch|clone_disk"
+
+
+# vxdisk list
+DEVICE       TYPE            DISK         GROUP        STATUS
+emcpoweraa   auto:cdsdisk    emcpowerq    vmax_vcsdg   online clone_disk
+emcpowerab   auto:cdsdisk    emcpowerp    vmax_vcsdg   online clone_disk
+
+# for i in `vxdisk list |grep clone_disk | awk '{print $1}'`; do echo $i; vxdisk set $i clone=off; done
+
+# vxdisk list
+DEVICE       TYPE            DISK         GROUP        STATUS
+emcpoweraa   auto:cdsdisk    emcpowerq    vmax_vcsdg   online
+emcpowerab   auto:cdsdisk    emcpowerp    vmax_vcsdg   online
+
+
+---------------------------------boot log aix-------------------------
+
+$  alog -L
+boot
+bosinst
+cfg
+console
+dumpsymp
+lvmcfg
+lvmgs
+lvmt
+mdmplog
+nim
+
+$  alog -L -t boot
+#file:size:verbosity
+/var/adm/ras/bootlog:131072:1
+
+$ cd /var/adm/ras/
+$ ls -ltr boot*
+-rw-r-----    1 root     system       131072 Apr 14 16:52 bootlog
+$ 
+$ 
+$ alog -L -t console
+#file:size:verbosity
+/var/adm/ras/conslog:32768:1
+$ 
+$ ls -ltr conslog
+-rw--w----    1 root     system        32768 Apr 14 18:07 conslog
+
+
+
+
+
+To record the current date and time in a log file named sample.log, enter:
+date | alog -f /tmp/sample.log
+
+To list the contents of /tmp/sample.log log file, enter:
+alog -f /tmp/sample.log -o
+
+
+To change the size of the log file named /tmp/sample.log to 8192 bytes, enter:
+echo "resizing log file" | alog -f /tmp/sample.log -s 8192
+
+-------------------------------------------------------------------------------------
+Critical : TWS_Link_Failed : PMAEMDM85 Link FAILED for more than 600 secs: SAIX_PDDEREGPMAEMDM85 Link FAILED for more than 600 secs: SAIX_PDDEREG
+
+
+bash-3.2# /maestro/TWS/bin/conman
+Tivoli Workload Scheduler (UNIX)/CONMAN 8.5 (20110928) Licensed Materials - Property of IBM(R)
+5698-WSH
+(C) Copyright IBM Corp 1998, 2008 All rights reserved.
+US Government User Restricted Rights
+Use, duplication or disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+IBM is a registered trademark of International Business Machines 
+Corporation in the United States, other countries, or both.
+Installed for user "maestro".
+Locale LANG set to the following: "en"
+Scheduled for (Exp) 05/14/18 (#6364) on SSUNP104.  Batchman LIVES.  Limit: 99, Fence: 0, Audit Level: 1
+CONMAN:AWSBEH002W The target host computer is not defined in the connection configuration file or the supplied command parameters.
+CONMAN:AWSBHU611W Conman could not initialize the HTTP or HTTPS connection.
+%
+%
+%sc
+
+-------------------------solaris local zone shutdown and boot---------------------------------------
+
+zoneadm -z cpbswz3cpub1 halt ==> shutdown
+zoneadm -z cpbswz3cpub1 boot ==> up
+zoneadm list -civ ==> status
+
+-----------------------------------Script ----------------------------------
+/net/ldnvnasnfsu0134.eur.nsroot.net/ldnfitv0105/fitqt0105/GTS/SAtools/vios_check.sh
+
+/net/ldnvnasnfsu0134.eur.nsroot.net/ldnfitv0105/fitqt0105/GTS/SAtools/vios_pri_fix.sh
+
+/net/ldnvnasnfsu0134.eur.nsroot.net/ldnfitv0105/fitqt0105/GTS/SAtools/vios_fix.sh
+
+
+
+
+
+/net/ldnvnasnfsu0141.eur.nsroot.net/ldneqtv0052/eqtqt0052/Packages/SOE-env-icg/SOE-icg-install.ICGUD.sh UAT
+
+
+---------------------------------------------------------------------------------------
+
+# ls -ltrh largefile.tar.xz
+-rw-rw-r--. 1 root    root    8.5G Feb 20 13:54 largefile.tar.xz
+# split -b 1024m -a 2 -d largefile.tar.xz largefile.tar.xz.part
+# ls -ltrh largefile.tar.xz.*
+-rw-rw-r--. 1 root root 1.0G Feb 21 10:01 largefile.tar.xz.part00
+-rw-rw-r--. 1 root root 1.0G Feb 21 10:01 largefile.tar.xz.part01
+-rw-rw-r--. 1 root root 1.0G Feb 21 10:01 largefile.tar.xz.part02
+-rw-rw-r--. 1 root root 1.0G Feb 21 10:01 largefile.tar.xz.part03
+-rw-rw-r--. 1 root root 1.0G Feb 21 10:01 largefile.tar.xz.part04
+-rw-rw-r--. 1 root root 1.0G Feb 21 10:01 largefile.tar.xz.part05
+-rw-rw-r--. 1 root root 1.0G Feb 21 10:01 largefile.tar.xz.part06
+-rw-rw-r--. 1 root root 1.0G Feb 21 10:02 largefile.tar.xz.part07
+-rw-rw-r--. 1 root root 508M Feb 21 10:02 largefile.tar.xz.part08
+
+#The parts can be reassembled using cat command.
+
+ls -1c -v largefile.tar.xz.part* | xargs -I {} cat {} >> largefile.tar.xz
+
+
+# makedumpfile -c -d 31 <vmcore> <output file>
+
+
+
+How to take vmcore at the time of issue
+
+B] When system freezes you can use various options to trigger crash using sysrq. 
+Few sysrq triggers which are usually used are as below :- 
+> If system is in hang state, but you are able to access it remotely or through console,then run below command to crash system. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# echo c > /proc/sysrq-trigger << Crash system manually ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+> If system does not respond at all then use the 
+Hot keys [Alt + PrintScreen + c] to dump the vmcore.
+
+
+
+
+-------------------------------ACL Aix------------
+
+
+[Prod root @ saixp3013  /root]
+# aclget /ppr1reg1/MANTAS/downstreamData
+*
+* ACL_type   NFS4
+*
+*
+* Owner: ppr1app1
+* Group: ppr1app
+*
+s:(OWNER@):     a       rwpRWxDaAdcCo   fidi
+s:(GROUP@):     a       rwpxDad fidi
+u:ppr1sft1:     a       rwpxDad fidi
+g:ppr1sft:      a       rwpxDad fidi
+s:(OWNER@):     d       rwpRWxDdos      
+s:(GROUP@):     d       rwpRWxDaAdcCos  
+u:ppr1sft1:     d       rwpRWxDaAdcCos  
+g:ppr1sft:      d       rwpRWxDaAdcCos  
+s:(EVERYONE@):  a       rRxac   
+s:(EVERYONE@):  d       wpDd    
+
+
+When ls -ltr in FID
+
+$ 
+$ ls -lrt /ppr1reg1/MANTAS/downstreamData/*20180711*.dat
+/ppr1reg1/MANTAS/downstreamData/AccountBalance_20180711_DLY_1.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/AccountGroupMember_20180711_DLY_1.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/AccountToCustomer_20180711_DLY_1.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/AcctGroupMember_20180711_DLY_1_PFG.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/AcctGroup_20180711_DLY_1_PFG.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/Acct_20180711_DLY_1_PFG.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/CustAddress_20180711_DLY_1_PFG.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/CustPhone_20180711_DLY_1_PFG.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/CustSegmentation_20180711_DLY_1_PFG.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/Cust_20180711_DLY_1_PFG.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/CustomerSegmentation_20180711_DLY_1.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/InvestmentAdvisor_20180711_DLY_1.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/ManagedAccount_20180711_DLY_1.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/frntOffTtxn_20180711_DLY_1_PFG.dat: No permission
+/ppr1reg1/MANTAS/downstreamData/frntOffTtxnparty_20180711_DLY_1_PFG.dat: No permission
+-rwx------    1 ppr1app1 ppr1app     1059328 Jul 12 19:35 /ppr1reg1/MANTAS/downstreamData/AccountAddress_20180711_DLY_1.dat
+-rwx------    1 ppr1app1 ppr1app    29587911 Jul 12 19:36 /ppr1reg1/MANTAS/downstreamData/Customer_20180711_DLY_1.dat
+-rwx------    1 ppr1app1 ppr1app    15243763 Jul 12 19:36 /ppr1reg1/MANTAS/downstreamData/CustomerAddress_20180711_DLY_1.dat
+
+
+When ls -ltr in root
+
+[Prod root @ saixp3013  /root]
+# ls -lrt /ppr1reg1/MANTAS/downstreamData/*20180711*.dat
+-rwxrwx---    1 ppr1app1 ppr1app           0 Jul 12 17:27 /ppr1reg1/MANTAS/downstreamData/AcctGroup_20180711_DLY_1_PFG.dat
+-rwxrwx---    1 ppr1app1 ppr1app      447255 Jul 12 17:28 /ppr1reg1/MANTAS/downstreamData/AcctGroupMember_20180711_DLY_1_PFG.dat
+-rwxrwx---    1 ppr1app1 ppr1app     3218861 Jul 12 17:28 /ppr1reg1/MANTAS/downstreamData/Acct_20180711_DLY_1_PFG.dat
+-rwxrwx---    1 ppr1app1 ppr1app    14185409 Jul 12 17:28 /ppr1reg1/MANTAS/downstreamData/CustSegmentation_20180711_DLY_1_PFG.dat
+-rwxrwx---    1 ppr1app1 ppr1app    29584684 Jul 12 17:28 /ppr1reg1/MANTAS/downstreamData/Cust_20180711_DLY_1_PFG.dat
+-rwxrwx---    1 ppr1app1 ppr1app    15243283 Jul 12 17:28 /ppr1reg1/MANTAS/downstreamData/CustAddress_20180711_DLY_1_PFG.dat
+-rwxrwx---    1 ppr1app1 ppr1app     5443629 Jul 12 17:28 /ppr1reg1/MANTAS/downstreamData/CustPhone_20180711_DLY_1_PFG.dat
+-rwxrwx---    1 ppr1app1 ppr1app      330074 Jul 12 17:32 /ppr1reg1/MANTAS/downstreamData/frntOffTtxnparty_20180711_DLY_1_PFG.dat
+-rwxrwx---    1 ppr1app1 ppr1app      279467 Jul 12 17:32 /ppr1reg1/MANTAS/downstreamData/frntOffTtxn_20180711_DLY_1_PFG.dat
+-rwxrwx---    1 ppr1app1 ppr1app      870143 Jul 12 19:26 /ppr1reg1/MANTAS/downstreamData/AccountBalance_20180711_DLY_1.dat
+-rwxrwx---    1 ppr1app1 ppr1app      481243 Jul 12 19:33 /ppr1reg1/MANTAS/downstreamData/AccountToCustomer_20180711_DLY_1.dat
+-rwxrwx---    1 ppr1app1 ppr1app       15775 Jul 12 19:34 /ppr1reg1/MANTAS/downstreamData/InvestmentAdvisor_20180711_DLY_1.dat
+-rwx------    1 ppr1app1 ppr1app     1059328 Jul 12 19:35 /ppr1reg1/MANTAS/downstreamData/AccountAddress_20180711_DLY_1.dat
+-rwxrwx---    1 ppr1app1 ppr1app    14186694 Jul 12 19:36 /ppr1reg1/MANTAS/downstreamData/CustomerSegmentation_20180711_DLY_1.dat
+-rwx------    1 ppr1app1 ppr1app    29587911 Jul 12 19:36 /ppr1reg1/MANTAS/downstreamData/Customer_20180711_DLY_1.dat
+-rwx------    1 ppr1app1 ppr1app    15243763 Jul 12 19:36 /ppr1reg1/MANTAS/downstreamData/CustomerAddress_20180711_DLY_1.dat
+-rwx------    1 ppr1app1 ppr1app     5444102 Jul 12 19:36 /ppr1reg1/MANTAS/downstreamData/CustomerPhone_20180711_DLY_1.dat
+-rwxrwx---    1 ppr1app1 ppr1app      708312 Jul 12 19:38 /ppr1reg1/MANTAS/downstreamData/ManagedAccount_20180711_DLY_1.dat
+-rwx------    1 ppr1app1 ppr1app           0 Jul 12 19:41 /ppr1reg1/MANTAS/downstreamData/FrontOfficeTransactionParty_20180711_DLY_1.dat
+
+
+to fix
+
+  aclconvert -t NFS4  /ppr1reg1/MANTAS/downstreamData
+
+add fidi for user and group
+
+  acledit  /ppr1reg1/MANTAS/downstreamData
+
+ 
+ * ACL_type   NFS4
+*
+*
+* Owner: ppr1app1
+* Group: ppr1app
+*
+s:(OWNER@):     a       rwpRWxDaAdcCo   fidi
+s:(GROUP@):     a       rwpxDad fidi
+u:ppr1sft1:     a       rwpxDad fidi
+g:ppr1sft:      a       rwpxDad fidi
+s:(OWNER@):     d       rwpRWxDdos
+s:(GROUP@):     d       rwpRWxDaAdcCos
+u:ppr1sft1:     d       rwpRWxDaAdcCos fidi     
+g:ppr1sft:      d       rwpRWxDaAdcCos fidi     
+s:(EVERYONE@):  a       rRxac
+s:(EVERYONE@):  d       wpDd
+~
+~
+"/tmp/acledit.41681130/acleS_6aaa" 17 lines, 346 characters 
+Should the modified ACL be applied? (yes) or (no) yes
+[Prod root @ saixp3013  /root]
+
+
+then
+
+aclget /ppr1reg1/MANTAS/downstreamData | aclput -R /ppr1reg1/MANTAS/downstreamData
+
+FIXED
+-----------------------------------------------------------------------------------------
+
+Note: Please don’t remove the Pacct file under /var/account.  Check the below output under the mention path and reach application team to check the ID  or process keep captured or generated.
+
+[Prod root @ ctocrcsgdb1pn1 /var/account]
+# lastcomm -f pacct | head -100
+
+why pacct file consuming more space.
+
+cd /var/crash/
+lastcomm > last.out
+less last.out 
+w
+ps -ef | grep dm33928
+grep "pts/2" last.out 
+grep "pts/2" last.out  | awk '{print $1}' | sort | uniq
+
+
+
+
+--------------------ilo password reset--------------
+first
+download the cfg file from ilo
+using
+hponcfg -w /tmp/ilo1.txt
+cat it and confirm the version
+
+If hponcfg not install use below method.
+
+hponcfg package location 
+========================== 
+/net/rutvnasori0001/vol/admin_storage/nfs/HP/hponcfg
+or 
+/var/tmp/jc38549/hponcfg/
+
+
+<RIBCL VERSION="2.1"> 
+<LOGIN USER_LOGIN="Administrator" PASSWORD="password"> 
+  <USER_INFO MODE="write"> 
+   <MOD_USER USER_LOGIN="Administrator"> 
+    <PASSWORD value="Welcome1"/> 
+   </MOD_USER> 
+  </USER_INFO> 
+</LOGIN> 
+</RIBCL> 
+
+
+Save the above in a file /tmp/ilo.txt 
+and upload the xml using 
+
+hponcfg -f /tmp/ilo.txt
+
+
+
+------------------------Get Last Access , Modified Date of File -------------------------------
+
+In Linux
+
+$ stat foo
+File: ‘foo’
+Size: 42            Blocks: 8          IO Block: 4096   regular file
+Device: fc01h/64513d    Inode: 410654      Links: 1
+Access: (0644/-rw-r--r--)  Uid: (80972/ etomort)   Gid: (18429/  eem_tw)
+Access: 2015-09-21 12:09:31.298712951 +0200
+Modify: 2015-09-21 12:09:31.298712951 +0200
+Change: 2015-09-21 12:09:31.302713093 +0200
+
+
+in Aix
+
+
+$ istat p.out
+Inode 263 on device 10/8        File
+Protection: rw-r--r--
+Owner: 0(root)          Group: 0(system)
+Link count:   1         Length 14682 bytes
+
+Last updated:   Tue Sep 15 10:50:15 PDT 2009
+Last modified:  Tue Sep 15 10:50:15 PDT 2009
+Last accessed:  Tue Nov  3 12:01:12 PST 2009
+
+
+-----------------------------history clear------------------------
+
+for h in $(seq 501 510 | tac); do history -d $h; done; history -d $(history 1 | awk '{print $1}')
+
+
+----------------------------------------------
+
+/net/gicap41/stage/General/SAtools/lnx_unused_sancheck-ASM_with_multipath.sh
+
+--------------------------------------------
+
+chown root ba /dev/asm/*
+
+chown root dba /dev/asm/.*
+
+chown root ba /dev/ofsctl
+
+chmod 0770 /dev/asm/*
+
+chmod 0770 /dev/asm/.*
+
+chmod 0664 /dev/ofsctl
+
+please set permissions
+
+/optware/grid/11.2.0.4/bin/acfsroot install 
+
+/bin/mount -t acfs -o all none none
+
+
+
+************************END line*********************************
