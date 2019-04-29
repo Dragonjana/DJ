@@ -1,0 +1,950 @@
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat svmon.sh
+#!/bin/ksh
+#
+# COMPONENT_NAME: perfpmr
+#
+# FUNCTIONS: none
+#
+# ORIGINS: IBM
+#
+# (C) COPYRIGHT International Business Machines Corp. 2000
+# All Rights Reserved
+#
+# US Government Users Restricted Rights - Use, duplication or
+# disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+#
+# svmon.sh
+#
+export LANG=C
+BIN=/usr/bin
+SBIN=/usr/sbin
+
+WPARG=0
+WPARARGG=ALL
+WPARPG=0
+WPARARGPG=ALL
+
+show_usage()
+{
+        echo "Usage: svmon.sh [-o outputfile] [-w <wparname|ALL>] [-W <wparname|ALL>]"
+        echo "default output file is svmon.out"
+}
+do_timestamp()
+{
+        echo "`/bin/date +"%H:%M:%S-%D"` :\t$1"
+}
+
+# exit if svmon executable is not installed
+if [ ! -f /usr/bin/svmon ]; then
+  echo "     SVMON: /usr/bin/svmon command is not installed"
+  echo "     SVMON:   This command is part of the 'bos.perf.tools' fileset."
+  exit 1
+fi
+
+
+while getopts o:w:W: flag ; do
+        case $flag in
+                o)     filename=$OPTARG;;
+                w)     WPARARGG=$OPTARG;WPARG=1;;
+                W)     WPARARGPG=$OPTARG;WPARPG=1;;
+                \?)    show_usage
+        esac
+done
+if [ -z "$filename" ]; then
+        filename=svmon.out
+fi
+
+echo "Date/Time:   `$BIN/date`" >> $filename
+echo "\n" >> $filename
+if [ $WPARG -eq 1 ]
+then
+        do_timestamp "svmon -G -@ ALL"
+        echo "svmon -G -@ ALL" >> $filename
+        echo "----------" >> $filename
+        $BIN/svmon -G -@ ALL >> $filename
+        #do_timestamp "svmon -G -Oaffinity=detail -@ ALL"
+        #echo "svmon -G -Oaffinity=detail -@ ALL" >> $filename
+        #$BIN/svmon -G  -Oaffinity=detail -@ ALL >> $filename
+        if [ $? -eq 1 ]
+        then
+                do_timestamp "svmon -G"
+                $BIN/svmon -G >> $filename
+                #do_timestamp "svmon -G -Oaffinity=detail"
+                #echo "svmon -G -Oaffinity=detail" >> $filename
+                #echo "----------" >> $filename
+                #$BIN/svmon -G  -Oaffinity=detail >> $filename
+        fi
+else
+        do_timestamp "svmon -G"
+        echo "$BIN/svmon -G" >> $filename
+        echo "----------" >> $filename
+        $BIN/svmon -G >> $filename
+        #do_timestamp "svmon -G -Oaffinity=detail"
+        #echo "svmon -G -Oaffinity=detail" >> $filename
+        #echo "----------" >> $filename
+        #$BIN/svmon -G  -Oaffinity=detail >> $filename
+fi
+if [ $WPARG -eq 1 ]
+then
+        if [ $WPARPG -eq 1 ]
+        then
+                do_timestamp "svmon -Pnsm -@ $WPARARGPG"
+                echo "svmon -Pnsm -@ $WPARARGPG" >> $filename
+                echo "----------" >> $filename
+                $BIN/svmon -Pnsm -@ $WPARARGPG >> $filename
+                if [ $? -eq 1 ]
+                then
+                        do_timestamp "svmon -Pnsm"
+                        $BIN/svmon -Pnsm  >> $filename
+                fi
+        else
+                do_timestamp "svmon -Pnsm -@ ALL"
+                echo "svmon -Pnsm -@ ALL" >> $filename
+                echo "----------" >> $filename
+                $BIN/svmon -Pnsm -@ ALL >> $filename
+                if [ $? -eq 1 ]
+                then
+                        do_timestamp "svmon -Pnsm"
+                        $BIN/svmon -Pnsm  >> $filename
+                fi
+        fi
+else
+        do_timestamp "svmon -Pnsm"
+        echo "svmon -Pnsm" >> $filename
+        echo "----------" >> $filename
+        $BIN/svmon -Pnsm  >> $filename
+fi
+
+#
+# list the 'mmap mapped to sid'
+#
+#$BIN/grep 'mmap mapped to sid' svmon.tmp |
+#while read P1 P2 P3 P4 P5 P6 SID P7; do
+#    echo "\n"  >> $filename
+#    echo "svmon -S $SID"       >> $filename
+#    echo "---------------"     >> $filename
+#    svmon -S $SID      >> $filename
+#done
+if [ $WPARG -eq 1 ]
+then
+        do_timestamp "svmon -lS -@ ALL"
+        svmon -lS -@ ALL > ${filename}.S
+        if [ $? -eq 1 ]
+        then
+                do_timestamp "svmon -lS"
+                svmon -lS > ${filename}.S
+        fi
+else
+        do_timestamp "svmon -lS"
+        $BIN/svmon -lS > ${filename}.S
+fi
+do_timestamp "svmon.sh completed"
+#$BIN/rm -f svmon.tmp
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat sar.sh
+#!/bin/ksh
+#
+# COMPONENT_NAME: perfpmr
+#
+# FUNCTIONS: none
+#
+# ORIGINS: 27
+#
+# (C) COPYRIGHT International Business Machines Corp.  2000
+# All Rights Reserved
+#
+# US Government Users Restricted Rights - Use, duplication or
+# disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+#
+# sar.sh
+#
+# invoke sar command for specified interval and create reports
+#
+export LANG=C
+BIN=/usr/bin
+SBIN=/usr/sbin
+
+
+
+if [ $# -ne 1 ]; then
+ echo "sar.sh: usage: sar.sh time"
+ echo "      time is total time in seconds to be measured."
+ exit 1
+fi
+
+# check total time specified for minimum amount of 60 seconds
+if [ $1 -lt 60 ]; then
+ echo Minimum time interval required is 60 seconds
+ exit 1
+fi
+
+# check if LPP installed
+if [ ! -x /usr/sbin/sar ]; then
+  echo "\n     SAR: /usr/sbin/sar command is not installed"
+  echo   "     SAR:   This command is part of the optional"
+  echo   "              bos.acct fileset"
+  exit 1
+fi
+
+# determine INTERVAL and COUNT
+if [ $1 -lt 601 ]; then
+ INTERVAL=10
+ let COUNT=$1/10
+else
+ INTERVAL=60
+ let COUNT=$1/60
+fi
+let COUNT=COUNT+1
+
+# put awk script in temp file for later use
+$BIN/cat <<EOF > sar.awk
+BEGIN {
+   state = 0;
+}
+
+{
+   if(state == 0) { # first record
+      timestamp = \$1; # save timestamp
+      state = 1;
+   }
+
+   if(\$1 == timestamp) { # header record
+      printf ("\n");
+      print \$0;
+      if(\$2 == "proc-sz") { # no average this category - print next rcd
+         state = 2;
+      }
+      next;
+   }
+
+   if(state == 2) { # first record after proc-sz header line
+      print \$0;
+      state = 1;
+      next;
+   }
+
+   if(\$1 == "Average") { # summary line
+      print \$0;
+      state = 4;   # On MP machines, data is given for each cpu
+      next;
+   }
+
+   if(state == 4) { # first record after Average summary line
+      if( \$0 ~ /^$/ )  # next line is blank so return
+         state = 1;
+      else    # MP output has multiple lines, so print them
+         print \$0;
+      next;
+   }
+
+}
+
+END {
+}
+EOF
+
+echo "\n\n\n      S A R    I N T E R V A L    O U T P U T   (sadc $INTERVAL $COUNT; sar -A)\n" > sar.int
+echo "\n\n\n        S  A  R    S  U  M  M  A  R  Y    O  U  T  P  U  T\n\n\n" > sar.sum
+echo "\n\nHostname:  "  `$BIN/hostname -s` >> sar.int
+echo "\n\nHostname:  "  `$BIN/hostname -s` >> sar.sum
+echo "\n\nTime before run:  " `$BIN/date` >> sar.int
+echo "\n\nTime before run:  " `$BIN/date` >> sar.sum
+
+echo "\n     SAR: Starting System Activity Recorder [SAR]...."
+trap 'kill -9 $!' 1 2 3 24
+/usr/lib/sa/sadc  $INTERVAL $COUNT sar.tmp &
+
+# wait required interval
+echo "     SAR: Waiting for measurement period to end...."
+wait
+
+# save time after run
+echo "\n\nTime after run :  " `$BIN/date` >> sar.int
+echo "\n\nTime after run :  " `$BIN/date` >> sar.sum
+
+echo "     SAR: Generating reports...."
+
+# Generate ascii version of collected sar data
+# For SMP machines list the cpu load by processor
+NUM_CPU=`$SBIN/lsdev -C | $BIN/grep proc | $BIN/grep Available | $BIN/wc -l`
+if [ $NUM_CPU = 1 ]; then
+    $SBIN/sar -Af sar.tmp > sar.tmp2
+  else
+    $SBIN/sar -A -P ALL -f sar.tmp > sar.tmp2
+fi
+
+# delete first 3 lines from this ascii file and overlay binary file
+$BIN/mv sar.tmp sar.bin
+$BIN/tail +5 sar.tmp2 > sar.tmp
+
+# put interval data into output file
+echo "\n\n\n" >> sar.int
+$BIN/cat sar.tmp >> sar.int
+
+# generate summary report
+echo "\n\n" >> sar.sum
+$BIN/awk -f sar.awk sar.tmp >> sar.sum
+
+$BIN/rm  sar.awk sar.tmp sar.tmp2
+
+echo "     SAR: Interval report is in file sar.int"
+echo "     SAR: Summary report is in file sar.sum"
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat CheckSpace
+#!/bin/sh
+
+case $1 in
+        free)
+                lsvg |lsvg -i 2>/dev/null |sed -e 's/(//g'  -e 's/)//g' |awk '
+                        BEGIN {
+                                print "VG             Free Space";
+                                print "-------------  ----------------";
+                        }
+                 /VOLUME GROUP/ {printf("%-15s",  $3);}
+                 /FREE PPs/ {printf("%-6s %s\n", $7, $8);}
+                '
+        ;;
+        lvlist)
+                lsvg -o |while read line
+                do
+                        echo "------------------------------------------------------------------------------------------------------"
+                        echo "VG             LV NAME         TYPE     LPs   Megs     Gigs     LV STATE     MOUNT POINT"
+                        echo "-------------- --------------- -------- ----- -------- -------- ------------ -------------------------"
+
+                        PPsize=`lsvg $line |awk '/PP SIZE:/{print $6}'`
+                        lsvg -l $line |egrep -v "MOUNT|${line}:"|\
+                                awk '
+                                        {
+                                                printf("%-14s ",  vg);
+                                                printf("%-15s ", $1);
+                                                printf("%-8s ", $2);
+                                                printf("%-5s ", $3);
+                                                printf("%-8s ", $4 * pp);
+                                                printf("%-8s ", $4 * pp / 1024);
+                                                #printf("%s ", $5);
+                                                printf("%-12s ", $6);
+                                                printf("%s\n", $7);
+                                                s=s+$4
+                                        }
+                                        END {   printf("-------------- --------------- -------- ----- -------- ");
+                                                printf("-------- ------------ -------------------------\n");
+                                                printf("%-14s ",  vg);
+                                                printf("%-4s PP size    ", pp);
+                                                printf("%-8s ", "-");
+                                                printf("%-5s ", s);
+                                                printf("%-8s ", s * pp);
+                                                printf("%-8s ", s * pp / 1024);
+                                                #printf("%s ", $5);
+                                                printf("%-12s ", "-");
+                                                printf("%s 34G disks needed\n", s/269);
+                                        }
+                                ' vg=$line pp=$PPsize
+                        echo "#\n#"
+                done
+        ;;
+        mikelist)
+                lsvg -o |while read line
+                do
+                        echo "------------------------------------------------------------------------------------------------------"
+                        echo "VG             LV NAME         TYPE     LPs   Gigs     LV STATE     MOUNT POINT"
+                        echo "-------------- --------------- -------- ----- -------- ------------ -------------------------"
+
+                        PPsize=`lsvg $line |awk '/PP SIZE:/{print $6}'`
+                        lsvg -l $line |egrep -v "MOUNT|${line}:" |\
+                                awk '
+                                        {
+                                                printf("%-14s ",  vg);
+                                                printf("%-15s ", $1);
+                                                printf("%-8s ", $2);
+                                                printf("%-5s ", $3);
+                                                #printf("%-8s ", $4 * pp);
+                                                GS=sprintf("%2.2f", $4 * pp / 1024);
+                                                printf("%-8s ", GS);
+                                                #printf("%s ", $5);
+                                                printf("%-12s ", $6);
+                                                printf("%s\n", $7);
+                                                s=s+$4
+                                        }
+                                        END {   printf("-------------- --------------- -------- ----- -------- ");
+                                                printf("-------- ------------ -------------------------\n");
+                                                printf("%-14s ",  vg);
+                                                printf("%-4s PP size    ", pp);
+                                                printf("%-8s ", "-");
+                                                printf("%-5s ", s);
+                                                #printf("%-8s ", s * pp);
+                                                GS=sprintf("%2.2f", s * pp / 1024);
+                                                printf("%-8s ", GS);
+                                                #printf("%s ", $5);
+                                                printf("%-12s ", "-");
+                                                printf("%2.2f 34G disks needed\n", s/269);
+                                        }
+                                ' vg=$line pp=$PPsize
+                        echo "#\n#"
+                done
+        ;;
+        CFS)
+                SERVER=`uname -n`
+                lsvg -o |while read line
+                do
+                        echo "------------------------------------------------------------------------------------------------------"
+                        PPsize=`lsvg $line |awk '/PP SIZE:/{print $6}'`
+                        lsvg -l $line |egrep -v "MOUNT|${line}:"| while read data
+                        do
+                                FS=`echo $data |awk '{print $NF}'`
+                                DEPTH=`echo $data |awk '{print $NF}' |awk -F'/' '{print NF - 1}'`
+                                USER=`ls -ald $FS 2>/dev/null|awk '{print $3}'`
+                                GROUP=`ls -ald $FS 2>/dev/null|awk '{print $4}'`
+                                echo $data |awk '
+                                        $2 == "jfs2"{
+                                                printf("%-15s FS ", server);
+                                                printf("%-15s ", vg);
+                                                printf("%-15s ", $1);
+                                                printf("%10sm ", $4 * pp);
+                                                printf("%-8s ", u);
+                                                printf("%-8s ", g);
+                                                printf("%s ", "4096");
+                                                printf("%s ", d);
+                                                printf("%s\n", $7);
+                                        }
+                                ' server=$SERVER vg=$line pp=$PPsize u=$USER g=$GROUP d=$DEPTH
+                        done
+                done
+        ;;
+        *)
+                lsvg |lsvg -i 2>/dev/null |sed -e 's/(//g'  -e 's/)//g' |awk '
+                        BEGIN {
+                                print "VG             TotalSpace MB  FreeSpace MB  UsedSpace MB";
+                                print "-------------  -------------  ------------  ------------";
+                        }
+                 /VOLUME GROUP/ {printf("%-15s",  $3);}
+                 /TOTAL PPs/ {printf("%-14s ", $7);  ts = ts + $7}
+                 /FREE PPs/ {printf("%-13s ", $7);   tf = tf + $7}
+                 /USED PPs/ {printf("%-14s\n", $6);  tu = tu + $6}
+                END {
+                        print "-------------  -------------  ------------  ------------";
+                        printf("%-15s",  "Totals");
+                        printf("%-14s ", ts);
+                        printf("%-13s ", tf);
+                        printf("%-14s\n", tu);
+                }
+                '
+        ;;
+esac
+
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat Powerpath_check_script
+#!/bin/ksh
+ 
+#  1. List the VGs which are online currently
+#  2. For each of the VGs in 1, list all the volumes
+#  3. For each of the volumes in 2, find the hdiskpower devices
+#  4. Run iostat in parallel with dd read from the hdiskpower, on native devices and pseudo
+#  5. If IOs are going to only hdisks and not hdiskpower return error for that volume
+#
+# Uncomment the following line if you would like to debug the script
+# DEBUG=1
+ 
+CheckForAnomaly ()
+{
+    if [ "$DEBUG" -eq 1 ] ; then set -x ; fi
+    volume=$1
+    pseudolist=`lslv -l $volume | grep hdiskpower | awk ' {print $1}'`
+ 
+    # Check the pseudolist for empty and if so return 
+    if [ -z "$pseudolist" ]  
+    then 
+      return 2;
+    fi
+
+    disklist=$pseudolist
+    for pv in $pseudolist
+    do
+      # List of native paths for given hdiskpower
+      rdisklist=`odmget -q"name=$pv and attribute=pnpath" CuAt | grep value | xargs -n3 | awk '{print $3}'`
+      disklist="${disklist} ${rdisklist}"
+    done
+
+    if [ -f /tmp/iostat.out ]
+    then 
+      rm -f /tmp/iostat.out
+    fi
+
+    # CAUTION: DON'T CHANGE THE if/of BELOW!! This primes the device so that IO can quickly flow
+    dd if=/dev/r$volume of=/dev/null count=10  >/dev/null 2>&1
+
+    # Run iostat for 3 seconds and one time
+    # echo "iostat $disklist 3 1 > /tmp/iostat.out "
+    iostat $disklist 3 1 > /tmp/iostat.out &
+    PID=$!   # EAW Comment #9
+
+    # Run the dd in BG
+    sleep 1   # Wait 1 sec to ensure the iostat is collecting
+    # CAUTION: DON'T CHANGE THE if/of BELOW!!
+    dd if=/dev/r$volume of=/dev/null count=10  >/dev/null 2>&1 &  #Change from EAW comment #3 to use raw device
+ 
+    # We need to wait till iostat pushes some data onto /tmp/iostat.out file
+    wait $PID   # EAW Comment #9
+
+    io_to_pseudo=`cat /tmp/iostat.out | grep hdiskpower | awk '{SUM=SUM+$5}END{print SUM}'`
+    io_to_hdisks=`cat /tmp/iostat.out | grep hdisk | grep -v hdiskpower | awk '{SUM=SUM+$5}END{print SUM}'`
+ 
+    if [ $io_to_pseudo -eq 0 ]
+    then
+      if [ $io_to_hdisks -gt 0 ]
+     then
+         return 1
+     else
+        echo "Warning: Unable to capture IO for LV $volume, please re-run script"
+        exit 1
+     fi
+   fi
+ 
+    return 0;
+ 
+}
+ 
+ 
+################# main ######################
+ 
+if [ "$DEBUG" -eq 1 ] ; then set -x ; fi
+ 
+# List the online VGs
+vglist=`lsvg -o`
+ 
+# List the Volumes out of VGs
+for vg in $vglist
+do 
+  lv=`lsvg -l $vg | tail +3 | awk '{  print $1 }' | head -1`
+  if [ -z "$lv" ]
+  then
+    echo "Warning: VG $vg has no LVs and cannot be validated."
+    echo "Warning: An LV must be created and the validation re-run!!"
+    return -1
+  fi
+  CheckForAnomaly $lv  
+  ret=$?
+  if [ $ret -eq 1 ]
+  then
+    echo "Warning: $lv in $vg is bypassing PowerPath!!"
+    echo "Warning: The host requires a reboot!!"
+    rm -rf /tmp/iostat.out
+    return -1
+  fi 
+done
+ 
+# We are here because LVM/PP are in consistent states 
+echo "LVM/PowerPath in consistent states; No action required!"
+ 
+# Created by IostatVerfiy()
+rm -rf /tmp/iostat.out
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat CheckPaths
+#!/usr/bin/perl
+
+
+@paths = qx "lspath";
+chomp @paths;
+
+sub MySort {
+        $ma = $a;
+        $mb = $b;
+        $ma =~ s/hdisk//;
+        $mb =~ s/hdisk//;
+        if($ma == $mb){ return 0;}
+        if ($ma > $mb){
+                return 1;
+        } else {
+                return -1;
+        }
+}
+
+
+foreach $line (@paths){
+        @flds = split(" ", $line);
+        $state = substr($flds[0], 0, 1);
+        $DiskPaths{$flds[1]} = "$DiskPaths{$flds[1]} $flds[2]:$state";
+        $size = qx "bootinfo -s $flds[1]";
+        chomp $size;
+        $DiskSize{$flds[1]} = $size
+}
+
+foreach $key (sort MySort keys %DiskPaths){
+        printf "%-8s %-20s %sm\n", $key, $DiskPaths{$key}, $DiskSize{$key};
+}
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat CheckDiskSize
+#!/usr/bin/perl
+
+
+
+@lscfg = qx "lscfg";
+chomp @lscfg;
+
+%VDISKS = ();
+%PDISKS = ();
+
+sub SortVirt {
+        $a1 = $a;
+        $b1 = $b;
+
+        $a1 =~ s/hdisk//;
+        $b1 =~ s/hdisk//;
+        return $a1 <=> $b1;
+}
+
+sub SortPower {
+        $a1 = $a;
+        $b1 = $b;
+
+        $a1 =~ s/hdiskpower//;
+        $b1 =~ s/hdiskpower//;
+        return $a1 <=> $b1;
+}
+
+
+foreach $a (@lscfg){
+        if($a =~ /(hdisk)/){
+                @tmp = split(" ", $a);
+                if($a =~ /(Virtual)/){
+                        $s = qx "bootinfo -s $tmp[1]";
+                        chomp $s;
+                        $VDISKS{$tmp[1]} = $s;
+                }
+                if($a =~ /(PowerPath)/){
+                        $s = qx "bootinfo -s $tmp[1]";
+                        chomp $s;
+                        $PDISKS{$tmp[1]} = $s;
+                }
+        }
+}
+
+foreach $a (sort SortVirt keys %VDISKS){
+        printf "%-14s %s\n", $a, $VDISKS{$a};
+}
+
+
+foreach $a (sort SortPower keys %PDISKS){
+        printf "%-14s %s\n", $a, $PDISKS{$a};
+}
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat CheckLvSpace
+#!/bin/sh
+
+#/usr/lpp/EMC/Symmetrix/bin/inq.aix64_51 |grep power|sed -e 's/\/dev\/r//' -e 's/ //g'
+
+lscfg -v |sed -e 's/\./ /g' |awk '
+        /hdiskpower/ {state=1;disk=$1};
+        /hdisk/ && /Virtual/ {print $1, $5};
+        /hdisk/ && /SCSI/ && $0 !~ /Virtual/ {state=1;disk=$1};
+        /Manufacturer/ {if(state == 1)print disk, $2; state=0;}
+' |sort -nk 1.11,1.13 >/tmp/DiskTypes
+
+case $1 in
+        status)
+                echo "################################################################"
+                echo "# `uname -n`"
+                lsvg -o |lsvg -li 2>/dev/null  |nawk '
+                        BEGIN {
+                                print "Num of VGs      Num of LVs      Max LV Size MB";
+                                print "--------------  --------------  --------------";
+                        }
+                        $1 ~ ".*:" {VGcount = VGcount + 1;}
+                        $2 == "paging"  {
+                                LVcount = LVcount + 1;
+                                if(MaxLvSize < ($3 * 128)){MaxLvSize = $3 * 128}
+                        }
+                        $2 == "jfs2"  {
+                                LVcount = LVcount + 1;
+                                if(MaxLvSize < ($3 * 128)){MaxLvSize = $3 * 128}
+                        }
+                        $2 == "jfs2log"  {
+                                LVcount = LVcount + 1;
+                                if(MaxLvSize < ($3 * 128)){MaxLvSize = $3 * 128}
+                        }
+                        $2 == "raw"  {
+                                LVcount = LVcount + 1;
+                                if(MaxLvSize < ($3 * 128)){MaxLvSize = $3 * 128}
+                        }
+                        $2 == "sysdump"  {
+                                LVcount = LVcount + 1;
+                                if(MaxLvSize < ($3 * 128)){MaxLvSize = $3 * 128}
+                        }
+                        END { printf("%-15s %-15s %-15s\n", VGcount, LVcount, MaxLvSize);}
+
+                '
+        ;;
+        tdisklv)
+                echo "Disk          Tier Company QD  VG            LVcount  TotalSize  FreeSize  UsedSize"
+                echo "------------- ---- ------- --  ------------  -------  ---------  --------  --------"
+
+                #lspv | sort -nk 1.11,1.13 |while read disk serial vg state
+                lspv | sort -nk 1.6,1.8 |while read disk serial vg state
+                do
+                        if [ "$state" = "active" ]
+                        then
+                                Type=`grep "^$disk " /tmp/DiskTypes |awk '{print $2}'`
+                                if [ "$Type" = "" ]
+                                then
+                                        Type="-"
+                                fi
+                                LSPV=`lspv $disk 2>/dev/null|sed -e 's/(//' -e 's/)//'`
+                                Tsize=`echo "$LSPV" |awk '/TOTAL PPs:/{print $4}'`
+                                Fsize=`echo "$LSPV" |awk '/FREE PPs:/{print $4}'`
+                                Usize=`echo "$LSPV" |awk '/USED PPs:/{print $4}'`
+                                QD=`lsattr -El $disk |awk '/queue_depth/{print $2}'`
+
+                                #LVcount=`lspv -l $disk  |egrep -v "DISTRIBUTION|$disk" |wc -l`
+                                LVcount="-"
+                                echo "$disk $Type $QD $vg $LVcount $Tsize $Fsize $Usize" |awk '{
+                                        printf("%-13s %-7s %-3s %-13s %-8s ",
+                                                $1, $2, $3, $4, ($8>0?$5:"empty"));
+                                        printf("%-10s %-9s %-7s \n", $6, $7, $8 );
+                                }'
+                        else
+                                case $disk in
+                                        hdiskpower*)
+                                                Type=`grep "^$disk " /tmp/DiskTypes |awk '{print $2}'`
+                                                Tsize=`bootinfo -s $disk`
+                                                QD=`lsattr -El $disk |awk '/queue_depth/{print $2}'`
+                                                echo "$disk $Type $QD $vg - $Tsize - -" |awk '{
+                                                        printf("%-13s %-5s %-3s %-13s %-8s ",
+                                                                $1, $2, $3, $4, ($5>0?$5:"empty"));
+                                                        printf("%-10s %-9s %-7s \n", $6, $7, $8 );
+                                                }'
+                                        ;;
+                                esac
+                        fi
+                done
+        ;;
+        disklv)
+                echo "Disk          Company QD  VG             LVcount  TotalSize  FreeSize  UsedSize"
+                echo "------------- ------- --  ------------   -------  ---------  --------  --------"
+
+                #lspv | sort -nk 1.6,1.8 |while read disk serial vg state
+                L1=`lspv |grep hdisk[0-9] |sort -nk 1.6,1.8`
+                L2=`lspv |grep $2 |grep hdiskpower |sort -nk 1.11,1.13`
+                (echo "$L1";echo "$L2") |while read disk serial vg state
+                do
+                        if [ "$state" = "active" ]
+                        then
+                                Type=`grep "^$disk " /tmp/DiskTypes |awk '{print $2}'`
+                                if [ "$Type" = "" ]
+                                then
+                                        Type="-"
+                                fi
+                                LSPV=`lspv $disk 2>/dev/null|sed -e 's/(//' -e 's/)//'`
+                                Tsize=`echo "$LSPV" |awk '/TOTAL PPs:/{print $4}'`
+                                Fsize=`echo "$LSPV" |awk '/FREE PPs:/{print $4}'`
+                                Usize=`echo "$LSPV" |awk '/USED PPs:/{print $4}'`
+                                QD=`lsattr -El $disk |awk '/queue_depth/{print $2}'`
+
+                                LVcount=`lspv -l $disk  |egrep -v "DISTRIBUTION|$disk" |wc -l`
+                                #LVcount="-"
+                                echo "$disk $Type $QD $vg $LVcount $Tsize $Fsize $Usize" |awk '{
+                                        printf("%-13s %-7s %-3s %-14s %-8s ",
+                                                $1, $2, $3, $4, ($8>0?$5:"empty"));
+                                        printf("%-10s %-9s %-7s \n", $6, $7, $8 );
+                                }'
+                        else
+                                OK="`grep $disk /tmp/DiskTypes`"
+                                if [ "$OK" != "" ]
+                                then
+                                        Type=`grep "^$disk " /tmp/DiskTypes |awk '{print $2}'`
+                                        Tsize=`bootinfo -s $disk |sed -e 's/ //g'`
+                                        QD=`lsattr -El $disk |awk '/queue_depth/{print $2}'`
+                                        echo "$disk $Type $QD $vg - $Tsize - -" |awk '{
+                                                printf("%-13s %-7s %-3s %-14s %-8s ",
+                                                        $1, $2, $3, $4, ($5>0?$5:"empty"));
+                                                printf("%-10s %-9s %-7s \n", $6, $7, $8 );
+                                        }'
+                                fi
+                        fi
+                done
+        ;;
+        movelv)
+                lsvg -o |lsvg -li 2>/dev/null  |nawk '
+                        BEGIN {
+                                lvcount=1;
+                                print "LV               VG                TYPE     Size MB     Mount Point";
+                                print "---------------  ----------------  -------- ----------- -----------";
+                        }
+                        $1 ~ ".*:" {split($1, d, ":");}
+                        $2 == "paging"  {
+                                printf("fs%2.2d %-15s %-10s %-8s %7s %s\n", lvcount,
+                                 $1, d[1], $2, $3 * 128, $NF);
+                        }
+                        $2 == "jfs2"    {
+                                printf("fs%2.2d %-15s %-10s %-8s %7s %s\n", lvcount,
+                                 $1, d[1], $2, $3 * 128, $NF);
+                        }
+                        $2 == "jfs2log" {
+                                printf("fs%2.2d %-15s %-10s %-8s %7s %s\n", lvcount,
+                                 $1, d[1], $2, $3 * 128, $NF);
+                        }
+                        $2 == "raw" {
+                                printf("fs%2.2d %-15s %-10s %-8s %7s %s\n", lvcount,
+                                 $1, d[1], $2, $3 * 128, $NF);
+                        }
+                        $2 == "sysdump" {
+                                printf("fs%2.2d %-15s %-10s %-8s %7s %s\n", lvcount,
+                                 $1, d[1], $2, $3 * 128, $NF);
+                        }
+                        {lvcount = lvcount + 1;}
+                '
+        ;;
+        *)
+                lsvg -o |lsvg -li 2>/dev/null  |nawk '
+                        BEGIN {
+                                print "LV               VG                TYPE     Size MB     Mount Point";
+                                print "---------------  ----------------  -------- ----------- -----------";
+                        }
+                        $1 ~ ".*:" {split($1, d, ":");}
+                        $2 == "paging"  {
+                                printf("%-15s %-10s %-8s %7s %s\n",
+                                 $1, d[1], $2, $3 * 128, $NF);
+                        }
+                        $2 == "jfs2"    {
+                                printf("%-15s %-10s %-8s %7s %s\n",
+                                 $1, d[1], $2, $3 * 128, $NF);
+                        }
+                        $2 == "jfs2log" {
+                                printf("%-15s %-10s %-8s %7s %s\n",
+                                 $1, d[1], $2, $3 * 128, $NF);
+                        }
+                        $2 == "raw" {
+                                printf("%-15s %-10s %-8s %7s %s\n",
+                                 $1, d[1], $2, $3 * 128, $NF);
+                        }
+                        $2 == "sysdump" {
+                                printf("%-15s %-10s %-8s %7s %s\n",
+                                 $1, d[1], $2, $3 * 128, $NF);
+                        }
+                '
+        ;;
+esac
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat CheckDiskInfo
+#!/usr/bin/perl
+
+@inq = qx "/usr/lpp/EMC/Symmetrix/bin/inq.aix64_51 -et 2>/dev/null";
+chomp @inq;
+
+@InqInfo = {};
+
+for($i=0;$i<@inq;$i++){
+        @tmp = split(":", $inq[$i], 9999);
+        $Disk[$i] = $tmp[0];
+        $Disk[$i] =~ s/\/dev\/r//;
+        $InqInfo[$i]{"disk"} = $Disk[$i];
+        $InqInfo[$i]{"serial"} = $tmp[1];
+        $InqInfo[$i]{"R1R2"} = $tmp[3];
+        $InqInfo[$i]{"type"} = $tmp[8];
+}
+for($i=0;$i<@InqInfo;$i++){
+        printf "%s ", $InqInfo[$i]{"disk"};
+        printf "%s ", $InqInfo[$i]{"serial"};
+        printf "%s ", $InqInfo[$i]{"R1R2"};
+        printf "%s\n", $InqInfo[$i]{"type"};
+
+}
+
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat createfs.sh
+#
+# Sample shell script to give you the idea of how to 
+# use the toolkit to fake up some real application
+#
+# Create the /db filesystem on two disks/striped
+
+mklv -y'db' -t'jfs' -u'8' -L'db' '-S64K' rootvg 64 hdisk0 hdisk1 
+crfs -v jfs -d'db' -m'/db' -Ayes  
+mount /db
+
+mkdir -p /db/log
+mkdir -p /db/data1
+mkdir -p /db/data1
+mkdir -p /db/data2
+
+mklv -y'web' -t'jfs' -u'8' -L'web' '-S64K' rootvg 64 hdisk0 hdisk1 
+crfs -v jfs -d'web' -m'/db' -Ayes  
+mount /web
+
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat dbstart.sh
+#
+# Sample shell script to give you the idea of how to
+# use the toolkit to fake up some real application
+#
+echo starting database
+export DIR=.
+export TIME=6000
+export LOG1=/db/log/logfile1
+export LOG2=/db/log/logfile2
+export DATA1=/db/data1/system.dbf
+export DATA2=/db/data1/index.dbf
+export DATA3=/db/data1/tables.dbf
+export DATA4=/db/data2/rollback.dbf
+export DATA5=/db/data1/tables2.dbf
+
+echo starting logging servers
+$DIR/nlog -k 1 -s 1 -m $TIME 2>$LOG1 -o "db -log1" >/dev/null &
+echo kill -9 $! >>nzap
+
+echo starting db servers
+$DIR/ncpu -p 4 -z 95 -s $TIME -o "db -client5" >/dev/null &
+
+echo starting cache
+$DIR/nmem -m 64 -z 80 -s $TIME -o "db -mgr1" >/dev/null &
+echo kill -9 $! >>nzap
+
+$DIR/nmem -m 64 -z 90 -s $TIME -o "db -mgr4" >/dev/null &
+echo kill -9 $! >>nzap
+
+$DIR/nmem -m 64 -z 95 -s $TIME -o "db -mgr5" >/dev/null &
+echo kill -9 $! >>nzap
+
+
+echo create the database
+for disk in $DATA1 $DATA2 $DATA3 $DATA4 $DATA5
+do
+        if [ -f $disk ]
+        then
+                echo $disk exists
+        else
+                echo $disk creating
+                $DIR/ndisk -C 32  -f $disk >/dev/null
+                echo kill -9 $! >>nzap
+        fi
+done
+
+echo starting disks
+$DIR/ndisk -R -r 20 -b 4k -z 80 -t $TIME -f $DATA1 -o "db -dmg1" >//dev/null &
+                echo kill -9 $! >>nzap
+$DIR/ndisk -R -r 20 -b 8k -z 90 -t $TIME -f $DATA4 -o "db -dmg4" >//dev/null &
+                echo kill -9 $! >>nzap
+$DIR/ndisk -R -r 90 -b 8k -z 95 -t $TIME -f $DATA5 -o "db -dmg5" >//dev/null &
+                echo kill -9 $! >>nzap
+
+echo database running
+
+[UAT root @ ccuaweb3 /net/ccua/export/scripts/AixLVM]
+# cat CheckDisks
+#!/bin/sh
+
+# to remove vg
+# reducevg -df findb1c_vg2 hdiskpower0
+
+# iostat -a 5 5 |grep fc
+
+/usr/lpp/EMC/Symmetrix/bin/inq.aix64 -showvol |awk -F':' '/power/{printf("%s %s\n", $1, $6);}'|sed -e 's/\/dev\/r//'>/tmp/inq.disks
+/usr/lpp/EMC/Symmetrix/bin/inq.aix64 -btl |awk -F':' '/power/{printf("%s %s\n", $1, $7);}'|sed -e 's/\/dev\/r//'>/tmp/inq.disks
+
+# mkvg -y vgname disk0 disk1 disk2 disk3
+
+for i in `lspv |awk '/power/ {print $1}'`
+do
+        lspv -l $i
+done
+
+lsvg -o|lsvg -i -l 
