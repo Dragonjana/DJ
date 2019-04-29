@@ -1,0 +1,96 @@
+[UAT root @ icgadmna1u /var/tmp/jr03595/asm-map-multipath]
+# cat mapping-script.sh
+##JR03595
+
+##This script will help to map the LUN ids from 99-oracle.rules file after SANTech refresh
+
+## Please make sure you have updated the org_rules and santec_mapping files before running the script
+
+##Please make sure to follw the input file format.
+##Example for org_rules file pattern.
+##KERNEL=="dm-*",ENV{DM_UUID}=="part1-mpath-360060e80139d030000009d0300003fa4",NAME="asmdisk/asmdisk48",OWNER="oracle",GROUP="dba",MODE="0640"
+##KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000197200138533030373045",NAME="asmdisk/data01",OWNER="oracle",GROUP="dba",MODE="0640"
+
+##Example for santec_mapping file pattern
+##-----------OLD LUN ID------------       --------- NEW LUN ID-------------
+##360000970000197200143533030303235       360060e8007e073000000e07300001062
+
+                echo "======================================================================================================================"
+                echo "UPDATE THE org_rules FILE WITH EXISTING RULES AND santec_mapping FILE WITH MAPPING DETAILS"
+                echo "NOTE: SCRIPT IS CASE SENSITIVE MAKE SURE YOU ARE UPDATING THE org_rules FILE AND santec_mapping FILE ACCORDINGLY"
+                echo "======================================================================================================================"
+                echo " "
+                echo '======== org_rules file pattern EXAMPLE =========='
+                echo 'KERNEL=="dm-*",ENV{DM_UUID}=="part1-mpath-360060e80139d030000009d0300003fa4",NAME="asmdisk/asmdisk48",OWNER="oracle",GROUP="dba",MODE="0640"'
+                echo 'KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000197200138533030373045",NAME="asmdisk/data01",OWNER="oracle",GROUP="dba",MODE="0640"'
+                echo " "
+                echo '======== santec_mapping file pattern EXAMPLE ====='
+                echo "-----------OLD LUN ID------------    ----------NEW LUN ID-------------"
+                echo "360000970000197200143533030303235    360060e8007e073000000e07300001062"
+                echo " "
+        read -r -p "Confirm to proceed  [Y/n] " input
+
+        case $input in
+          [yY][eE][sS]|[yY])
+                echo " "
+                echo "=============  New Mapping ==========="
+                echo " "
+## Collecting LUN ID from current rule file
+                cat org_rules|awk -F '"' '{print $4}'|awk -F '-' '{print $NF}'|while read d1
+                do
+
+## Collecting mapping details
+##              cat santec_mapping|awk '{print $2" " $5}'|sed s/\(//g|sed s/\)//g|while read d2 d3
+                cat santec_mapping|awk '{print $1" " $2}'|while read d2 d3
+                do
+                if [ "$d1" == "$d2" ]
+                then
+                if [ "$(grep -c $d1 org_rules)" == 1 ]
+                then
+                grep $d1 org_rules|sed "s/$d1/$d3/g"
+                fi
+                fi
+                done
+                done
+        ;;
+
+           [nN][oO]|[nN])
+
+                echo " "
+                echo "========================================================================================"
+                echo '##################### PLEASE UPDATE THE FILES AND RERUN THE SCRIPT #####################'
+                echo "========================================================================================"
+                echo " "
+        ;;
+
+        *)
+        echo "Invalid input..."
+         exit 1
+        ;;
+        esac
+----------------------------------------------------
+[UAT root @ icgadmna1u /var/tmp/jr03595/asm-map-multipath]
+# cat org_rules|head -10
+KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000195702812533031383232",NAME="asmdisk/mpathax", OWNER="oracle", GROUP="dba", MODE="0640"
+KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000195702812533031383238",NAME="asmdisk/mpathay", OWNER="oracle", GROUP="dba", MODE="0640"
+KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000195702812533031383239",NAME="asmdisk/mpathaz", OWNER="oracle", GROUP="dba", MODE="0640"
+KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000195702812533031374546",NAME="asmdisk/mpathb", OWNER="oracle", GROUP="dba", MODE="0640"
+KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000195702812533031383137",NAME="asmdisk/mpathba", OWNER="oracle", GROUP="dba", MODE="0640"
+KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000195702812533031383230",NAME="asmdisk/mpathbb", OWNER="oracle", GROUP="dba", MODE="0640"
+KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000195702812533031383146",NAME="asmdisk/mpathbc", OWNER="oracle", GROUP="dba", MODE="0640"
+KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000195702812533031383142",NAME="asmdisk/mpathbd", OWNER="oracle", GROUP="dba", MODE="0640"
+KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000195702812533031383236",NAME="asmdisk/mpathbe", OWNER="oracle", GROUP="dba", MODE="0640"
+KERNEL=="dm-*",ENV{DM_UUID}=="mpath-360000970000195702812533031383237",NAME="asmdisk/mpathbf", OWNER="oracle", GROUP="dba", MODE="0640"
+[UAT root @ icgadmna1u /var/tmp/jr03595/asm-map-multipath]
+# cat santec_mapping|head -10
+360000970000195702812533031453346       360060e80074f6e0000004f6e00000fb6
+360000970000195702812533031453430       360060e80074f6e0000004f6e00000fb7
+360000970000195702812533031453431       360060e80074f6e0000004f6e00000fb8
+360000970000195702812533031453432       360060e80074f6e0000004f6e00000fb9
+360000970000195702812533031453433       360060e80074f6e0000004f6e00000fba
+360000970000195702812533031453434       360060e80074f6e0000004f6e00000fbb
+360000970000195702812533031453435       360060e80074f6e0000004f6e00000fbc
+360000970000195702812533031453436       360060e80074f6e0000004f6e00000fbd
+360000970000195702812533031453437       360060e80074f6e0000004f6e00000fbe
+360000970000195702812533031453438       360060e80074f6e0000004f6e00000fbf
+[UAT root @ icgadmna1u /var/tmp/jr03595/asm-map-multipath]
