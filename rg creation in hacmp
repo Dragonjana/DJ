@@ -1,0 +1,144 @@
+
+
+AIX HACMP NODES:
+________________
+
+
+Please ensure cluster service is stable on both nodes before proceed further.
+
+ # lssrc -ls clstrmgrES | grep -i state
+Current state: ST_STABLE
+
+
+
+Perform the below steps in BOTH active Node & passive node:
+===========================================================
+
+1) Create a dedicated 2GB volume to use as a filesystem using local VG in server. ( Dont use rootvg and cluster vg)
+
+2) mount the new volume as /opt/udeployha
+
+
+lv name : udeploy62lv
+
+$ df -k /opt/udeployha
+	Filesystem    1024-blocks      Free %Used    Iused %Iused Mounted on
+	/dev/udeployhalv    2097152   1310868   38%     8601     3% /opt/udeployha
+
+
+3) mkdir /tmp/udeploy_install
+
+4) cd /tmp/udeploy_install
+
+5) cp /net/stealth/export1/home1.localhost/sw/AIX/uDeploy_Agent_6.2.0.0.707419.tar /tmp/udeploy_install/
+
+6) tar -xf /tmp/udeploy_install/uDeploy_Agent_6.2.0.0.707419.tar
+
+7) cd /tmp/udeploy_install/ibm-ucd-agent-install
+
+8) ./install-agent-aix.sh prod
+
+9) cd /opt/udeployha
+
+10) mkdir lost+found
+
+11) cp /etc/inittab /etc/inittab.orig
+
+12) vi /etc/inittab and remove the below entry or comment out with ":"
+
+    root:2:once:/opt/udeployha/agent/bin/agent_start.sh
+
+
+13) Stop udeploy agent service on both since the installation started it automatically.
+ 
+# /opt/udeployha/agent/bin/agent start
+
+
+
+14) Creating udeploy cluster script in both nodes.
+
+
+# cd /usr/local/hascript/
+
+# vi udeploy62.rc
+
+# cat /usr/local/hascript/udeploy62.rc
+#!/bin/sh
+
+case "$1" in
+start)
+
+echo "udeploy 6.2 RG started on " `hostname` at `date` > /var/tmp/udeploy6.2_start.log
+/opt/udeployha/agent/bin/agent_start.sh >> /var/tmp/udeploy6.2_start.log 2>&1
+sleep 10
+/usr/bin/ps -ef|grep -i ude |grep -v grep >> /var/tmp/udeploy6.2_start.log
+
+;;
+
+stop)
+
+echo "udeploy RG stopped on " `hostname` at `date` > /var/tmp/udeploy6.2_stop.log
+/opt/udeployha/agent/bin/agent_stop.sh >> /var/tmp/udeploy6.2_stop.log 2>&1
+sleep 10
+/usr/bin/ps -ef|grep -i ude|grep -v grep >> /var/tmp/udeploy6.2_stop.log
+
+;;
+
+esac
+exit 0
+##End##
+
+
+
+
+Perform the below steps in ONLY in active Node:
+================================================
+
+
+15) Create a cluster application server called  udeploy62_as
+
+# smitty cm_add_app_scripts
+                                                      [Entry Fields]
+  Application Controller Name                         udeploy62_as
+  New Name                                           [udeploy62_as]
+  Start Script                                       [/usr/local/hascript/udeploy62.rc start]
+  Stop Script                                        [/usr/local/hascript/udeploy62.rc stop]
+  Application Monitor Name(s)                                                                                                                                                                                                              +
+  Application startup mode                           [background]   
+
+
+
+16) Create a RG called udeploy62_RG 
+
+#smitty cm_add_resource_group
+
+
+ Resource Group Name                                 UDEPLOY_62_RG
+  New Resource Group Name                            []
+  Participating Nodes (Default Node Priority)        [aittsswpte1 aittsswpte2]                                                                                                                                                             +
+
+  Startup Policy                                      Online On Home Node Only                                                                                                                                                             +
+  Fallover Policy                                     Fallover To Next Priority Node In The List                                                                                                                                           +
+  Fallback Policy                                     Fallback To Higher Priority Node In The List  
+
+
+
+17) Assign the created application server (udeploy_as) to UDEPLOY_62_RG
+
+#smitty cm_change_show_rg_resources
+	select ---> UDEPLOY_62_RG and provide the below detail
+
+	Application Controllers                            [udeploy62_as]
+
+
+
+18) smitty hacmp
+
+	perform Verify & Sync
+
+
+
+19) After successfull verify & sync, please ensure failover test of UDEPLOY_62_RG only.
+
+
+
