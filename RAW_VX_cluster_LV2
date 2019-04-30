@@ -1,0 +1,39 @@
+99  vxdisk -eoalldgs list
+  500  exit
+  501  hastatus -summ
+  502  ls -ltr /dev/vx/rdsk/scoobyproddg
+  503  vxdisk list
+  504  vxdisk list -eo
+  505  vxdisk list -eo alldgs
+  506  vxprint -g scoobyproddg -v
+  507  vxassist -g scoobyproddg maxsize
+  508  vxassist -g scoobyproddg make sybdev22 16384M
+  509  /etc/vx/bin/vxdisksetup -i emc0_046d
+  510  /etc/vx/bin/vxdisksetup -i emc0_0411
+  511  vxassist -g scoobyproddg maxsize
+  512  vxdg -g scoobyproddg adddisk emc0_046c emc0_046d emc0_0411
+  513  vxdisk set emc0_046c clone=on
+  514  vxdisk set emc0_046d clone=on
+  515  vxdisk set emc0_0411 clone=on
+  516  vxassist -g scoobyproddg maxsize
+  517  vxdg -g scoobyproddg adddisk emc0_046c emc0_046d emc0_0411
+  518  vxassist -g scoobyproddg maxsize
+  519  vxassist -g scoobyproddg make sybdev22 16384M
+  520  vxassist -g scoobyproddg make sybdev23 16384M
+  521  vxassist -g scoobyproddg make sybdev24 16384M
+  522  vxassist -g scoobyproddg make sybdev25 16384M
+  523  vxassist -g scoobyproddg make sybdev26 16384M
+  524  cat /etc/VRTSvcs/conf/config/main.cf| grep "DATA"
+  525  cat /etc/VRTSvcs/conf/config/main.cf| grep "sybdev"
+  526  cat /etc/VRTSvcs/conf/config/main.cf| grep "sybdev17"
+  527  hacf -cftocmd /etc/VRTSvcs/conf/config/ -display | egrep -i sybdev17
+  528  ls -ltr /dev/vx/rdsk/scoobyproddg
+  529  vxedit -g scoobyproddg set user=sybase group=sybase sybdev22
+  530  vxedit -g scoobyproddg set user=sybase group=sybase sybdev23
+  531  vxedit -g scoobyproddg set user=sybase group=sybase sybdev24
+  532  vxedit -g scoobyproddg set user=sybase group=sybase sybdev25
+  533  vxedit -g scoobyproddg set user=sybase group=sybase sybdev26
+  534  ls -ltr /dev/vx/rdsk/scoobyproddg
+  535  exit
+
+
