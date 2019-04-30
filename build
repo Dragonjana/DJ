@@ -1,0 +1,229 @@
+Register Data Services
+# clrt register SUNW.HAStoragePlus
+# clrt register SUNW.oracle_listener
+# clrt register SUNW.oracle_server
+# clrt register SUNW.gds
+--------------------------------------------------------
+Initialize VX disks for rbcsu2dg
+# vxdisksetup -i emcpower3
+
+Create Local rbcsu2dg
+# vxdg init rbcsu2dg rbcsu2dg01=emcpower3
+# vxassist -g rbcsu2dg make optware  15g layout=nostripe
+# vxassist -g rbcsu2dg make visibr65  1g layout=nostripe
+# vxassist -g rbcsu2dg make patrol    1g layout=nostripe
+# vxassist -g rbcsu2dg make db2       1g layout=nostripe
+# vxassist -g rbcsu2dg make dce       1g layout=nostripe
+# vxassist -g rbcsu2dg make optmqm    1g layout=nostripe
+# vxassist -g rbcsu2dg make visibr    1g layout=nostripe
+# vxassist -g rbcsu2dg make ndmopt    1g layout=nostripe
+# vxassist -g rbcsu2dg make apps      1g layout=nostripe
+# vxassist -g rbcsu2dg make dcelocal  1g layout=nostripe
+# vxassist -g rbcsu2dg make cmmigr    1g layout=nostripe
+# vxassist -g rbcsu2dg make sminder   1g layout=nostripe
+# vxassist -g rbcsu2dg make sows      1g layout=nostripe
+# vxassist -g rbcsu2dg make rbcsstage 1g layout=nostripe
+# vxassist -g rbcsu2dg make rbcslog   1g layout=nostripe
+# vxassist -g rbcsu2dg make ndmwork   1g layout=nostripe
+# vxassist -g rbcsu2dg make oraclient 2g layout=nostripe
+# vxassist -g rbcsu2dg make truechange 4.8g layout=nostripe
+--------------------------------------------------------
+Register Local rbcsu2dg
+# vxdg import rbcsu2dg
+# cldg create -t vxvm -p localonly=true -n rbcsssu2 rbcsu2dg
+# vxvol -g rbcsu2dg startall
+--------------------------------------------------------
+Make large filesystems
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/optware
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/visibr65
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/patrol
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/db2
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/dce
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/optmqm
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/visibr
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/ndmopt
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/apps
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/dcelocal
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/cmmigr
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/sminder
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/sows
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/rbcsstage
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/rbcslog
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/ndmwork
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/oraclient
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/truechange
+
+Add to /etc/vfstab
+############################## LOCAL TO RBCSU1DG ###############################
+##################
+/dev/vx/dsk/rbcsu2dg/optware   /dev/vx/rdsk/rbcsu2dg/optware   /optware/oracle
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/visibr65  /dev/vx/rdsk/rbcsu2dg/visibr65  /opt/inprise/vbro
+ker6  vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/patrol    /dev/vx/rdsk/rbcsu2dg/patrol    /usr/users/patrol
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/db2       /dev/vx/rdsk/rbcsu2dg/db2       /opt/IBM/db2
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/dce       /dev/vx/rdsk/rbcsu2dg/dce       /opt/dce
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/optmqm    /dev/vx/rdsk/rbcsu2dg/optmqm    /opt/mqm
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/visibr    /dev/vx/rdsk/rbcsu2dg/visibr    /opt/inprise/vbro
+ker   vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/ndmopt    /dev/vx/rdsk/rbcsu2dg/ndmopt    /opt/cdunix
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/apps      /dev/vx/rdsk/rbcsu2dg/apps      /opt/apps
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/dcelocal  /dev/vx/rdsk/rbcsu2dg/dcelocal  /opt/dcelocal
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/cmmigr    /dev/vx/rdsk/rbcsu2dg/cmmigr    /cmmigr
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/sminder   /dev/vx/rdsk/rbcsu2dg/sminder   /export/opt/SiteM
+inder vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/sows      /dev/vx/rdsk/rbcsu2dg/sows      /export/opt/sows
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/rbcsstage /dev/vx/rdsk/rbcsu2dg/rbcsstage /rbcsprod_stage
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/rbcslog   /dev/vx/rdsk/rbcsu2dg/rbcslog   /rbcslog
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/ndmwork   /dev/vx/rdsk/rbcsu2dg/ndmwork   /ndmwork
+      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/oraclient /dev/vx/rdsk/rbcsu2dg/oraclient /opt/oraClient/10
+.2.0.3  vxfs 3 yes -
+
+Add oracle to /etc/passwd
+# oracle:x:29963:101:FUNCTIONAL,,,ORACLE INSTANCE:/u01/oracle:/bin/ksh
+...
+
+Add oracle to /etc/group
+# dba::101:oracle
+...
+
+Make it on both nodes
+# mkdir -p /optware/oracle
+# mkdir -p /opt/inprise/vbroker6
+# mkdir -p /usr/users/patrol
+# mkdir -p /opt/IBM/db2
+# mkdir -p /opt/dce
+# mkdir -p /opt/mqm
+# mkdir -p /opt/inprise/vbroker
+# mkdir -p /opt/cdunix
+# mkdir -p /opt/apps
+# mkdir -p /opt/dcelocal
+# mkdir -p /cmmigr
+# mkdir -p /export/opt/SiteMinder
+# mkdir -p /export/opt/sows
+# mkdir -p /rbcsprod_stage
+# mkdir -p /rbcslog
+# mkdir -p /ndmwork
+# mkdir -p /opt/oraClient/10.2.0.3
+# mkdir -p /export/opt/truechange
+
+# mount /optware/oracle
+# chown oracle:dba  /optware/oracle
+--------------------------------------------------------
+Initialize VX disks for oradg
+# vxdisksetup -i emcpower6
+# vxdisksetup -i emcpower7
+# vxdisksetup -i emcpower11
+# vxdisksetup -i emcpower12
+# vxdisksetup -i emcpower13
+
+Create failover oradg
+# vxdg init oradg oradg01=emcpower6
+# vxdg -g oradg adddisk oradg02=emcpower7
+# vxdg -g oradg adddisk oradg03=emcpower11
+# vxdg -g oradg adddisk oradg04=emcpower12
+# vxdg -g oradg adddisk oradg05=emcpower13
+
+Register failover oradg
+# cldg create -t vxvm -n rbcsssu2,rbcsssu1 -p preferenced=true oradg
+
+# vxassist -g oradg make oradata 100g layout=nostripe
+# vxassist -g oradg make ddumps   25g layout=nostripe
+# vxassist -g oradg make tdumps   25g layout=nostripe
+
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/oradg/oradata
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/oradg/ddumps
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/oradg/tdumps
+
+Make it on both nodes
+# mkdir /oradata
+# mkdir /DDUMPS
+# mkdir /TDUMPS
+# mount /oradata
+# mount /DDUMPS
+# mount /TDUMPS
+# chown oracle:dba /oradata
+# chown oracle:dba /DDUMPS
+# chown oracle:dba /TDUMPS
+
+######## CLUSTER SHARED Oracle DISK DG's ################################
+/dev/vx/dsk/oradg/oradata /dev/vx/rdsk/oradg/oradata /oradata vxfs 3 no -
+/dev/vx/dsk/oradg/ddumps  /dev/vx/rdsk/oradg/ddumps  /DDUMPS  vxfs 3 no -
+/dev/vx/dsk/oradg/tdumps  /dev/vx/rdsk/oradg/tdumps  /TDUMPS  vxfs 3 no -
+
+# cldg switch -n rbcsssu1 oradg
+
+----------------------------------------------------
+##### scrgadm -a -g pplus-rg -h cftsseurp2,cftsseurp1
+
+clrg create -n rbcsssu2,rbcsssu1 ora-rg
+clrg switch -M -e ora-rg
+
+----------------------------------------------------
+##### scrgadm -a -L -j ppluslh-r -g pplus-rg -l cfteurpplusp -n eurp2_2@cftsseur
+p2,eurp1_2@cftsseurp1
+
+clrslh create -g ora-rg -h rbcsorau -N rbcs_u2@rbcsssu2,rbcs_u1@rbcsssu1 ora_rbc
+s-lh
+
+----------------------------------------------------
+##### scrgadm -a -j pplusfs-r -g pplus-rg -t SUNW.HAStoragePlus -x FilesystemMou
+ntPoints=/u13,/u14,/u20,/u21,/u30,/u31,/u09,/u10,/u11,/u05,/u12 -x AffinityOn=TR
+UE
+
+clrs create -g ora-rg -t HAStoragePlus \
+-p FilesystemMountPoints=/oradata,/DDUMPS,/TDUMPS \
+-p AffinityOn=true orafs-res
+
+----------------------------------------------------
+#####scswitch -Z -g pplus-rg
+
+clrg online -M ora-rg
+
+clrg switch -n rbcsssu1 ora-rg
+clrg switch -n rbcsssu2 ora-rg
+
+STOP STOP STOP STOP
+====================================================
+##### scrgadm -a -j oracle-hist-server -g hist-rg -t SUNW.oracle_server -x ORACL
+E
+_HOME=/optware/oracle/9.2.0.8_64 -x Alert_log_file=/u01/oracle/admin/HIST/bd
+ump/alert_HIST.log -x ORACLE_SID=HIST -x Connect_string=cl_monitor/eu_hist_p
+rod -x Restart_type=RESOURCE_RESTART -y resource_dependencies=histfs-r
+
+----------------------------------------------------
+##### scrgadm -a -j oracle-hist-listener -g hist-rg -t SUNW.oracle_listener -x O
+R
+ACLE_HOME=/optware/oracle/9.2.0.8_64 -x LISTENER_NAME=LISTENER_HIST -y resou
+rce_dependencies=histfs-r
+
+====================================================
+09/19/2008 - Working one !!!
+
+clrs create -g ora-rg \
+-t SUNW.oracle_server \
+-p Resource_dependencies=orafs-res \
+-p ORACLE_SID=RBCS \
+-p ORACLE_HOME=/optware/oracle/10.2.0.3/db \
+-p Alert_log_file=/optware/oracle/admin/RBCS/bdump/alert_RBCS.log \
+-p Connect_string=cl_monitor/clmon123 \
+ora-server-res
+----------------------------------------------------
+clrs create -g ora-rg \
+-t SUNW.oracle_listener \
+-p ORACLE_HOME=/optware/oracle/10.2.0.3/db \
+-p LISTENER_NAME=LISTENER_RBCS -p Resource_dependencies=orafs-res \
+ora-listener-res
+
