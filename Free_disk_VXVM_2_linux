@@ -1,0 +1,50 @@
+
+vxdisksetup -i -f tagmastore-usp0_2426 format=cdsdisk   initialize new disk     vxdisksetup -i -f tagmastore-usp0_2426 format=cdsdisk  
+vxdisk -eo alldgs list  list dg with assosiated disk    vxdisk set <disknbame> clone=on                
+vxdg -g rfpsdg_la02u adddisk rfpsdg_la02u-02=emc0_0546  adding new disk to dg   vxdg -g group_name adddisk new_disk_name=device_name   
+vxassist -g rfpsdg_la02u maxsize        check the available space in dg vxassist -g eqzln16dg make DATA_10 20g                 
+vxdg -g rfpsdg_la02u rmdisk emc0_0546   remove the disk from dg vxedit -g eqzln16dg set user=sybase group=sybase DATA_10       
+vxassist -g rfpsdg_la02u make ufpsmqm2_vol 17G  create volume in dg                                                    
+mkfs -t vxfs /dev/vx/dsk/rfpsdg_la02u/ufpsmqm2_vol      create vxvm fs                                                 
+        add the entry in fstab in case of local dg                                                     
+                                                               
+                                                               
+vxassist -g fpsuatmqdg remove volume ufpsmqm1_vol       remove exist volume from dg                                                    
+vxresize -g soft2_dg optora2_vol +10G   increase VXFS file system                                                      
+vxresize -g soft2_dg optora2_vol -10G   degress VXFS file system                                                       
+ 
+968  20180218 18:25:39 > vxdisksetup -i -f emcpowercq format=cdsdisk 
+  969  20180218 18:25:53 > vxdisksetup -i -f emcpowercr format=cdsdisk 
+  970  20180218 18:25:57 > vxdisk -eo alldgs list 
+  971  20180218 18:26:15 > vxdisksetup -i -f emcpowercs format=cdsdisk 
+  972  20180218 18:26:25 > vxdisksetup -i -f emcpowerct format=cdsdisk 
+  973  20180218 18:26:30 > vxdisksetup -i -f emcpowercv format=cdsdisk 
+  974  20180218 18:26:37 > vxdisksetup -i -f emcpowercu format=cdsdisk 
+  975  20180218 18:26:44 > vxdisk -eo alldgs list 
+  976  20180218 18:28:43 > vxdg -g cvdb02p_dg adddisk cvdb02p_d19=emcpowercq 
+  977  20180218 18:29:16 > vxdisk set emcpowercq clone=on 
+  978  20180218 18:29:19 > vxdg -g cvdb02p_dg adddisk cvdb02p_d19=emcpowercq 
+  979  20180218 18:29:31 > vxdisk -eo alldgs list 
+  980  20180218 18:30:29 > history |grep -i cvdb02p_d13 
+  981  20180218 18:30:36 > history |grep -i cvdb02p_d18 
+  982  20180218 18:30:49 > history |grep -i clone 
+  983  20180218 18:31:09 > history |grep -i udid 
+  984  20180218 18:31:27 > vxdisk set emcpowercr clone=on 
+  985  20180218 18:31:32 > vxdisk set emcpowercs clone=on 
+  986  20180218 18:31:36 > vxdisk set emcpowerct clone=on 
+  987  20180218 18:31:43 > vxdisk set emcpowercu clone=on 
+  988  20180218 18:31:47 > vxdisk set emcpowercv clone=on 
+  989  20180218 18:31:56 > vxdisk -eo alldgs list 
+  990  20180218 18:32:35 > vxdg -g cvdb02p_dg adddisk cvdb02p_d20=emcpowercr 
+  991  20180218 18:32:42 > vxdg -g cvdb02p_dg adddisk cvdb02p_d21=emcpowercs 
+  992  20180218 18:32:50 > vxdg -g cvdb02p_dg adddisk cvdb02p_d22=emcpowerct 
+  993  20180218 18:33:01 > vxdg -g cvdb02p_dg adddisk cvdb02p_d23=emcpowercu 
+  994  20180218 18:33:09 > vxdg -g cvdb02p_dg adddisk cvdb02p_d24=emcpowercv 
+  995  20180218 18:33:15 > vxdisk -eo alldgs list 
+  996  20180218 18:33:39 > vxassist -g cvdb02p_dg maxsize 
+  997  20180218 18:34:17 > df -h /dumps/CVCHP1 
+  998  20180218 18:35:51 > vxresize -g cvdb02p_dg dumps +200G 
+  999  20180218 18:35:56 > df -h /dumps/CVCHP1 
+ 1000  20180218 18:39:17 > history 
+[Prod root @ mwcvdb02p ~] 
+
