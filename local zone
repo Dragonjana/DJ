@@ -1,0 +1,183 @@
+# /etc/powermt unmanage class=hitachi
+
+# cfgadm -al -o show_SCSI_LUN
+Ap_Id                          Type         Receptacle   Occupant     Condition
+c2                             fc-fabric    connected    configured   unknown
+c2::50060e800476440c,0         disk         connected    configured   unknown
+c2::50060e800476440c,1         disk         connected    configured   unknown
+c2::50060e800476440c,2         disk         connected    configured   unknown
+c3                             fc           connected    unconfigured unknown
+c4                             fc-fabric    connected    configured   unknown
+c4::50060e800476441c,0         disk         connected    configured   unknown
+c4::50060e800476441c,1         disk         connected    configured   unknown
+c4::50060e800476441c,2         disk         connected    configured   unknown
+c5                             fc           connected    unconfigured unknown
+
+# format
+
+# vxdctl enable
+
+# vxddladm set namingscheme=ebn persistence=yes
+# vxdisk list -> You will see TagmaStore-USP0 disks
+
+# vxdmpadm listenclosure all
+ENCLR_NAME        ENCLR_TYPE     ENCLR_SNO      STATUS       ARRAY_TYPE
+============================================================================
+Disk              Disk           DISKS                CONNECTED    Disk
+TagmaStore-USP0   TagmaStore-USP 048E3                CONNECTED    A/A
+
+# vxdmpadm getattr enclosure TagmaStore-USP0 iopolicy
+ENCLR_NAME     DEFAULT        CURRENT
+============================================
+TagmaStore-USP0 MinimumQ       MinimumQ
+
+# vxdmpadm setattr enclosure TagmaStore-USP0 iopolicy=minimumq
+
+# /opt/SANinfo/inq
+Inquiry utility, Version V7.3-845 (Rev 2.0)      (SIL Version V6.4.2.0 (Edit Level 845)
+Copyright (C) by EMC Corporation, all rights reserved.
+For help type inq -h.
+
+..............
+
+--------------------------------------------------------------------------------------------
+DEVICE                            :VEND    :PROD            :REV   :SER NUM    :CAP(kb)
+--------------------------------------------------------------------------------------------
+/dev/rdsk/c1t0d0s2                :SEAGATE :ST914602SSUN146G:0603  :081795N8   :   143369664
+/dev/rdsk/c1t1d0s2                :SEAGATE :ST914602SSUN146G:0603  :081795MN   :   143369664
+/dev/rdsk/c2t50060E800548E361d0s2 :HITACHI :OPEN-V          :6002  :50 048E3   :    36375360
+/dev/rdsk/c2t50060E800548E361d1s2 :HITACHI :OPEN-V          :6002  :50 048E3   :    36375360
+/dev/rdsk/c2t50060E800548E361d2s2 :HITACHI :OPEN-V          :6002  :50 048E3   :    36375360
+/dev/rdsk/c4t50060E800548E371d0s2 :HITACHI :OPEN-V          :6002  :50 048E3   :    36375360
+/dev/rdsk/c4t50060E800548E371d1s2 :HITACHI :OPEN-V          :6002  :50 048E3   :    36375360
+/dev/rdsk/c4t50060E800548E371d2s2 :HITACHI :OPEN-V          :6002  :50 048E3   :    36375360
+/dev/vx/rdmp/Disk_0s2             :SEAGATE :ST914602SSUN146G:0603  :081795MN   :   143369664
+/dev/vx/rdmp/Disk_1s2             :SEAGATE :ST914602SSUN146G:0603  :081795N8   :   143369664
+/dev/vx/rdmp/TagmaStore-USP0_0s2  :HITACHI :OPEN-V          :6002  :50 048E3   :    36375360
+/dev/vx/rdmp/TagmaStore-USP0_1s2  :HITACHI :OPEN-V          :6002  :50 048E3   :    36375360
+/dev/vx/rdmp/TagmaStore-USP0_2s2  :HITACHI :OPEN-V          :6002  :50 048E3   :    36375360
+
+START ======================================================================
+
+# vxdisksetup -i TagmaStore-USP0_0
+# vxdisksetup -i TagmaStore-USP0_1
+# vxdisksetup -i TagmaStore-USP0_2
+
+# vxdg init sst01_dg   sst01_dg01=TagmaStore-USP0_0
+# vxdg init ssbld1_dg ssbld1_dg01=TagmaStore-USP0_1
+
+#?vxdg -g   sst01_dg adddisk sst01_dg02=TagmaStore-USP0_1
+
+# vxassist -g sst01_dg  make cftsst01 20g
+# vxassist -g ssbld1_dg make cftssbld1 20g
+
+# mkfs -F ufs /dev/vx/rdsk/sst01_dg/cftsst01   layout=nostripe
+# mkfs -F ufs /dev/vx/rdsk/ssbld1_dg/cftssbld1 layout=nostripe
+
+# vi /etc/vfstab
+# Local Zone - cftsst01 
+/dev/vx/dsk/sst01_dg/cftsst01   /dev/vx/rdsk/sst01_dg/cftsst01   /export/zones/cftsst01  ufs 2 yes -
+# Local Zone - cftssbld1
+/dev/vx/dsk/ssbld1_dg/cftssbld1 /dev/vx/rdsk/ssbld1_dg/cftssbld1 /export/zones/cftssbld1 ufs 2 yes -
+
+# mkdir -p /export/zones/cftsst01
+# mkdir -p /export/zones/cftssbld1
+# mount -a
+# mount -v|grep cftsst01 
+# mount -v|grep cftssbld1
+# chmod 700 /export/zones/cftsst01
+# chmod 700 /export/zones/cftssbld1
+# ls -ld /export/zones/cftsst01 
+# ls -ld /export/zones/cftssbld1
+--------------------------------
+# nslookup cftsst01
+Name:   cftsst01.nam.nsroot.net
+Address: 153.40.26.89
+# grep cftsst01 /etc/hosts
+153.40.26.89    cftsst01        cftsst01.nam.nsroot.net
+
+# nslookup cftssbld1                                          
+Name:   cftssbld1.nam.nsroot.net
+Address: 153.40.26.90
+#  grep cftssbld1 /etc/hosts
+153.40.26.90    cftssbld1       cftssbld1.nam.nsroot.net
+
+# cd /opt/IHSctrcfg/bin
+
+[root @ cftssuat1]:/opt/IHSctrcfg/bin
+# ./cfgzone
+>>>>>>   Enter zone name: cftsst01
+>>>>>>   Use the following IP address? (default:y) 
+         IP address: 153.40.26.89
+         (y/n)? 
+>>>>>>   Available NICs:
+e1000g0
+e1000g1
+e1000g2
+>>>>>>   Enter zone NIC: e1000g0
+>>>>>>   Use the following Email for notification? (default:y) 
+         Email: dl.GT.Citift.Unix.SA@imcnam.ssmb.com
+         (y/n)? y
+>>>>>>   Configure zone for NIS+ ? (default:y)  (y/n)n
+         The following parameters are generated:
+         =====================================
+                 zone name:              cftsst01
+                 zone IP address:        153.40.26.89
+                 zone NIC:               e1000g0
+                 email:                  dl.GT.Citift.Unix.SA@imcnam.ssmb.com
+                 name_service:   
+
+         Is this correct? (y/n) y
+ default tmpsize is 50% (system swap is 67110712k)
+>>>>>>   Use the default tmpsize? (default=y) (y/n) 
+
+         Zone hostid zhostid=Z-x0NW_1
+>>>>>>   Use this zhostid? (default:y)  (y/n)
+
+Enter zone root password: 
+Re-enter zone root password: 
+ zone param. file '/etc/opt/IHSctrcfg/cftsst01' created
+
+run '/opt/IHSctrcfg/bin/mkzone cftsst01' to start configuring zone
+             OR
+Configure zone cftsst01 now? (default:n) (y/n)
+y
+Preparing to install zone <cftsst01>.
+Creating list of files to copy from the global zone.
+Copying <36381> files to the zone.
+Initializing zone product registry.
+Determining zone package initialization order.
+Preparing to initialize <400> packages on the zone.
+Initialized <400> packages on zone.                                
+Zone <cftsst01> is initialized.
+Installation of <52> packages was skipped.
+Installation of these packages generated warnings: <VRTSat>
+The file </export/zones/cftsst01/root/var/sadm/system/logs/install_log> contains a log of the zone installation.
+zoneadm: zone 'cftsst01': WARNING: The zone.cpu-shares rctl is set but
+zoneadm: zone 'cftsst01': FSS is not the default scheduling class for
+zoneadm: zone 'cftsst01': this zone.  FSS will be used for processes
+zoneadm: zone 'cftsst01': in the zone but to get the full benefit of FSS,
+zoneadm: zone 'cftsst01': it should be the default scheduling class.
+zoneadm: zone 'cftsst01': See dispadmin(1M) for more details.
+
+#   zoneadm list -cv
+  ID NAME             STATUS     PATH                           BRAND    IP    
+   0 global           running    /                              native   shared
+   4 cftsst01         running    /export/zones/cftsst01         native   shared
+   5 cftssbld1        running    /export/zones/cftssbld1        native   shared
+
+zlogin cftsst01
+zlogin cftssbld1
+
+Wait for the confirmation mail dor the zone creation.
+
+Change IP of the local zone:
+
+zonecfg -z cftsweuru3
+zonecfg:cftsweuru3> remove net address=153.40.50.64
+zonecfg:cftsweuru3> add net
+zonecfg:cftsweuru3:net> set address=153.40.50.64
+zonecfg:cftsweuru3:net> set physical=e1000g0
+zonecfg:cftsweuru3:net> end
+zonecfg:cftsweuru3> exit
+
