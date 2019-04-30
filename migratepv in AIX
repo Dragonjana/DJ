@@ -1,0 +1,42 @@
+stty erase 
+hostname
+lsdev -Cc disk | grep -i virtual
+cfgmgr
+lsdev -Cc disk | grep -i virtual
+lspv
+lsvg -p rootvg
+lspv | grep -i alt
+/usr/sbin/alt_rootvg_op -X
+rmdev -dl hdisk0
+lspv
+rendev -l hdisk3 -n hdisk0
+lspv
+lsvg -p rootvg
+extendvg rootvg hdisk0
+lsvg -p rootvg
+migratepv -l hd5 hdisk1 hdisk0
+chpv -c hdisk1
+bosboot -ad /dev/hdisk0
+migratepv hdisk1 hdisk0
+recuvevg rootvg hdisk1
+reducevg rootvg hdisk1
+rmdev -dl hdisk1
+lsvg -p rootvg
+bosboot -ad /dev/hdisk0
+bootlist -m normal hdisk0
+bootlist -m normal -o
+lspv | grep -i paging
+lspv
+rendev -l hdisk4 -n hdisk1
+extendvg pagingvg hdisk1
+lsvg -p pagingvg
+migratepv hdisk2 hdisk1
+reducevg pagingvg hdisk2
+rmdev -dl hdisk2
+lspv
+rendev -l hdisk5 -n hdisk2
+lspv
+echo "alt_disk_copy -P all -B -d 'hdisk2' 1> /tmp/adi.log 2>&1" | at now
+tail -f /tmp/adi.log
+lspv
+bootlist -m normal -o
