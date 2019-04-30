@@ -1,0 +1,53 @@
+When extending a RVG volume normally, we will get the below error.
+
+# /etc/vx/bin/vxresize -g ptrncnar01 ptrncnar01_vol1 +20G
+VxVM vxassist ERROR V-5-1-16948 Unable to resize the volume. Volume is part of RVG.  It is recommended to use the "vradmin resizevol" command or specify "-f" option to force the operation.
+VxVM vxresize ERROR V-5-1-4703 Problem running vxassist command for volume ptrncnar01_vol1, in diskgroup ptrncnar01
+
+We need to do the below steps when increasing the RVG Volume.
+
+
+To start the vradmin service,
+
+#/etc/init.d/vras-vradmind.sh start
+
+
+To Check the status of replica use the below. Check the status on both PROD and COB.
+
+#vradmin -g <DG> -l repstatus <RVG>                                                     
+
+
+Example:-
+
+#vradmin -g ptrncnar01 -l repstatus ptrncnar01_rvg
+
+[COB root @******* /etc/init.d]
+# vradmin -g ptrncnar01 -l repstatus ptrncnar01_rvg
+VxVM VVR vradmin INFO V-5-52-1205 Primary is unreachable or RDS has configuration error. Displayed status information is from Secondary and can be out-of-date.
+Replicated Data Set: ptrncnar01_rvg
+
+Secondary:
+  Host name:                  ctrncnar_rlk
+  RVG name:                   ptrncnar01_rvg
+  DG name:                    ptrncnar01
+  Rlink from Primary:         rlk_ctrncnar_rlk_ptrncnar01_rvg
+  Rlink to Primary:           rlk_ptrncnar_rlk_ptrncnar01_rvg
+  Configured mode:            asynchronous
+  Latency protection:         off
+  SRL protection:             autodcm
+  Data status:                consistent, up-to-date
+  Replication status:         replicating (connected)
+  Current mode:               N/A
+  Logging to:                 SRL ( 0 updates behind, last update ID  39272.278664470)
+  Timestamp Information:      behind by  0h 0m 0s
+  Last Update on Primary:     Dec  7 02:37:55 PM
+  Secondary up-to-date as of: Dec  7 02:37:55 PM
+  Bandwidth Limit:            N/A
+
+[COB root @ ******** /etc/init.d]
+
+
+To Increase the volume,
+
+#vradmin -g <DG>  resizevol  <RVG>  <VOL>  <size>
+#vradmin -g ptrncnar01 resizevol ptrncnar01_rvg ptrncnar01_vol1 +20G
