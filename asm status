@@ -1,0 +1,299 @@
+#!/bin/bash
+file=/tmp/san-test
+fail=0
+echo -e "-------------------------------------------------------------------------------------" > /tmp/asm-dup
+mul=`/sbin/multipath -ll|wc -l`
+> /tmp/asm-list
+if [ $mul -ne 0 ]
+then
+#dmsetup info -c | grep mpath  | awk '{print $1" " $NF}' > /tmp/san-test
+dmsetup info -c | grep mpath  | awk -F- '{print $1" " $NF}' | awk '{print $1" " $NF}' > /tmp/san-test
+pvs 2>/dev/null| grep mpath | awk '{print $1}'|cut -d'/' -f4 > /tmp/lv-list
+while read mpname id
+do 
+        od --read-bytes=128 --format=c /dev/mapper/$mpname | grep "O   R   C   L   D   I   S   K" > /dev/null
+         if [ $? -eq 0 ]
+                 then 
+                        cou=(`cat /etc/udev/rules.d/99-oracle.rules| grep $id| wc -l`)
+                if [ $cou -gt 1 ]
+                        then
+                        for i in `cat /etc/udev/rules.d/99-oracle.rules |grep $id | awk -F',' '{print $3}' | cut -d'/' -f2 |cut -d '=' -f2| sed 's/"//g'`
+                        do
+                        echo -e "$id\t is ASM device but having duplicate entries in udev rules file, plz verify \t $i" >> /tmp/asm-dup
+                        done
+                        echo -e "-------------------------------------------------------------------------------------" >> /tmp/asm-dup
+                else
+                        adisk1=(`cat /etc/udev/rules.d/99-oracle.rules| grep $id | grep asm|awk -F',' '{print $3}' | cut -d'/' -f2 |cut -d '=' -f2| sed 's/"//g'`)
+                        adisk=(`cat /etc/udev/rules.d/99-oracle.rules| grep $id |grep asm | awk -F',' '{print $3}' | cut -d'=' -f2 | sed 's/"//g'`)
+
+                        if [ ! "$adisk1" ]
+                        then
+                        echo -e "$id $mpname is ASM \t ( `ls -l /dev/mapper/$mpname` )" >> /tmp/asm-list
+                                if [ `ls -l /dev/mapper/$mpname | awk '{print $3}'` != "oracle" ]
+                                then
+                                echo -e "FAIL: ASM Disk $mpname have wrong  permission\t (`ls -l /dev/mapper/$mpname`)" >> /tmp/asm-perm
+                                fi
+                        else
+                        #echo -e "$id $mpname is ASM \t (`ls -l /dev/asmdisk/$adisk|grep "$adisk$"`)" >> /tmp/asm-list
+                        echo -e "$id $mpname is ASM \t ( `ls -l /dev/$adisk|grep "$adisk1$"` )" >> /tmp/asm-list
+                                #if [ `ls -l /dev/asmdisk/$adisk|grep "$adisk$"| awk '{print $3}'` != "oracle" ]
+                                if [ `ls -l /dev/$adisk|grep "$adisk1$"| awk '{print $3}'` != "oracle" ]
+                                then
+                                echo -e "FAIL: ASM Disk $adisk1 have wrong  permission \t (`ls -l /dev/$adisk|grep "$adisk1$"`)" >> /tmp/asm-perm
+                                fi
+                        fi
+                fi
+                        grep $id /etc/udev/rules.d/99-oracle.rules > /dev/null
+                        if [ $? -ne 0 ]
+                        then
+                                echo -e "FAIL: $id $mpname is ASM device but missing in rules file /etc/udev/rules.d/99-oracle.rules" >> /tmp/asm-miss
+                        else
+                                egrep "$mpname$" /tmp/lv-list > /dev/null
+                                if [ $? -eq 0 ]
+                                then
+                                        echo "FAIL: $mpname is used in both LVM and in ASM, please cross verify" >> /tmp/asm-lvm
+                                fi
+								                       fi
+         else
+                #echo "$id not ASM" >> /tmp/non-asm-list
+                grep $id /etc/udev/rules.d/99-oracle.rules > /dev/null
+                if [ $? -eq 0 ]
+                then
+                        egrep "$mpname$" /tmp/lv-list > /dev/null
+                        if [ $? -eq 0 ]
+                        then
+                            ldisk=(`grep $id /etc/udev/rules.d/99-oracle.rules|awk -F',' '{print $3}'`)
+                            echo "FAIL: $mpname is added in ASM rules file /etc/udev/rules.d/99-oracle.rules ($ldisk) but also part of LVM, please cross verify " >> /tmp/non-asm-lvm
+                        fi
+                else
+                egrep "$mpname$|"$mpname"p1$|"$mpname"1$" /tmp/lv-list > /dev/null
+                if [ $? -ne 0 ]
+                then
+                echo "$id" >> /tmp/free-dev
+                fi
+                 fi
+        fi
+done < "$file"
+
+else
+
+        /sbin/powermt display dev=all | grep Pseudo | awk '{print $2}' | cut -d'=' -f2 > /tmp/san-test
+        pvs | grep power | awk '{print $1}'|cut -d'/' -f3 > /tmp/lv-list
+        while read power
+        do 
+        fdisk -l /dev/$power 2>&1| grep "$power"1 >/dev/null 
+
+        if [ $? -eq 0 ]
+        then
+        power1=`fdisk -l /dev/$power | grep "$power"1 | awk '{print $1}' | cut -d'/' -f3`
+        else
+        power1=$power
+        fi
+        od --read-bytes=128 --format=c /dev/$power1 | grep "O   R   C   L   D   I   S   K" > /dev/null
+         if [ $? -eq 0 ]
+                 then 
+                        #adisk=(`cat /etc/udev/rules.d/99-oracle.rules| grep $power | awk -F',' '{print $1}' | cut -d'=' -f3 | sed 's/"//g'`)
+                        echo -e "$power is ASM \t ( `ls -l /dev/$power1` )" >> /tmp/asm-list
+                        if [ `ls -l /dev/$power1| awk '{print $3}'` != "oracle" ]
+                                then
+                                echo -e "FAIL: ASM Disk $power have wrong  permission \t (`ls -l /dev/$power1`)" >> /tmp/asm-perm
+                                fi
+                        grep $power /etc/udev/rules.d/99-oracle.rules > /dev/null
+                        if [ $? -ne 0 ]
+                        then
+                                echo -e "FAIL: $power1 is ASM device but missing in rules file /etc/udev/rules.d/99-oracle.rules" >> /tmp/asm-miss
+                        else
+                                egrep "$power$" /tmp/lv-list > /dev/null
+                                if [ $? -eq 0 ]
+                                then
+                                        echo "FAIL: $power is used in both LVM and in ASM, please cross verify" >> /tmp/asm-lvm
+                                fi
+
+                        fi
+						        else
+                #echo "$id not ASM" >> /tmp/non-asm-list
+                grep "$power"1 /etc/udev/rules.d/99-oracle.rules > /dev/null
+                if [ $? -eq 0 ]
+                then
+                        egrep "$power$" /tmp/lv-list > /dev/null
+                        if [ $? -eq 0 ]
+                        then
+                            ldisk=(`grep $power /etc/udev/rules.d/99-oracle.rules|awk -F',' '{print $1}'`)
+                            echo "FAIL: $power is added in ASM rules file /etc/udev/rules.d/99-oracle.rules ($ldisk) but also part of LVM, please cross verify " >> /tmp/non-asm-lvm
+                        fi
+                else
+                egrep "$power$|"$power"p1$|"$power"1$" /tmp/lv-list > /dev/null
+                if [ $? -ne 0 ]
+                then
+                echo "$power" >> /tmp/free-dev
+                fi
+                 fi
+        fi
+done < "$file"
+fi
+
+echo "=======Oracle Cluster nodes========="
+home=(`cat /etc/oratab|grep "+ASM" | awk -F':' '{print $2}'`)
+$home/bin/olsnodes > /tmp/test-oracle
+
+n=`cat /tmp/test-oracle|wc -l`
+if [ $n -eq 0 ]
+then
+echo "`uname -n` is single node"
+else
+cat /tmp/test-oracle
+fi
+#echo "====================================="
+
+if [ -f /tmp/asm-list ]
+then
+echo "===========ASM devices==============="
+cat /tmp/asm-list| sort -nk 15,15
+echo -e "\n***********Total ASM devices: `cat /tmp/asm-list|wc -l`************\n"
+else
+echo "NO ASM disks avaiable on server"
+exit
+fi
+
+echo "=======CHECK 1: Asm devices which are missing in udev rules file======="
+if [ -f /tmp/asm-miss ]
+then
+cat /tmp/asm-miss
+fail=1
+else
+echo "PASS: No issues observed"
+fi
+
+
+echo "=======CHECK 2: Conflict Devices (part of both ASM & LVM)=============="
+if [ -f /tmp/asm-lvm ]
+then
+cat /tmp/asm-lvm
+fail=1
+else
+echo "PASS: No issues observed"
+fi
+echo "=======CHECK 3: Devices part of ASM rules and LVM============================"
+if [ -f /tmp/non-asm-lvm ]
+then
+cat /tmp/non-asm-lvm
+fail=1
+else
+echo "PASS: No issues observed"
+fi
+
+if [ -f /tmp/asm-list ]
+then
+if [ $mul -le 1 ]
+then
+cat /tmp/asm-list |awk '{print $2}' |sed 's/p1//g' > /tmp/asm-list1
+par=`cat /tmp/asm-list |awk '{print $2}'| grep p1| wc -l`
+        if [ $par -ne 0 ]
+        then
+        while read j
+        do
+        no=(`fdisk -l /dev/mapper/$j 2>/dev/null| grep -A 5 Device|awk '{print $1}' | grep -v Device | grep -v '^$'|wc -l`)
+        if [ $no -eq 1 ]
+        then
+        ty=(`fdisk -l /dev/mapper/$j 2>/dev/null| grep -A 5 Device | awk '{print $6}' | egrep -v 'Device|Id' | grep -v '^$' | xargs`)
+                if [ $ty != "Linux" ]
+                then
+                echo "FAIL: $j has $no partitions  with partition type $ty" >> /tmp/asm-part 
+                fi
+        fi
+        done < /tmp/asm-list1
+        fi
+else
+        cat /tmp/asm-list |awk '{print $1}' > /tmp/asm-list1
+        while read j
+        do
+        no=(`fdisk -l /dev/$j 2>/dev/null| grep -A 5 Device|awk '{print $1}' | grep -v Device | grep -v '^$'|wc -l`)
+        if [ $no -eq 1 ]
+        then
+        ty=(`fdisk -l /dev/$j 2>/dev/null| grep -A 5 Device | awk '{print $6}' | egrep -v 'Device|Id' | grep -v '^$' | xargs`)
+                if [ $ty != "Linux" ]
+                then
+                echo "FAIL: $j has $no partitions  with partition type $ty" >> /tmp/asm-part
+                fi
+        fi
+        done < /tmp/asm-list1
+fi
+        echo "=======CHECK 4: ASM devices with wrong partition type=================="
+        if [ -f /tmp/asm-part ]
+        then
+        cat /tmp/asm-part
+        fail=1
+        else 
+        echo "PASS: no issues observed"
+        fi
+fi
+echo "=======CHECK 5: ASM devices ownership================================="
+if [ -f /tmp/asm-perm ]
+then
+cat /tmp/asm-perm
+fail=1
+else
+echo "PASS: All ASM devices are having correct ownership"
+fi
+echo "=======Check 6: Duplicate entries in ASM rules file==================="
+if [ `cat /tmp/asm-dup | wc -l` -eq 1 ]
+then
+echo "PASS: No duplicate entries"
+else
+cat /tmp/asm-dup
+fail=1
+fi
+echo "=======CHECK 7: ASM rules file verification============================"
+if [ `cat /tmp/test-oracle |wc -l` -le 1 ]
+then
+echo "PASS: single node cluster"
+else
+k=(`uname -n`)
+node=(`cat /tmp/test-oracle | grep -v -i $k`)
+cat /etc/udev/rules.d/99-oracle.rules|grep -i asm|sort   > /tmp/$k-asm
+/bin/su  oracle -c "ssh $node 2>/dev/null 'cat /etc/udev/rules.d/99-oracle.rules|grep -i asm|sort '" > /tmp/$node-asm
+
+diff -U 0 /tmp/$k-asm /tmp/$node-asm > /dev/null
+if [ $? -eq 0 ]
+then
+echo "PASS: Oracle rules files are idenetical on both the nodes"
+else
+fail=1
+echo "FAIL: Oracle rules files are not idenetical on both the nodes"
+
+diff /tmp/$k-asm /tmp/$node-asm
+fi
+fi
+rm -rf /tmp/$k-asm /tmp/$node-asm 
+
+echo "===========================INFO: Free Devices=========================="
+if [ -f /tmp/free-dev ]
+then
+        c=0
+        cat /tmp/free-dev | sort -u > /tmp/free-dev1
+     while read i
+        do
+        grep $i /tmp/asm-list > /dev/null
+        if [ $? -ne 0 ]
+        then
+        echo "INFO: $i is free device"
+        ((c++))
+        fi
+        done < "/tmp/free-dev1"
+
+        echo -e "\n**************Total free devices: $c******************\n"
+else
+echo " NO FREE DEVICES AVAILABLE"
+fi
+echo "======================================================================="
+
+if [ $fail -eq 1 ]
+then
+echo -e "********Checkouts are failed, please fix/verify above issues*********"
+else
+echo -e "**********************ALL Checkouts are passed*************************"
+fi
+echo "======================================================================="
+rm -rf /tmp/asm-list /tmp/asm-list1 /tmp/non-asm-list /tmp/asm-lvm /tmp/non-asm-lvm /tmp/free-dev* /tmp/asm-miss /tmp/asm-part /tmp/asm-perm /tmp/asm-dup /tmp/san-test
+
+
