@@ -1,0 +1,63 @@
+vgcfgrestore -l gckycdb32u_vg
+
+pvs
+
+  /dev/mapper/mpathmj   gckycdb32u_vg lvm2 a--u  33.71g      0 
+  /dev/mapper/mpathmk   gckycdb32u_vg lvm2 a--u  33.71g      0 
+  /dev/mapper/mpathml   gckycdb32u_vg lvm2 a--u  33.71g      0 
+  /dev/sda2             rootvg        lvm2 a--u 837.88g 629.88g
+  unknown device        gckycdb32u_vg lvm2 a-mu 269.73g   1.73g
+
+ 518  
+  
+  550  vgcfgrestore  gckycdb32u_vg -l
+
+  File:         /etc/lvm/archive/gckycdb32u_vg_00028-1062007940.vg
+  Couldn't find device with uuid BK1PEm-UaGA-qauI-tT75-ZjC4-wp0N-ysL6Ld.
+  VG name:      gckycdb32u_vg
+  Description:  Created *before* executing 'lvextend -L +270G /dev/mapper/gckycdb32u_vg-backuplv -r'
+  Backup Time:  Thu Apr 21 15:03:54 2016
+
+
+ls -ltr /etc/lvm/archive/gckycdb32u_vg_00028-1062007940.vg
+
+
+  554  cat /etc/lvm/archive/gckycdb32u_vg_00028-1062007940.vg | grep -A3 -i BK1PEm-UaGA-qauI-tT75-ZjC4-wp0N-ysL6Ld
+
+       id = "BK1PEm-UaGA-qauI-tT75-ZjC4-wp0N-ysL6Ld"
+                        device = "/dev/mapper/mpathlgp1"        # Hint only
+
+                        status = ["ALLOCATABLE"]
+
+
+  555  ls -ltr /dev/mapper/mpathlgp1
+
+[UAT root @ gckycdb32u ~]
+# ls -ltr /dev/mapper/mpathlgp1
+ls: cannot access /dev/mapper/mpathlgp1: No such file or directory
+
+556  ls -ltr /dev/mapper/mpathlg
+
+[UAT root @ gckycdb32u ~]
+# ls -ltr /dev/mapper/mpathlg
+lrwxrwxrwx 1 root root 18 Apr  7 16:04 /dev/mapper/mpathlg -> ../asmdisk/data174
+  
+
+  
+  561  pvcreate --uuid=BK1PEm-UaGA-qauI-tT75-ZjC4-wp0N-ysL6Ld /dev/mapper/mpathlg --restorefile=/etc/lvm/archive/gckycdb32u_vg_00028-1062007940.vg
+[UAT root @ gckycdb32u ~]
+# pvcreate --uuid=BK1PEm-UaGA-qauI-tT75-ZjC4-wp0N-ysL6Ld /dev/mapper/mpathlg --restorefile=/etc/lvm/archive/gckycdb32u_vg_00028-1062007940.vg
+  Couldn't find device with uuid BK1PEm-UaGA-qauI-tT75-ZjC4-wp0N-ysL6Ld.
+  allocation/use_blkid_wiping=1 configuration setting is set while LVM is not compiled with blkid wiping support.
+  Falling back to native LVM signature detection.
+  Physical volume "/dev/mapper/mpathlg" successfully created
+
+  562  vgcfgrestore -f /etc/lvm/archive/gckycdb32u_vg_00028-1062007940.vg gckycdb32u_vg
+
+[UAT root @ gckycdb32u ~]
+# vgcfgrestore -f /etc/lvm/archive/gckycdb32u_vg_00028-1062007940.vg gckycdb32u_vg
+  Restored volume group gckycdb32u_vg
+  563  pvs
+
+  /dev/mapper/mpathlg   gckycdb32u_vg lvm2 a--u 269.73g 269.73g
+  
