@@ -1,0 +1,76 @@
+df -h /backup        	==> 269.73G 
+df -h /ggdata        	==> Need to create FS for 100GB
+df -h /gg111		==> Need to create FS for 20GB
+
+
+269.73G - 100G -20G = 149G
+
+
+pvs
+vgs
+lvs
+
+lvdisplay | grep -i backup
+
+lvdisplay /dev/bkupvg-kycnddgtu21/backuplv
+
+
+umount /backup
+
+
+e4fsck -f /dev/mapper/bkupvg--kycnddgtu21-backuplv
+
+
+resize4fs /dev/mapper/bkupvg--kycnddgtu21-backuplv 149G
+
+
+lvdisplay /dev/bkupvg-kycnddgtu21/backuplv
+
+
+lvreduce -L -120G /dev/bkupvg-kycnddgtu21/backuplv
+
+
+lvdisplay /dev/bkupvg-kycnddgtu21/backuplv
+
+
+vgs
+
+ls -ld ggdata
+ls -ld gg111
+
+mkdir ggdata gg111
+
+
+ 
+lvcreate -L 100G -n ggdata_lv bkupvg-kycnddgtu21
+lvs
+lvcreate -L 20G -n gg111_lv  bkupvg-kycnddgtu21
+lvs
+
+vgs
+lvdisplay 
+
+lvdisplay | egrep -i "gg111|ggdata"
+
+mkfs.ext4 /dev/bkupvg-kycnddgtu21/ggdata_lv
+mkfs.ext4 /dev/bkupvg-kycnddgtu21/gg111_lv
+
+
+
+cp -pi /etc/fstab /etc/fstab_bkp_26feb
+vi /etc/fstab
+
+mount -a
+
+df -h /backup /gg111 /ggdata
+
+ls -ld /gg111 /ggdata
+
+chown oracle:dba ggdata gg111
+
+ls -ld /gg111 /ggdata
+
+
+
+
+
