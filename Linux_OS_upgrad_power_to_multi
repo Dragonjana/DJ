@@ -1,0 +1,214 @@
+Step 1: Disable powerpath 
+
+passwd root
+
+mv /etc/init.d/PowerPath /etc/init.d/PowerPath.bkp
+
+
+Step 2.)Comment all the SAN and NAS file system. and reboot the machine
+
+cp -pi /etc/fstab /etc/fstab_bkp
+
+vi /etc/fstab
+
+comment using #
+
+cd /etc/init.d
+mv ohasd ohasd_old
+
+cd /etc/rc3.d
+
+mv S96ohasd sS96ohasd
+
+
+reboot
+
+
+Step 3.) ONce the server is back online, Remove the powerpath rpm.
+
+yum remove EMCpower*
+
+
+
+Step 4.) Change the repos under /etc/yum.repos.d
+
+	a) edit the /etc/yum.repos.d/soe-prod.repo config file,
+
+		change the version number 
+
+		for eg: 
+
+		if the version number is “4” replace with “6”
+     		( the changes should be made in three places.)
+
+	
+	b) cp -p /etc/yum.repos.d/soe-prod.repo /etc/yum.repos.d/soe-prod.repo.SAVED.`/bin/date '+%Y%m%d'`;
+      
+	c) In /etc/yum.repos.d/soe-prod.repo filwe, change the number.
+
+		 # vi /etc/yum.repos.d/soe-prod.repo;
+               		 /4
+                	
+			R6
+                	n
+                	.
+                	n
+                	.
+                	:wq!
+
+Step 5.) Run yum update 
+
+yum update
+
+For below error:
+
+Error: Package: SOE-product-san-stack-cluster-RHEL6_64-4.1-A0.noarch (@soe6u4)
+           Requires: redhat-release-server < 6Server-6.5
+           Removing: redhat-release-server-6Server-6.4.0.4.el6.x86_64 (@soe6u4-x86_64/6.5)
+               redhat-release-server = 6Server-6.4.0.4.el6
+           Updated By: redhat-release-server-6Server-6.5.0.1.el6.x86_64 (soe6u5)
+               redhat-release-server = 6Server-6.5.0.1.el6
+ You could try using --skip-broken to work around the problem
+ You could try running: rpm -Va --nofiles --nodigest
+
+Follow the below steps:
+-------------------------------------------------------------------
+yum remove SOE-product-san-stack-cluster-RHEL6_64-4.1-A0.noarch
+
+then do
+
+yum update
+
+
+Step 6.) install the sangria on the server.
+
+yum install sangria
+
+Step 7.) Copy the rule files.
+
+cp -pi /etc/udev/rules.d/99-oracle.rules /etc/udev/rules.d/99-oracle.rules_old_bkp
+
+cp -pi /var/tmp/sa/newrules.file /etc/udev/rules.d/99-oracle.rules
+
+ 
+Step 8.) Change the Root password and reboot server
+
+passwd root
+
+cd /etc/init.d
+mv ohasd_old ohasd
+
+cd /etc/rc3.d
+
+mv sS96ohasd S96ohasd
+
+vi /etc/fstab
+
+Uncomment by removing #
+
+reboot
+
+Step 9.) Verify asm disks under /dev/asmdisk/asmdisk*
+
+uncomment the /etc/fstab
+mount -a
+
+su - oracle -c "/optware/oracle/11.2.0.4/db_1/bin/kfod disks=all status=true asm_diskstring='/dev/asmdisk/*'"
+
+
+Step 10.) once the server is back on-line do the check outs.
+
+•	ls -l /dev/asmdisk/asmdisk*
+•	pvs;lvs;vgs
+•	/opt/sangria/bin/sanstack_verify.pl
+•	/net/ccua/export/scripts/ca02038/compare_after_reboot_on_this_server.sh
+•	/net/ccua/export/scripts/healthcheck
+•	/opt/rinfo/bin/rinfosend
+
+
+
+
+
+
+
+
+
+
+
+
+
+# pvs
+  Configuration setting "activation/thin_check_executable" unknown.
+  Configuration setting "activation/thin_check_options" unknown.
+  Couldn't find device with uuid jEXYcb-L6fK-GDEB-O3bb-Ogn0-hFF2-efcZIJ.
+  PV                   VG             Fmt  Attr PSize   PFree  
+  /dev/mapper/mpathac  p1n1_oravg     lvm2 a--   33.71g      0 
+  /dev/mapper/mpathf   p1n1_backup    lvm2 a--   33.71g      0 
+  /dev/mapper/mpathg   p1n1_backup    lvm2 a--   33.71g      0 
+  /dev/mapper/mpathj   p1n1_backup    lvm2 a--   33.71g   2.57g
+  /dev/mapper/mpatho   p1n1_backup    lvm2 a--   33.71g      0 
+  /dev/mapper/mpathp   p1n2_backup    lvm2 a--   33.71g 732.00m
+  /dev/mapper/mpathq   p1n2_oradatavg lvm2 a--   33.71g  13.71g
+  /dev/mapper/mpathsp1 p1n1_oravg     lvm2 a--   33.71g   4.43g
+  /dev/mapper/mpathu   p1n1_oradatavg lvm2 a--   33.71g  13.71g
+  /dev/mapper/mpathx   p1n1_backup    lvm2 a--   33.71g      0 
+  /dev/mapper/mpathy   p1n2_oravg     lvm2 a--   33.71g      0 
+  /dev/sda2            rootvg         lvm2 a--  837.88g 781.88g
+  unknown device       p1n2_oravg     lvm2 a-m   33.71g   4.43g
+
+cd /etc/lvm/archive/
+ls -lrt p1n2_oravg*
+cd ../backup/
+ls -lrt p1n2_oravg*
+
+cat p1n2_oravg_00017-1667125227.vg
+
+cat /etc/udev/rules.d/99-oracle.rules | awk -F"-" '{print $4}'| awk -F'"' '{print $1}'| while read i ; do  multipath -ll | grep -i $i | awk '{print $1}';done > /tmp/test
+pvs | grep -i mpath| awk '{print $1}'|awk -F"/" '{print $4}' >> /tmp/test
+multipath -ll | grep -i mpath| awk '{print $1}' > /tmp/test1
+cat /tmp/test1 /tmp/test > /tmp/test2
+cat /tmp/test2|sort | uniq –u
+
+
+od --read-bytes=512 --format=c  /dev/mapper/mpathabp1
+od --read-bytes=512 --format=c  /dev/mapper/mpathw
+od --read-bytes=512 --format=c  /dev/mapper/mpathk
+
+# od --read-bytes=512 --format=c /dev/mapper/mpathabp1
+0000000 001 202 001 001  \0  \0  \0  \0  \t  \0  \0 200   i   % 034 225
+0000020   ?   < 022  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000040   O   R   C   L   D   I   S   K  \0  \0  \0  \0  \0  \0  \0  \0
+0000060  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000100  \0  \0      \v  \t  \0 001 004   D   A   T   A   1   _   0   0
+0000120   0   9  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000140  \0  \0  \0  \0  \0  \0  \0  \0   D   A   T   A  \0  \0  \0  \0
+0000160  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000200  \0  \0  \0  \0  \0  \0  \0  \0   D   A   T   A   1   _   0   0
+0000220   0   9  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000240  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+*
+0000300  \0  \0  \0  \0  \0  \0  \0  \0   , 020 370 001  \0 024 362 256
+0000320   , 020 370 001  \0   0 362 256  \0 002  \0 020  \0  \0   @  \0
+0000340 200 356 006  \0 267   !  \0  \0 002  \0  \0  \0 001  \0  \0  \0
+0000360 002  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000400  \0  \0 020  \n   .   h 367 001  \0   @ 313   F  \0  \0  \0  \0
+0000420  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+*
+0001000
+
+# od --read-bytes=512 --format=c /dev/mapper/mpathk
+0000000  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+*
+0001000
+
+
+pvcreate --uuid "jEXYcb-L6fK-GDEB-O3bb-Ogn0-hFF2-efcZIJ" --restorefile /etc/lvm/archive/p1n2_oravg_00017-1667125227.vg /dev/mapper/mpathabp1
+
+
+lvchange -ay /dev/p1n2_oravg/p1n2_optware
+
+
+mount –a
+
+
+
