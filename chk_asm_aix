@@ -1,0 +1,79 @@
+#!/usr/bin/ksh
+
+# This script will check the disk header for ASM data and make sure disks are with correct permission
+
+case `/bin/uname` in
+	AIX)
+
+# AIX CODE BEGIN #
+
+LSPV_OUT=/tmp/.lspv.txt
+ASM_LIST=/tmp/.asmdisks.txt
+>$LSPV_OUT
+>$ASM_LIST
+
+echo  "Generating Disk List..... "
+
+lspv>$LSPV_OUT
+
+  echo "List generated - Running check for `cat /tmp/.lspv.out | egrep 'power|oracle' |wc -l|xargs` disks"
+
+##ASM CHECK 
+
+issue=0
+for i in `cat $LSPV_OUT| egrep 'power|oracle' | awk '{print $1}'`
+do
+lquerypv -h /dev/r$i | grep ORCLDISK > /dev/null
+if [ $? -eq 0 ]
+then
+        echo "$i ASM" >> $ASM_LIST
+        if [ `ls -l /dev/r$i | awk '{print $3}'` != "oracle" ]
+        then
+                echo     "ASM Disk $i have wrong  permission"
+		issue=1
+        fi
+fi
+done
+
+if [ $issue -ne 0 ]
+then
+	echo "WARNING : PERMISSION ERRORS ON ASM DISKS FOUND !!"
+else
+	echo "GOOD : Permission looks fine for ASM disks"
+fi
+
+#echo "ASM Disk list : $ASM_LIST"
+
+###LVM CHECK
+
+issue=0
+for i in `cat $LSPV_OUT | grep power | grep active | awk '{print $1}'`
+do
+if [ `ls -l /dev/r$i | awk '{print $3}'` != "root" ]
+then
+        echo "LVM disk $i have wrong permission"
+	issue=1
+fi
+done
+
+if [ $issue -ne 0 ]
+then
+        echo "WARNING : PERMISSION ERRORS ON LVM  DISKS FOUND !!"
+else
+        echo "GOOD : Permission looks fine for LVM disks"
+fi
+
+# AIX CODE ENDS #
+
+;;
+        Linux)
+                echo "Not implemented in Linux"
+        ;;
+
+        SunOS)
+                echo "Not implemented on Solaris"
+        ;;
+        *)
+                echo "unknown OS"
+        ;;
+esac
