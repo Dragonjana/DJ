@@ -1,0 +1,138 @@
+#!/usr/bin/ksh
+
+PATH="/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH
+TMP=/tmp
+VERSION=$( echo '$Revision: 1.3 $' | awk '{print $2}' )
+SCRIPT_NAME=$( basename $0 )
+ERROR_LEVEL=0
+
+echo "${SCRIPT_NAME}: Version ${VERSION}"
+echo "http://fmwiki.nam.nsroot.net/index.php/lparcheck"
+echo "Checking Virtual Adapters"
+lsdev -Cc adapter -t IBM,v-scsi  > /tmp/lsdev.$$
+grep Defined /tmp/lsdev.$$
+
+echo "Collecting Disk Paths"
+awk '( $2 == "Available" ){ print $1 }' /tmp/lsdev.$$ | while read VDEV
+        do
+        lspath -p ${VDEV} >> ${TMP}/lspath.$$
+        done
+
+echo "Check path attributes"
+awk '( $2 == "Available" ){ print $1 }' /tmp/lsdev.$$ | while read VDEV
+        do
+        ERRRECOV=$( lsattr -El ${VDEV} -a vscsi_err_recov | awk '{print $2}' )
+        if [ "${ERRRECOV}" != "fast_fail" ];then
+                echo "The vscsi_err_recov attribute for ${VDEV} is NOT set to fast_fail!" >&2
+                let ERROR_LEVEL+=1
+                fi
+
+        PATHTO=$( lsattr -El ${VDEV} -a vscsi_path_to | awk '{print $2}' )
+        if [  "${PATHTO}" != "60" ];then
+                echo "The vscsi_path_to attribute for ${VDEV} is NOT set to 60!"
+                let ERROR_LEVEL+=1
+                fi
+
+        done
+
+rm /tmp/lsdev.$$
+unset VDEV
+unset PATHTO
+unset ERRRECOV
+
+echo "Checking Disk Paths"
+NOTENABLED=$( grep -c -v ^Enabled ${TMP}/lspath.$$ )
+if [ ${NOTENABLED} -gt 0 ]; then
+        echo "\tOne or more paths are not Enabled" >&2
+        grep -v ^Enabled ${TMP}/lspath.$$
+        let ERROR_LEVEL+=1
+        fi
+
+unset NOTENABLED
+
+awk '{ print $2 }' ${TMP}/lspath.$$ | sort | uniq -c  | awk '( $1 != 2 ){ print $2 }' | while read HDISK
+        do
+        echo "\t${HDISK}: Number of paths detected is not two." >&2
+        let ERROR_LEVEL+=1
+        done
+
+unset HDISK
+
+rm ${TMP}/lspath.$$
+
+echo "Check disk attributes"
+lsdev -Cc disk -s vscsi -t vdisk -F name | while read HDISK
+        do
+        lsattr -El ${HDISK} > /tmp/lsattr.$$
+        HMODE=$( awk '( $1 == "hcheck_mode" ){ print $2 }' /tmp/lsattr.$$ )
+        HINTERVAL=$( awk '( $1 == "hcheck_interval" ){ print $2 }' /tmp/lsattr.$$ )
+        if [ "${HMODE}" != "nonactive" ]
+                then
+                echo "${HDISK}: hcheck_mode is not set to nonactive." >&2
+                let ERROR_LEVEL+=1
+                fi
+
+        if [ "${HINTERVAL}" != "60" ]
+                then
+                echo "${HDISK}: hcheck_interval is not set to 60." >&2
+                let ERROR_LEVEL+=1
+                fi
+
+        done
+
+rm /tmp/lsattr.$$
+unset HMODE
+unset HINTERVAL
+unset HDISK
+
+echo "Collecting network interfaces ..."
+ifconfig -a > ${TMP}/ifconfig-a.$$
+
+echo "Checking test addresses ..."
+grep ^en[0-9] ${TMP}/ifconfig-a.$$ | awk '{ print substr($1,3,length($1)-3) }' | while read ENT
+        do
+        TESTADDR=$( lsattr -El ent${ENT} -a netaddr -F value )
+        grep -q " ${TESTADDR} " ${TMP}/ifconfig-a.$$
+        if [ $? -eq 0 ]; then
+                echo "\tent${ENT} test address is an IP on this system. This will not failover automatically." >&2
+                let ERROR_LEVEL+=1
+                fi
+
+        if [ "${TESTADDR}" == "0" ]; then
+                echo "\tent${ENT} no test address. This interface must be manually failed over."
+                fi
+
+        done
+
+unset TESTADDR
+unset ENT
+
+echo "Checking interface ... "
+grep ^en[0-9] ${TMP}/ifconfig-a.$$ | awk '{ print substr($1,3,length($1)-3) }' | while read ENT
+        do
+        entstat -d ent${ENT}  > ${TMP}/entstat.$$
+        ACTIVE=$( grep "^Active channel" ${TMP}/entstat.$$ | cut -d: -f 2 )
+        if [ "${ACTIVE}" !=  " primary channel" ]; then 
+                echo "\tent${ENT} is running on ${ACTIVE}" >&2
+                VLAN=$( grep "^Port VLAN ID:" ${TMP}/entstat.$$ | tail -1 | cut -d: -f 2 )
+                VSWITCH=$( grep "^Switch ID:" ${TMP}/entstat.$$ | tail -1 | cut -d: -f 2 )
+        else
+                VLAN=$( grep "^Port VLAN ID:" ${TMP}/entstat.$$ | head -1 | cut -d: -f 2 )
+                VSWITCH=$( grep "^Switch ID:" ${TMP}/entstat.$$ | head -1 | cut -d: -f 2 )
+                fi
+
+        echo "\tent${ENT}: Active VLAN is ${VLAN} on switch ${VSWITCH}"
+        done
+
+
+unset ACTIVE
+unset VLAN
+unset VSWITCH
+unset ENT
+
+if [ ${ERROR_LEVEL} -ne 0 ]; then
+        echo "${SCRIPT_NAME}: Errors detected" >&2
+        fi
+
+exit ${ERROR_LEVEL}
