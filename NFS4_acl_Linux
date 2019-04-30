@@ -1,0 +1,243 @@
+ 512  nfs4_setfacl -m g:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  513  df -h 
+  514  ls -ld /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound
+  515  history | grep -i set
+  516  nfs4_setfacl -m group:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  517  nfs4_setfacl -m A:group:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  518  nfs4_setfacl -m D:group:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  519  nfs4_setfacl -m D:group:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound
+  520  sestatus
+  521  nfs4_setfacl -a A:g:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  522  getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  523  getent pcpmndm1 
+  524  getent passwd pcpmndm1 
+  525  id pcpmndm1 
+  526  nfs4_setfacl -a A:u:pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  527  nfs4_setfacl -a A:user:pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  528  nfs4_setfacl -a A::pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  529  getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  530  nfs4_setfacl -a A:user:pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  531  setfacl -m u:pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  532  nfs4_setfacl -a A:d:user@pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  533  nfs4_setfacl -a A:d:user@pcpmndm1:rxtncy /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  534  nfs4_setfacl -a A::user@pcpmndm1:rxtncy /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  535  getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  536  nfs4_setfacl -a A::owner@pcpmndm1:rxtncy /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  537  nfsstat -m
+  538  nfs4_getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  539  getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  540  id pcpmndm1 
+  541  nfs4_setfacl -a A:g:pcpmndm:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  542  getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  543  nfs4_getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  544  getfacl /pcpmnas1/wrk/emaildelivery/RG/statusfeed/inbound/
+  545   nfs4_getfacl  /pcpmnas1/wrk/emaildelivery/RG/statusfeed/inbound/
+  546  nfs4_setfacl -a A:g:pcpmndm:rwx  /pcpmnas1/wrk/emaildelivery/RG/statusfeed/inbound/
+  547  nfs4_getfacl  /pcpmnas1/wrk/emaildelivery/RG/statusfeed/inbound/
+  548  top
+  549  history
+[Prod root @ lsgttscivrap2p ~]
+# 
+
+
+
+sinvnasicg0010:/sinicgv0134
+                       25G  211M   25G   1% /pcpmnas1
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# rpm -qa | grep -i nfs
+nfs-utils-lib-1.1.5-13.el6.x86_64
+nfs-utils-1.2.3-75.el6.x86_64
+nfs4-acl-tools-0.3.3-8.el6.x86_64
+[Prod root @ lsgttscivrap2p ~]
+# nfs
+nfs4_editfacl     nfs4_getfacl      nfs4_setfacl      nfs_cache_getent  nfsidmap          nfsiostat         nfsstat           
+[Prod root @ lsgttscivrap2p ~]
+# nfs
+nfs4_editfacl     nfs4_getfacl      nfs4_setfacl      nfs_cache_getent  nfsidmap          nfsiostat         nfsstat           
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -m g:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+No path(s) specified.
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# df -h 
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/rootvg-lv_root
+                      4.8G  972M  3.6G  21% /
+tmpfs                  32G   12K   32G   1% /dev/shm
+/dev/sda1             504M   83M  397M  18% /boot
+/dev/mapper/rootvg-lv_home
+                      2.0G  3.8M  1.9G   1% /home
+/dev/mapper/rootvg-lv_opt
+                       20G  6.1G   13G  33% /opt
+/dev/mapper/rootvg-lv_tmp
+                      7.8G  159M  7.2G   3% /tmp
+/dev/mapper/rootvg-lv_var
+                       20G  3.0G   16G  16% /var
+/dev/mapper/rootvg-lv_var_crash
+                      9.8G  187M  9.1G   2% /var/crash
+/dev/mapper/appvg-lv_pcpmapp1
+                      148G  7.6G  133G   6% /pcpmapp1
+/dev/mapper/appvg-lv_cdunix
+                      9.8G  1.1G  8.3G  12% /opt/cdunix
+sinvnasicg0010:/sinicgv0134
+                       25G  211M   25G   1% /pcpmnas1
+[Prod root @ lsgttscivrap2p ~]
+# ls -ld /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound
+drwxr-xr-x 2 pcpmapp1 pcpmapp 80 Nov 25 02:12 /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound
+[Prod root @ lsgttscivrap2p ~]
+# history | grep -i set
+   57  setfal /pcpmnas1
+  150  cd /pddecn2/com_setup/amlrptndm/runamlrptndm
+  151  cd /pddecn2/com_setup/amlrptndm/log/
+  153  cd  /pddecn2/com_setup/amlrptndm/log
+  154  cd pddecn2/com_setup
+  155  cd /pddecn2/com_setup
+  235  setfacl -m user:pcpmqry1:r-- /pcpmapp1/cpms/cpmssvc/logs
+  239   setfacl -m user:pcpmqry1:r-x /pcpmapp1/cpms/cpmssvc/logs
+  240   setfacl -m user:pcpmqry1:r-x /pcpmapp1/cpms/cpmsbackend/logs
+  512  nfs4_setfacl -m g:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+  515  history | grep -i set
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -m group:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+No path(s) specified.
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -m A:group:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+No path(s) specified.
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -m D:group:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+No path(s) specified.
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -m D:group:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound
+No path(s) specified.
+[Prod root @ lsgttscivrap2p ~]
+# sestatus
+SELinux status:                 disabled
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -a A:g:pcpmapp:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+getfacl: Removing leading '/' from absolute path names
+# file: pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+# owner: pcpmapp1
+# group: pcpmapp
+user::rwx
+group::rwx
+other::r-x
+
+[Prod root @ lsgttscivrap2p ~]
+# getent pcpmndm1 
+Unknown database: pcpmndm1
+Try `getent --help' or `getent --usage' for more information.
+[Prod root @ lsgttscivrap2p ~]
+# getent passwd pcpmndm1 
+pcpmndm1:x:2000053296:2000066664:1000259950:/pcpmapp1/wrk:/bin/ksh
+[Prod root @ lsgttscivrap2p ~]
+[Prod root @ lsgttscivrap2p ~]
+# id pcpmndm1 
+uid=2000053296(pcpmndm1) gid=2000066664(pcpmndm) groups=2000066664(pcpmndm)
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -a A:u:pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+Bad Ace Flag:u
+Failed while inserting ACE(s) (at index 1).
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -a A:user:pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+Bad Ace Flag:u
+Failed while inserting ACE(s) (at index 1).
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -a A::pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+[Prod root @ lsgttscivrap2p ~]
+# getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+getfacl: Removing leading '/' from absolute path names
+# file: pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+# owner: pcpmapp1
+# group: pcpmapp
+user::rwx
+group::rwx
+other::r-x
+
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -a A:user:pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+Bad Ace Flag:u
+Failed while inserting ACE(s) (at index 1).
+[Prod root @ lsgttscivrap2p ~]
+# setfacl -m u:pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+setfacl: /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/: Operation not supported
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -a A:d:user@pcpmndm1:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+Failed setxattr operation: Invalid argument
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -a A:d:user@pcpmndm1:rxtncy /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+Failed setxattr operation: Invalid argument
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -a A::user@pcpmndm1:rxtncy /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+Failed setxattr operation: Invalid argument
+[Prod root @ lsgttscivrap2p ~]
+# getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+getfacl: Removing leading '/' from absolute path names
+# file: pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+# owner: pcpmapp1
+# group: pcpmapp
+user::rwx
+group::rwx
+other::r-x
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -a A::owner@pcpmndm1:rxtncy /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+Failed setxattr operation: Invalid argument
+[Prod root @ lsgttscivrap2p ~]
+# nfsstat -m
+/pcpmnas1 from sinvnasicg0010:/sinicgv0134/
+ Flags: rw,relatime,vers=4,rsize=131072,wsize=131072,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=169.195.101.179,minorversion=0,local_lock=none,addr=10.217.166.247
+
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+A::pcpmndm1@nfsdomain:rwDxT
+A:g:GROUP@:rwDxT
+A::OWNER@:rwaDxtTnNcCy
+A:g:GROUP@:rxtncy
+A::EVERYONE@:rxtncy
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+getfacl: Removing leading '/' from absolute path names
+# file: pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+# owner: pcpmapp1
+# group: pcpmapp
+user::rwx
+group::rwx
+other::r-x
+
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# 
+[Prod root @ lsgttscivrap2p ~]
+# id pcpmndm1 
+uid=2000053296(pcpmndm1) gid=2000066664(pcpmndm) groups=2000066664(pcpmndm)
+[Prod root @ lsgttscivrap2p ~]
+# nfs4_setfacl -a A:g:pcpmndm:rwx /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+[Prod root @ lsgttscivrap2p ~]
+# getfacl /pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+getfacl: Removing leading '/' from absolute path names
+# file: pcpmnas1/wrk/emaildelivery/KR/statusfeed/inbound/
+# owner: pcpmapp1
+# group: pcpmapp
