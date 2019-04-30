@@ -1,0 +1,92 @@
+To narrow it down and get a list of the disks:
+grep WARNING /var/adm/messages|grep scsi|awk '{ print $10 }'|sort|uniq
+To get a list of the above disk names in /dev/dsk:
+for i in $(grep WARNING /var/adm/messages|grep scsi|awk '{ print $10 }'|sort|uniq);do ls -l /dev/dsk|grep $i;done|grep s0
+prtvtoc should be able to give output:
+Good:
+# prtvtoc /dev/rdsk/c8t5000C50017BF647Fd0s2
+* /dev/rdsk/c8t5000C50017BF647Fd0s2 partition map
+*
+* Dimensions:
+*     512 bytes/sector
+* 585937500 sectors
+* 585937433 accessible sectors
+*
+* Flags:
+*   1: unmountable
+*  10: read-only
+*
+* Unallocated space:
+*       First     Sector    Last
+*       Sector     Count    Sector
+*          34       222       255
+*
+*                          First     Sector    Last
+* Partition  Tag  Flags    Sector     Count    Sector  Mount Directory
+ 0      4    00        256 585920827 585921082
+ 8     11    00  585921083     16384 585937466
+Bad:
+# prtvtoc /dev/rdsk/c8t5000C50017C11183d0s2
+prtvtoc: /dev/rdsk/c8t5000C50017C11183d0s2: Unable to read Disk geometry errno = 0x16
+So does this list:
+for i in $(ls -l /dev/rdsk/*|grep s2|awk '{print $9 }');do prtvtoc $i;done|grep Unable
+equal this list (from before):
+for i in $(grep WARNING /var/adm/messages|grep scsi|awk '{ print $10 }'|sort|uniq);do ls -l /dev/dsk|grep $i;done|grep s0
+So to fix it, label the disk with format, then use prtvtoc to confirm it has a lable, then run “print|format” and see if the errors no longer appear in the 
+# format -e /dev/rdsk/c8t5000C50017C11183d0s2
+
+/dev/rdsk/c8t5000C50017C11183d0s2: configured with capacity of 279.38GB
+selecting /dev/rdsk/c8t5000C50017C11183d0s2
+[disk formatted]
+
+
+FORMAT MENU:
+ disk       - select a disk
+ type       - select (define) a disk type
+ partition  - select (define) a partition table
+ current    - describe the current disk
+ format     - format and analyze the disk
+ repair     - repair a defective sector
+ label      - write label to the disk
+ analyze    - surface analysis
+ defect     - defect list management
+ backup     - search for backup labels
+ verify     - read and display labels
+ save       - save new disk/partition definitions
+ inquiry    - show vendor, product and revision
+ scsi       - independent SCSI mode selects
+ cache      - enable, disable or query SCSI disk cache
+ volname    - set 8-character volume name
+ !<cmd>     - execute <cmd>, then return
+ quit
+format> l
+[0] SMI Label
+[1] EFI Label
+Specify Label type[0]:
+Ready to label disk, continue? y
+
+format> q
+
+# prtvtoc /dev/rdsk/c8t5000C50017C11183d0s2
+* /dev/rdsk/c8t5000C50017C11183d0s2 partition map
+*
+* Dimensions:
+*     512 bytes/sector
+*     625 sectors/track
+*      20 tracks/cylinder
+*   12500 sectors/cylinder
+*   46875 cylinders
+*   46873 accessible cylinders
+*
+* Flags:
+*   1: unmountable
+*  10: read-only
+*
+*                          First     Sector    Last
+* Partition  Tag  Flags    Sector     Count    Sector  Mount Directory
+ 2      5    01          0 585912500 585912499
+ 6      4    00          0 585912500 585912499
+
+print|format
+
+
