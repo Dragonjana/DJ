@@ -1,0 +1,148 @@
+NEW FS create from the rootvg in linux
+
+EG:-
+sda disk having 600Gb size. Total 160 GB has been created and utilized in server remaining 440GB are in free space.
+
+[root@fxsmdap3u ~]# fdisk -l /dev/sda
+
+Disk /dev/sda: 599.9 GB, 599932844032 bytes
+255 heads, 63 sectors/track, 72937 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 262144 bytes / 524288 bytes
+Disk identifier: 0x000497e2
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *           1          26      204800   83  Linux
+Partition 1 does not end on cylinder boundary.
+/dev/sda2              26       15691   125829120   8e  Linux LVM
+/dev/sda3           15691       20913    41948672   83  Linux
+
+It’s already sda3 created, totally 4 partition only can create on server. So we need to extend the partition and create logical partition.
+
+To create extend partition in /dev/sda
+
+[root@fxsmdap3u ~]# fdisk /dev/sda
+
+WARNING: DOS-compatible mode is deprecated. It's strongly recommended to
+         switch off the mode (command 'c') and change display units to
+         sectors (command 'u').
+
+Command (m for help): n
+
+> e  ==> e for extend partition
+Give all remaining space to extend partition just enter twice;
+First cylinder (20913-72937, default 20913):
+Using default value 20914
+Last cylinder, +cylinders or +size{K,M,G} (20914-72937, default 72937):
+ > enter
+> enter
+Now check extend partition created or not (With p option).
+Command (m for help): p
+
+Disk /dev/sda: 599.9 GB, 599932844032 bytes
+255 heads, 63 sectors/track, 72937 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 262144 bytes / 524288 bytes
+Disk identifier: 0x000497e2
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *           1          26      204800   83  Linux
+Partition 1 does not end on cylinder boundary.
+/dev/sda2              26       15691   125829120   8e  Linux LVM
+/dev/sda3           15691       20913    41948672   83  Linux
+/dev/sda4           20913       72937   417882836+   5  Extended
+
+Now we create logical partition from the extended partition.
+
+Command (m for help): n
+First cylinder (20914-72937, default 20914):
+Using default value 20914
+Last cylinder, +cylinders or +size{K,M,G} (20914-72937, default 72937):  +100G
+
+Now check logical partition created or not.
+Command (m for help): p
+
+Disk /dev/sda: 599.9 GB, 599932844032 bytes
+255 heads, 63 sectors/track, 72937 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 262144 bytes / 524288 bytes
+Disk identifier: 0x000497e2
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *           1          26      204800   83  Linux
+Partition 1 does not end on cylinder boundary.
+/dev/sda2              26       15691   125829120   8e  Linux LVM
+/dev/sda3           15691       20913    41948672   83  Linux
+/dev/sda4           20913       72937   417882836+   5  Extended
+/dev/sda5           20914       33968   104863232   8e  Linux LVM
+
+Save the modification "w" 
+Command (m for help): w
+
+Run partprobe and list the /dev/sda5 on server.
+
+[root@fxsmdap3u ~]# ls -ltr /dev/sda*
+brw-rw---- 1 root disk 8, 4 Nov 19 06:49 /dev/sda4
+brw-rw---- 1 root disk 8, 1 Nov 19 06:49 /dev/sda1
+brw-rw---- 1 root disk 8, 2 Nov 19 06:57 /dev/sda2
+brw-rw---- 1 root disk 8, 3 Nov 19 06:57 /dev/sda3
+brw-rw---- 1 root disk 8, 5 Nov 19 06:57 /dev/sda5
+brw-rw---- 1 root disk 8, 0 Nov 20 06:24 /dev/sda
+
+create PV , extend the VG , create LV and create FS.
+
+pvcreate /dev/sda5
+pvs
+vgextend rootvg /dev/sda5
+pvs
+lvcreate -L 100G -n zeus_lv rootvg
+lvs
+lvdisplay | grep -i zeus
+mkfs.ext4 /dev/rootvg/zeus_lv 
+cp -pi /etc/fstab /etc/fstab_bkp_19nov
+vi /etc/fstab
+cd /
+mkdir zeus
+mount -a
+
+Change the ownership what they request.
+
+Troubleshoot
+
+If you get the error like below on fdisk command.
+
+Partition 5 does not start on physical sector boundary.
+
+Command (m for help): p
+
+Disk /dev/sda: 599.9 GB, 599932844032 bytes
+255 heads, 63 sectors/track, 72937 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 262144 bytes / 524288 bytes
+Disk identifier: 0x000497e2
+
+   Device Boot Start End Blocks Id System
+/dev/sda1 * 1 26 204800 83 Linux
+Partition 1 does not end on cylinder boundary.
+/dev/sda2 26 15691 125829120 8e Linux LVM
+/dev/sda3 15691 20913 41948672 83 Linux
+/dev/sda4 20913 72937 417882836+ 5 Extended
+/dev/sda5 20914 33968 104864199+ 83 Linux
+Partition 5 does not start on physical sector boundary.
+
+Use -c option in the fdisk command 
+fdisk -c /dev/sda
+
+If newly created LVM is not listed in list command.
+
+ls -ltr /dev/sda*
+brw-rw---- 1 root disk 8, 3 Nov 19 01:05 /dev/sda3
+brw-rw---- 1 root disk 8, 2 Nov 19 01:05 /dev/sda2
+brw-rw---- 1 root disk 8, 1 Nov 19 01:05 /dev/sda1
+brw-rw---- 1 root disk 8, 0 Nov 19 05:43 /dev/sda
+
+Run Partprobe even its not show, reboot the host.
