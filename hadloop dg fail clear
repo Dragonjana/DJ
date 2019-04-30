@@ -1,0 +1,34 @@
+Always unmount FS when it is RAID0 before releasing to DC.
+When you get UGOOD F state in Hadoop cluster server , to clear F use below command. 
+
+
+For storcli64
+/opt/MegaRAID/storcli/storcli64 /c0/fall del
+
+For MegaCli64
+/opt/MegaRAID/MegaCli/MegaCli64 -CfgLdAdd -r0 [8:12] WB RA Direct CachedBadBBU -a0 
+
+or 
+
+Check foreign configuration:
+
+# megacli -CfgForeign -Scan -aall
+There are 1 foreign configuration(s) on controller 0.
+Exit Code: 0x00
+Clear it:
+
+# megacli -CfgForeign -Clear -aall
+Foreign configuration 0 is cleared on controller 0.
+Exit Code: 0x00 
+
+
+or 
+
+/opt/MegaRAID/MegaCli/MegaCli64 -CfgForeign -Scan -aall
+There are 1 foreign configuration(s) on controller 0.
+Exit Code: 0x00
+Clear it:
+
+/opt/MegaRAID/MegaCli/MegaCli64 -CfgForeign -Clear -aall
+Foreign configuration 0 is cleared on controller 0.
+Exit Code: 0x00 
