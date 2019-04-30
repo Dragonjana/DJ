@@ -1,0 +1,196 @@
+ASM disk addition in Linux
+
+
+steps to be follwed:
+
+check for free disks by using the below command:
+
+
+
+pvs | grep -i power | awk '{print $1}' | awk -F "/" '{print $3}' | mail -s "pvs" janarthanan.chidhambaram@iuo.citi.com
+
+cat /etc/udev/rules.d/99-oracle.rules 
+
+ cat /etc/udev/rules.d/99-oracle.rules | awk -F "\"" '{print $2}' | tr -d "1" | mail -s "asm" janarthanan.chidhambaram@iuo.citi.com
+
+
+/opt/SANinfo/bin/inq | grep -i power |  awk '{print $1}' | awk -F "/" '{print $3}' | mail -s "inq" janarthanan.chidhambaram@iuo.citi.com
+
+
+
+add here free disk list
+
+cd /tmp
+vi disk_list.txt
+emcpowereh
+emcpowereg
+	
+
+check it free disk are partition if "emcpowereh" gives output like emcpowereh and emcpowereh1 it has been partitioned 
+
+for i in `cat /tmp/disk_list.txt`; do echo $i; ls -ld /dev/$i*; echo; done
+
+
+for i in `cat /tmp/disk_list.txt`; do echo $i; fdisk -l /dev/$i*; echo; done
+
+
+if its not partition do below step  
+
+
+
+cd /dev
+
+ for i in `cat /tmp/disk_list.txt`; do echo "n
+p
+1
+
+
+w
+"|fdisk $i;done 
+
+
+ 
+ partprobe
+
+
+edit the below file add the enrty
+
+cd /etc/udev/rules.d
+ ls -lrt
+cp -pi 99-oracle.rules 99-oracle.rules_bkp
+ cd /dev
+  cd /etc/udev/rules.d
+vi 99-oracle.rules
+
+
+if os version below 6.0 version use below step
+
+
+for i in `cat /tmp/disk_list.txt`; do ls /dev/$i*|tail -1|awk -F "/" '{print $3}'; done > /tmp/disk1_list.txt
+
+
+
+for i in `cat /tmp/disk1_list.txt`; do chown oracle:dba $i;ls -ld $i; done
+
+for i in `cat /tmp/disk1_list.txt`; do ls -ld $i; done
+
+
+if os version 6.0 and above version use below step
+
+
+
+udevadm control --reload-rules
+udevadm trigger --type=devices --action=change
+
+
+# udevcontrol reload_rules
+# start_udev
+
+
+for i in `cat /tmp/disk1_list.txt`; do ls -ld $i; done
+
+
+---------------------------------------------
+
+for i in `cat server.lst`
+do
+echo "n
+p
+1
+
+
+w
+"|fdisk $i;done 
+
+mount ccuaweb3:/export/scripts /net/ccuaweb3/export/scripts
+
+
+/net/ccuaweb3/export/scripts/WTS/total_san.lvm_asm.sh
+
+
+script to check for free disk in excel:
+
+=IF(ISERROR(MATCH(A1,$C$1:$C$184,0)),"","Duplicate")
+
+
+fdisk -l 2>/dev/null | egrep '^Disk'| grep -i emcpower
+
+or
+
+for i in `cat /tmp/test1.txt`; do fdisk -l 2>/dev/null /dev/$i | egrep '^Disk'; done
+
+
+-----------------------multipath ------------------------------
+
+/net/ccuaweb3/export/scripts/WTS/total_san.lvm_asm.sh
+
+cat /etc/udev/rules.d/99-oracle.rules | awk -F "/" '{print $2}'| tr -d "1" | awk -F "\"" '{print $1}'| mail -s "asm" janarthanan.chidhambaram@iuo.citi.com
+
+
+pvs | grep -i mpath | awk '{print $1}' | awk -F "/" '{print $4}'| tr -d "1" | mail -s "pvs" janarthanan.chidhambaram@iuo.citi.com
+
+
+multipath -ll | grep -i mpath | awk '{print $1}' | mail -s "Mpath" janarthanan.chidhambaram@iuo.citi.com
+
+
+remove last p letter from PVS and oracle rules output
+
+
+multipath -ll | grep -i mpath | awk '{print $1 " " $3}'
+
+/opt/sangria/bin/inq | egrep -i "dm-56|dm-72|dm-51|dm-63|dm-70" | awk '{print $1 " " $7}' | awk -F "/" '{print $3}'
+
+
+
+multipath -ll | grep -i size
+
+multipath -ll | grep -i size|awk -F "=" '{print $2}'|awk '{print $1}'
+
+
+-
+
+
+
+
+
+for i in `cat newdisks.mpath` 
+do 
+vgextend ctogcbcswdb2p_vg /dev/mapper/$i 
+done 
+lvextend -L +100G /dev/mapper/abworkvg-abworklv 
+resize2fs /dev/mapper/abworkvg-abworklv
+
+
+
+
+
+for i in `cat test.txt` 
+do 
+vgextend ctogcbcswdb2p_vg /dev/mapper/$i 
+done 
+
+
+reduce 
+
+
+for i in `cat test.txt` 
+do 
+vgreduce ctogcbcswdb2p_vg /dev/mapper/$i 
+done
+
+for i in `cat test789.txt` 
+do 
+pvremove /dev/mapper/$i 
+done
+
+
+
+
+lvs -o +devices
+
+
+lvdisplay /dev/ctogcbcswdb2p_vg/varapplv -m
+
+vgs -o +devices 
+
+
