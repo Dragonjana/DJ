@@ -1,0 +1,129 @@
+aix_disk_list.sh
+
+#!/bin/ksh
+#!/usr/bin/ksh
+echo "\033[5;31m VG_Name   FS_Name                 Assign_Disk""\033[0m"
+echo "-----------------------------------------------"
+for vg in `lsvg -o`;do
+        for fs in `lsvgfs $vg`;do
+                printf "%-8s" $vg" " && printf "%-22s" $fs;
+                for disk in `lsvg -p $vg|tail +3|awk '{print $1}'`;do
+                        lspv -l $disk | grep -q " ${fs}$" && printf "%-8s" $disk" ";
+                done;
+                echo
+        done;
+done
+
+-----------------------------------------------------------
+check_df_hung_solaris
+
+
+#!/bin/bash
+#!/bin/sh
+
+CMD="truss"
+OUT="/tmp/output.txt"
+DF="df -h"
+
+$CMD -o $OUT $DF & sleep 2 ; kill $! 
+
+CK_MNT=`egrep -c "sleeping" /tmp/output.txt`
+
+                if [ $CK_MNT = 1 ]; then 
+echo
+echo
+echo
+
+                        echo " $DF Command is Hung " 
+
+                        echo 
+
+                        STATUS=`cat /tmp/output.txt | grep -i sleeping |sed 's/(/ /g' |tr -d '",'| awk   '{print $2}'`
+
+                echo -e "file system is stale on \033[5;31m $STATUS " "\033[0m"
+echo
+
+                else 
+                        echo "Mount point are fine" 
+                         
+                fi
+
+rm  $OUTcheck_df_hung_solaris
+-----------------------------------------------------------
+check_df_hung_Linux.sh
+
+#!/bin/bash
+#!/bin/sh
+
+CMD="strace"
+OUT="/tmp/output.txt"
+DF="df -h"
+
+$CMD -o $OUT $DF & sleep 5 ; kill $! 
+
+CK_MNT=`cat /tmp/output.txt| tail -1 | grep -c statfs`
+
+                if [ $CK_MNT = 1 ]; then 
+echo
+echo
+echo
+
+                        echo " $DF Command is Hung " 
+
+                        echo 
+
+                        STATUS=`cat /tmp/output.txt |tail -1 | grep -i statfs|sed 's/(/ /g' |tr -d '",'| awk   '{print $2}'`
+
+                echo -e "file system is stale on \033[5;31m $STATUS " "\033[0m"
+echo
+
+                else 
+                        echo "Mount point are fine" 
+                         
+                fi
+
+rm  $OUT
+
+-----------------------------------------------
+check_df_hung_AIX.sh
+
+#!/usr/bin/ksh
+#!/usr/bin/bash
+#!/usr/bin/sh
+
+CMD="truss"
+OUT="/tmp/output.txt"
+DF="df -gt"
+
+$CMD -o $OUT $DF & sleep 4 ; kill $! 
+
+CK_MNT=`egrep -c "sleeping" /tmp/output.txt`
+
+                if [ $CK_MNT = 1 ]; then 
+echo
+echo
+echo
+
+                        echo " $DF Command is Hung " 
+
+                        echo 
+
+                        STATUS=`cat /tmp/output.txt | grep -i sleeping |sed 's/(/ /g' |tr -d '",'| awk   '{print $2}'`
+
+                echo "file system is stale on \033[5;31m $STATUS " "\033[0m"
+echo
+
+                else 
+                        echo "Mount point are fine" 
+                         
+                fi
+
+rm  $OUT
+
+------------------------------------------
+
+
+
+
+
+
