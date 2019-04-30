@@ -1,0 +1,539 @@
+ 109  hpssacli ctrl all show config
+  110  exit
+  111  hpssacli ctrl all show config
+  112  df -h
+  113  vgs
+  114  vgdisplya
+  115  vgdisplay
+  116  vgdisplay rootvg
+  117  pvs
+  118  hpssacli ctrl all show config
+  119  fdisk -l
+  120  pvdisplay
+  121  hpssacli
+  122  hpssacli ctrl all show config
+  123  hpssacli ctrl all show config
+  124  pvs
+  125  hpssacli ctrl all show config
+  126  hpssacli ctrl all show config 
+  127  hpssacli ctrl all show config
+  128  uname -a ;date
+  129  hpssacli ctrl all show config
+  130  bash
+  131  history
+  132  hpssacli ctrl all show config
+  133  hpssacli ctrl all show config
+  134  hpssacli ctrl slot=# pd 2I:1:6 modify led=on
+  135  hpssacli ctrl all show config | grep -i slot
+  136  hpssacli ctrl all show config 
+  137  hpssacli ctrl slot=0 pd 2I:1:6 modify led=on
+  138  hpssacli ctrl all show config 
+  139  hpssacli ctrl all show config 
+  140  hpssacli ctrl slot=0 pd 2I:1:6 modify led=off
+  141  hpssacli ctrl all show config 
+  142  hpssacli ctrl all show config 
+  143  exit
+  144  hpssacli ctrl all show config 
+  145  hpssacli ctrl all show config 
+  146  d f-h
+  147  df -h
+  148  df h
+  149  hpacucli
+  150  rpm -ivh /net/tfiad3/nfs/HP/hpssacli/hpssacli-2.20-11.0.x86_64.rpm
+  151  hpssacl
+  152  hpssacloi
+  153  hpssacli
+  154        physicaldrive 1I:1:4 (port 1I:box 1:bay 4, SAS, 900.1 GB, OK)
+  155     array D (SAS, Unused Space: 0  MB)
+  156        logicaldrive 4 (838.3 GB, RAID 0, OK)
+  157        physicaldrive 2I:1:5 (port 2I:box 1:bay 5, SAS, 900.1 GB, OK)
+  158  fdisk -l |grep -i "disk"
+  159  fdisk -l |grep -i /dev/mapper"
+  160  fdisk -l |grep -i "/dev/mapper"
+  161  fdisk -l |grep  "disk"
+  162  history
+  163  hpssacli ctrl slot=# pd 2I:1:6
+  164  hpssacli
+  165  hpssacli
+  166  fdisk -l
+  167  fdisk -l /dev/sdf
+188  rm test
+  189  cd /data/hbaserq
+  190  ls -ltr
+  191  touch test
+  192  ls -ltr
+  193  cd 
+  194  cd /data/kafkaesque
+  195  ls -ltr
+  196  touch test
+  197  ls -ltr
+  198  rm test
+  199  pwd
+  200  df -h
+  201  pvs
+  202  vgs
+  203  vgreduce datavg /dev//dev/sde
+  204  pvscan
+  205  vgscan
+  206  lvscan
+  207  lvs
+  208  df -h
+  209  fuser -cu /data/hbase
+  210  kill -9 9997
+  211  cd 
+  212  umount -l  /data/hbase
+  213  df -h
+  214  lvs
+  215  lvremove /dev/datadg/datavg_vol1
+  216  lvremove --help /dev/datadg/datavg_vol1
+  217  lvremove /dev/datadg/datavg_vol1
+  218  lvremove -fl /dev/datadg/datavg_vol1
+  219  lvremove -f /dev/datadg/datavg_vol1
+  220  vgs
+  221  lvremove  /dev/datavg/datavg_vol1
+  222  lvs
+  223  pvremove /dev/hpssacli
+  224  hpssacli
+  225  hplog -v
+  226  ctrl slot=0 ld all show
+  227  hpssacli 
+  228  lvs
+  229  pvremove --help
+  230  pvremove /dev/mapper/datavg-datavg_vol1
+  231  pvs
+  232  hpssacli 
+  233  fdisk -l |grep -i disk
+  234  fdisk -l |grep -i "disk"
+  235  fdisk -l |grep -i "/dev/disk"
+  236  fdisk -l /dev/sde
+  237  pvs
+  238  pvcreate /dev/sde          
+  239  pvcreate /dev/sde          pvs
+  240  pvs
+  241  pvscan
+  242  pvscan
+  243  vgscan
+  244  lvscan
+  245  pvcreate --help
+  246  pvcreate /dev/sd
+  247  pvcreate /dev/sde
+ 254  lvs
+  255  lvcreate -L 4t -n datavg-datavg_vol1 datavg
+  256  pvcreate /dev/sde
+  257  pvs
+  258  vgextend datavg /dev/sde
+  259  vgs
+  260  pvs
+  261  vls
+  262  lvs
+  263  lvcreate -L 4t -n datavg-datavg_vol1 datavg
+  264  pvs
+  265  vgreduce --removemissing
+  266  vgreduce --help
+  267  vgreduce datavg ITT1aF-5ilK-iFub-hdn6-pvj9-vVkn-xbJHEW
+  268  lvcreate -L 4t -n datavg-datavg_vol1 datavg
+  269  vgs
+  270  pvs
+  271  lvs
+  272  lvcreate -L 4t -n datavg_vol1 datavg
+  273  hpasscli
+  274  hpssacli
+  275  lvs
+  276  pvs
+  277  vgs
+  278  lvscan
+  279  vgscan
+  280  pvscan
+  281  pvs
+  282  pvdisplay
+  283  pvremove help
+  284  pvremove --help
+  285  vgreduce --removemissing --force datavg
+  286  vgs
+  287  pvs
+  288  lvs
+  289  lvcreate -L 4t -n datavg_vol1 datavg
+  290  cat /etc/fstab
+  291  lvs
+  292  mkfs  -t ext4 /dev/datavg/vol1
+  293  cd /dev/datavg
+  294  ls -ltr
+  295  mkfs  -t ext4 /dev/datavg/datavg_vol1
+  296  mount -a
+  297  df -h
+  298  vgs
+  299  ls -ld /data/hbase
+  300  chown cfadm:cfgrp /data/hbase
+  301  chown -R  cfadm:cfgrp /data/hbase
+  302  cd /data/hbase
+  303  ls -ltr
+  304  df -h
+  305  lvs
+  306  pvs
+  307  vgs
+310  df -h /data/hbase
+  311  cd 
+  312  df -Hp
+  313  df -Ph
+  314  lvs
+  315  lvs
+  316  df -Ph
+  317  vgs
+  318  pvs
+  319  lvs
+  320  hpssacli
+  321  df -h
+  322  cd /data/hbase
+  323  ls -ltr
+  324  cd 
+  325  df -h /data/hbase
+  326  exit
+  327  history
+  328  uptime
+  329  df -h
+  330  sa r 14
+  331  sar 1 4
+  332  history
+  333  history |gre -i hpacucli
+  334  iostat
+  335  df -h
+  336  cat /var/log/messages | grep -w io
+  337  cat /var/log/messages | grep -w i/o
+  338  cat /var/log/messages | grep -i i/o
+  339  date
+  340  sar 1 8
+  341  /net/tfiad3/nfs/bin/health_linux.pl
+  342  date
+  343  hpasmcli ctrl all show config
+  344  hpssacli ctrl all show config
+  345  fdisk -l |more
+  346  vgs
+  347  history
+  348  df -h
+  349  pvs
+  350  lvs
+  351  fdisk -l
+  352  hpssacli ctrl all show config
+  353  fdisk -l
+  354  pvs
+  355  fdisk -l | grep -i /dev/sdb
+  356  df -h
+  357  hpssacli ctrl all show config
+  358  df -h
+  359  pvs
+  360  vgs
+  361  dmesg 
+  362  dmesg | grep -i failure
+  363  df -h
+  364  cd /data/hbase
+  365  ls -ltr\
+  366  ls
+  367  touch 123
+  368  ls -ltr
+  369  rm 123
+  370  ls -ltr
+  371  cd /data/kafkaesque
+  372  ls 
+375  df -h
+  376  cd /data/hbaserq
+  377  ls
+  378  touch 1
+  379  cd /data/tibems_local
+  380  ls
+  381  cd /opt/diadm
+  382  ls
+  383  cd /logs/diadm
+  384  ls
+  385  cd /data/didata
+  386  ls 
+  387  cd /
+  388  cd 
+  389  cat /proc/mounts | grep ro | grep datavg
+  390  exit
+  391  df -h
+  392  pvs
+  393  hpasmcli ctrl all show config
+  394  hpssacli ctrl all show config
+  395  df -h
+  396  cd /data/hbase
+  397  ls -lrt
+  398  touch 1
+  399  rm 1
+  400  cd vgs
+  401  cgs
+  402  vgs
+  403  df -h
+  404  cd /data/kafkaesque
+  405  ls -lrt
+  406  touch 1
+  407  cd /opt/diadm
+  408  ls
+  409  ls -lrt
+  410  touch 1
+  411  hpssacli ctrl all show config
+  412  pvs
+  413  df -h
+  414  hpssacli ctrl all show config
+  415  dmesg | grep -i failure
+  416  hpssacli ctrl all show config
+  417  dmesg | grep -i failure | tail
+  418  vgs
+  419  pvs
+  420  df -h
+  421  exit
+  422  vgs -o +devices
+  423  cat /proc/mounts | grep ro
+  424  cat /proc/mounts | grep ro| grep datavg
+  425  cd /logs
+  426  touch a
+  427  lsblk
+  428  ls -l /dev/sdb
+  429  lsblk | grep 8:16
+  430  lvs -o +lv_kernel_major,lv_kernel_minor
+  431  lvdisplay|awk  '/LV Name/{n=$3} /Block device/{d=$3; sub(".*:","dm-",d); print d,n;}'
+  432  lsblk -f
+  433  lsblk -f | more
+  434  fdisk -l /dev/sdb
+  435  fdisk -l /dev/sda
+  436  fdisk -l /dev/sdb
+  437  fdisk -l | grep sdb
+ 438  parted -l
+  439  lsscsi
+  440  lsscsi| grep sdb
+  441  lsblk -o NAME,FSTYPE,LABEL,UUID,MOUNTPOINT
+  442  lsblk -o NAME,FSTYPE,LABEL,UUID,MOUNTPOINT | more
+  443  uptime
+  444  df -h
+  445  sa r 14
+  446  sar 1 4
+  447  history
+  448  history |gre -i hpacucli
+  449  hpssacli ctrl show config
+  450  hpssacli ctrl all show config
+  451  sar 1 4
+  452  sar
+  453  date
+  454  hpssacli ctrl all show config
+  455  df -h
+  456  pvs
+  457  vgs
+  458  fdisk -l
+  459  fdisk -l |more
+  460  hpssacli ctrl all show config
+  461  ps -ef |grep -i had
+  462  df -h
+  463  cd /data/hbase
+  464  ls
+  465  hpssacli ctrl all show config
+  466  vgs
+  467  df -h
+  468  history
+  469  exit
+  470  history
+  471  hpssacli ctrl all show config
+  472  fdisk -l
+  473  vgs
+  474  df -h
+  475  pvs
+  476  exit
+  477  df -h
+  478  tail -50 /var/log/messages
+  479  tail -200 /var/log/messages |grep "I/O"
+  480  cat /var/log/messages |grep "I/O"
+  481  cat /var/log/messages |grep "corruption or read-only"
+  482  exit
+  483  date
+  484  exit
+  485  df -h 
+  486  df -h /logs /data/hbaserq /data/kafkaesque
+  487  hpssacli  ctrl all show config
+  488  dmidecode -t system 
+  489  hpacucli ctrl all showconfig 
+  490  hpssacli ctrl all show config 
+  491  dmesg | tail
+  492  df -hp
+  493  df -hP
+  494  pvs
+  495  cat /etc/lvm/archive/datavg_00048-1053533771.vg | grep sdb
+  496  cat /etc/lvm/archive/datavg_00048-1053533771.vg
+  497  pvs
+  498  cat /proc/mounts | grep ro,
+  499  dmidecode -t1
+  500  bash
+  501  clear
+  502  ps -ef |grep -i had
+  503  ps -ef |grep -i pmon
+  504  cat /proc/mounts |grep -i ro
+  505  cat /proc/mounts |grep -w ro
+  506  df -h 
+  507  uname
+  508  mount |grep -w ro
+  509  cat /etc/fstab |grep /data/didata
+  510  cat /proc/mounts |grep -w ro
+  511  vgs
+  512  pvs
+  513  cat /proc/mounts |grep -w ro
+  514  df -h
+  515  fuser -cu /logs 
+  516  uptime
+  517  who -r
+  518  crontab -l |egrep -i "shut|init|reb"
+  519  date
+  520  dmesg |tail
+  521  dmesg grep -i fail
+  522  hpcucli ctrl all show status
+  523  hpssacli ctrl all show config
+  524  df -h
+  525  vgs
+  526  history 
+  527  hpssacli ctrl all show config
+  528  hpssacli ctrl slot=0 ld=2 show
+  529  hpssacli ctrl slot=0 ld 2 show
+  530  pvs
+  531  pvs|grep 'sdb'
+  532  df 
+  533  vgs
+  534  pvs
+  535  pvdisplay /dev/sdb
+  536  pvdisplay /dev/sdc
+  537  history
+  538  hpssacli ctrl slot=0 ld 2 show
+  539  hpssacli ctrl all show config
+  540  hpacucli rescan
+  541  hpssacli rescan
+  542  df -h
+  543  pvs
+  544  hpssacli ctrl all show config
+  545  df -h 
+  546  mount | grep -i ro
+  547  df -h
+  548  pvs
+  549  hpacucli
+  550  hpssacli 
+  551  pvs
+https://support.hpe.com/hpsc/doc/public/display?docId=emr_na-c03493210
+  552  hpacucli
+  553  hpssacli
+•	hpssacli> ctrl slot=0 ld 4 modify reenable forced  ## To re-enabling failed drive
+
+  554  pvs
+
+  555  fdisk -l
+  556  fdisk -l | grep Disk
+  557  fdisk -l | grep "^Disk" | egrep -v "mapp|iden"
+ 558  pvs
+  559  pvcreate
+  560  pvcreate --help
+  561  pvcreate /dev/sdb -u Disk /dev/sdw (Sun disk label): 128 heads, 32 sectors, 537 cylinders
+  562  Disk /dev/sdx (Sun disk label): 128 heads, 32 sectors, 537 cylinders
+  563  [root@cfswps8c-phys ~]# pvs
+  564  pvcreate /dev/sdb -u OK8D2m-Fx7h-WwDX-3QHv-SLjT-RLBb-FM5PRm
+  565  cd /etc/lvm
+  566  ls
+  567  cd cache
+  568  ls -lrt
+  569  cd ..
+  570  ls
+  571  cd backup/
+  572  ls -lrt
+  573  cd datavg 
+  574  ls -lrt
+  575  cd ..
+  576  ls -lrt
+  577  pvcreate /dev/sdb -u OK8D2m-Fx7h-WwDX-3QHv-SLjT-RLBb-FM5PRm --restorefile /etc/lvm/backup/datavg 
+  578  pvs
+  579  df -hP
+  580  lvs -o + devices
+  581  lvs -o +devices
+  582  df -hTP
+  583  umount /logs /data/tibems_local /data/hbaserq /data/kafkaesque /opt/diadm /logs/diadm /data/didata
+  584* 
+  585  df -h 
+  586  fuser -cu /logs
+  587  fuser -cuk /logs
+  588  umount /logs
+  589  fuser -cu /data/kafkaesque
+  590  fuser -cuk /data/kafkaesque
+  591  umount /data/kafkaesque
+  592  df -h 
+  593  pvcreate /dev/sdb -u OK8D2m-Fx7h-WwDX-3QHv-SLjT-RLBb-FM5PRm --restorefile /etc/lvm/backup/datavg 
+  594  lvs -o +devices
+  595  df -hTP
+  596  cat /etc/lvm/backup/datavg | head
+  597  pvcreate /dev/sdb -u OK8D2m-Fx7h-WwDX-3QHv-SLjT-RLBb-FM5PRm --restorefile /etc/lvm/backup/datavg --froce
+  598  pvcreate /dev/sdb -u OK8D2m-Fx7h-WwDX-3QHv-SLjT-RLBb-FM5PRm --restorefile /etc/lvm/backup/datavg --force
+  599  cat /etc/lvm/backup/datavg | grep -i datavg
+  600  cat /etc/lvm/backup/datavg | grep -C 4 -i datavg
+  601  cat /etc/lvm/backup/datavg | grep -C 4 -i sdb
+  602  df -hP
+  603  lvs 
+  604  lvchange -an /dev/mapper/datavg-datavg_vol2 
+  605  lvs
+  606  pvcreate /dev/sdb -u OK8D2m-Fx7h-WwDX-3QHv-SLjT-RLBb-FM5PRm --restorefile /etc/lvm/backup/datavg
+  607  lvchange -an /dev/mapper/datavg-datavg_vol3 
+  608  lvchange -an /dev/mapper/datav-vol4
+  609  lvchange -an /dev/mapper/datavg-vol04
+  610  lvchange -an /dev/mapper/datav-vol05
+  611  lvchange -an /dev/mapper/datavg-vol05
+  612  lvchange -an /dev/mapper/datavg-vol06
+  613  lvchange -an /dev/mapper/datavg-vol07
+  614  lvchange -an /dev/mapper/datavg-vol08
+  615  pvcreate /dev/sdb -u OK8D2m-Fx7h-WwDX-3QHv-SLjT-RLBb-FM5PRm --restorefile /etc/lvm/backup/datavg
+  616  pvs
+  617* 
+618  lvchange -ay /dev/mapper/datavg-datavg_vol3 
+  619  lvchange -ay /dev/mapper/datavg-datavg_vol2
+  620  lvchange -ay /dev/mapper/datavg-vol0[4-8]
+  621  lvchange -ay /dev/mapper/datavg-vol04
+  622  lvchange -ay /dev/mapper/datavg-vol05
+  623  lvchange -ay /dev/mapper/datavg-vol06
+  624  lvchange -ay /dev/mapper/datavg-vol07
+  625  lvchange -ay /dev/mapper/datavg-vol08
+  626  pvs
+  627  mount -a
+  628  cat /opt/openv/netbackup/exclude_list 
+  629  df -hTP
+  630  /opt/openv/netbackup/bp
+  631  /opt/openv/netbackup/bin/bp
+  632  pvs
+  633  history | grep -i moun
+  634  cat /etc/fstab
+  635  mkfs.ext4 /dev/datavg/datavg_vol2 
+  636  mount /logs
+  637  df -h 
+  638  mkfs.ext4 /dev/datavg/datavg_vol3
+  639  cat /etc/fstab | grep -i datavg
+  640  mkfs.ext4 /dev/datavg/vol04
+  641  mkfs.ext4 /dev/datavg/vol05
+  642  mkfs.ext4 /dev/datavg/vol06
+  643  mkfs.ext4 /dev/datavg/vol07
+  644  mkfs.ext4 /dev/datavg/vol08
+  645  mount -a
+  646  cd logs
+  647  cd /logs/
+  648  ls
+  649  mkdir diadm
+  650  ls -ltr 
+  651  mount -a
+  652  df -h 
+  653  /opt/openv/netbackup/bin/bp
+  654  ps -ef | grep -i back
+  655  tail -f /root/bplog.rest.001 
+  656  ls -ltr 
+  657  ls -ltr diadm/
+  658  tail -f /root/bplog.rest.001 
+  659  ls -ltr diadm/
+  660  ls -ltr diadm/*/
+  661  ls -ltr
+  662  tail -f /root/bplog.rest.001 
+  663  /opt/openv/netbackup/bin/bp
+  664  tail -f /root/bplog.rest.002
+  665  tail -f /root/bplog.rest.001 
+  666  /opt/openv/netbackup/bin/bp
+  667  f -h 
+  668  df -h
+  669  top
+  670  df -h 
+  671  history 
+[root@cfswps8c-phys logs]# 
+
