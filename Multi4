@@ -1,0 +1,1697 @@
+migratelp.pl
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my ($vg,$pps,%hdisk,$disk,$disk2,@output,$freepp,$match);
+my (@output2,$lv,$line,$lvsize,$match2,$count,@output3,$lp);
+
+if ($#ARGV == 1){
+   $vg = $ARGV[0];
+   $pps = $ARGV[1];
+}else{
+   printf "Specify volume group name and number of desired free PP's\n";
+   exit 1;
+}
+
+@output = `lsvg -p $vg | grep active | awk '{print \$1}'`;
+
+for $disk (@output){
+   chomp($disk);
+   $freepp = `lspv $disk | grep "FREE PPs:" | awk '{print \$3}'`;
+   chomp($freepp);
+   $hdisk{$disk} = $freepp;
+}
+
+for $disk (@output){
+   if ($hdisk{$disk} >= $pps) { next; }
+   $match = "false";
+   for $disk2 (@output){
+      if ($hdisk{$disk2} - ($pps - $hdisk{$disk}) - $pps >= 0){
+         @output2 = `lspv -l $disk`;
+         $match2 = "false";
+         for $line (@output2){
+            if ($line =~ /(\S+)\s+(\d+)\s+.*/){
+               $lv = $1;
+               $lvsize = $2;
+               if ($lvsize >= ($pps - $hdisk{$disk})){
+                  $match2 = "true";
+                  $count = 0;
+                  @output3 = `lslv -m $lv | grep " $disk " | awk '{print \$1}'`;
+                  for $lp (@output3){
+                     chomp($lp);
+                     $lp += 0;  #This removes leading zeros
+                     if ($count < ($pps - $hdisk{$disk})){
+                        printf "migratelp ${lv}/${lp} $disk2; sleep 1; ###To free up PP's on $disk\n";
+                     }
+                     $count++;
+                  }
+                  last;   
+               }
+            }
+         }
+         if ($match2 eq "false") {
+            print "**ERROR** - Couldn't find any LV's on $disk that are $pps PP's\n";
+            exit 2;
+         }
+         $hdisk{$disk2} = $hdisk{$disk2} - ($pps - $hdisk{$disk});
+         $match = "true";
+         last;
+      }
+   }
+   if ($match eq "false") {
+      print "**ERROR** - Couldn't find $pps free PP's on any remaining disks \n";
+      exit 2;
+   }
+}
+
+-------------------------------------------------------
+sysinfo.sh
+
+#!/usr/bin/ksh
+#!/usr/bin/bash
+#!/usr/bin/sh
+#
+
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
+
+if [[ $EUID -ne 0 ]]; then
+   echo "This script can only be executed with root privileges"
+   exit 1
+fi
+
+if [[ "`uname`" != 'Linux' ]];
+then
+   echo 'This script is only for Linux hosts'
+   exit;
+fi
+
+havepowermt=0;
+[[ "`which powermt 2>/dev/null`" != "" ]] && havepowermt=1
+
+repeatstr() { for i in `seq 1 $1`; do echo -n "$2" ; done; }
+
+echoindent() { repeatstr $1 ' '; shift; echo "$@"; }
+
+indentblock() {
+   indent=$1;
+   shift;
+   echo "$@" | while read line; do echoindent $indent "$line"; done
+}
+
+check_vol_ownership() {
+   cleandisk=$1;
+   is_asm=$2;
+   is_lvm=$3;
+
+   if [[ $is_asm -eq 1 ]];
+   then
+      grep_for='oracle(?:\s+)dba';
+      should_be='oracle:dba';
+   else
+      grep_for='root(?:\s+)disk';
+      should_be='root:disk';
+   fi
+
+   ownership_ok=0;
+   outer_ownership_ok=0;
+   inner_ownership_ok=0;
+   inner_partition_exists=0;
+   
+   [[ -e "${cleandisk}1" ]] && inner_partition_exists=1;
+
+   outer_ownership_ok=$( ls -l $cleandisk 2>/dev/null | grep -P "$grep_for" >/dev/null 2>&1 && echo 1 || echo 0 );
+
+   if [[ $inner_partition_exists -eq 1 ]];
+   then
+      inner_ownership_ok=$( ls -l "${cleandisk}1" 2>/dev/null | grep -P "$grep_for" >/dev/null 2>&1 && echo 1 || echo 0 );
+
+      if [[ $inner_ownership_ok -eq 1 ]];
+      then
+         ownership_ok=1;
+      fi
+   elif [[ $outer_ownership_ok -eq 1 ]];
+   then
+      ownership_ok=1; 
+   fi
+
+   if [[ $ownership_ok -eq 0 ]];
+   then
+      echoindent 9 '*' ALERT: this volume has incorrect ownership.  It should belong to "$should_be";
+   fi
+
+}
+
+echo ".$( repeatstr 69 - )."
+banner="SUMMARY REPORT FOR `hostname -f` `hostname -i`"
+printf "| %-67s |\n" "$banner"
+echo "'$( repeatstr 69 - )'"
+
+echo;
+
+echo HOST INFORMATION
+
+echoindent 3 This host is named $( hostname -f ) at $( hostname -i );
+echoindent 3 It has been up for $( uptime | perl -e 'undef $/; $e=<>; $e =~ /.*up\s(\d.*),(?=\s+\d+\sus).*/; print $1' ) hours
+
+isvirtual=0; [[ "$( dmidecode | grep -E VMware )" != "" ]] && isvirtual=1
+isblade=0; [[ $isvirtual -eq 0 && "$( dmidecode | grep 'Enclosure Name' )" != "" ]] && isblade=1
+enclosure='';
+
+if [[ $isblade -eq 1 ]]; then
+   enclosure=$( dmidecode | grep 'Enclosure Name' | awk '{ print $3 }' );
+fi
+
+echoindent 3 This server is a $(
+   if [[ $isvirtual -eq 1 ]]; then
+      echo -n Virtual Machine;
+   elif [[ $isblade -eq 1 ]]; then
+      echo -n Blade Server in enclosure $enclosure
+   else
+      echo -n Physical Machine;
+   fi;
+)
+
+echoindent 6 Model Info: $( dmidecode | grep -P '^\s+Product Name:' 2>/dev/null | head -n1 | perl -pi -e 's/^\s+.*?://' );
+echoindent 6 $( dmidecode | grep -P '^\s+Serial Number:' 2>/dev/null | head -n1 | perl -pi -e 's/^\s+//' );
+echoindent 6 Architecture: $( uname -m )
+echoindent 6 Running: $( cat /etc/redhat-release )
+echoindent 6 Kernel: $( uname -r )
+echoindent 6 Installed Packages: $( rpm -qa | wc -l )
+
+echo;
+
+echo PROCESSORS
+
+if [[ $isvirtual -eq 0 ]]; then
+
+   physical_cpus=$( cat /proc/cpuinfo | grep '^physical id' | sort | uniq -c | wc -l );
+   cores_per_cpu=$( cat /proc/cpuinfo | grep '^cpu cores' | sort | uniq -c | awk '{ print $5 }' )
+   logical_cpus=$( cat /proc/cpuinfo | grep -P '^processor[[:space:]]+:\s\d+' | wc -l )
+   hyperthreads='undetected';
+
+   if [[ "$cores_per_cpu" != "" ]]; then
+      hyperthreads=$(( $logical_cpus / ( $physical_cpus * $cores_per_cpu ) ));
+   fi
+
+   echoindent 3 This system has has
+   echoindent 6 physical processors: $physical_cpus
+   echoindent 6 cores per processor: $cores_per_cpu
+   echoindent 6 threads per core: $hyperthreads
+   echoindent 6 total logical processors: $logical_cpus -- \(physical CPUs x Cores x Threads per core\)
+   echoindent 3 Processor details follow:
+else
+
+   echoindent 3 This system has $(
+      cat /proc/cpuinfo | grep -P '^processor[[:space:]]+:\s\d+' | wc -l
+      ) logical processor\(s\) with the following details:
+fi
+
+dmidecode -t 4 | perl -e '
+   undef $/;
+   for ( split /(?<=\n)\n+/, <> ) {
+      print and last if /Processor Information/ && /Flags:/
+   }' |
+   grep -v ^Processor |
+   grep -vP '^[[:space:]]{0,}(Handle|ID:|Socket|Serial|Asset|Part)'
+
+
+echo;
+
+echo MEMORY
+
+echoindent 3 $(( $( free -g | grep ^Mem | awk '{ print $2 }' ) + 1 )) GB of installed RAM
+
+echoindent 3 $(( $( free -g | grep ^Swap | awk '{ print $2 }' ) + 1 )) GB of configured swap space
+
+meminfo=$(
+   dmidecode | perl -e '
+      undef $/;
+      for ( split /(?<=\n)\n+/, <> ) {
+         print if /Memory Device\n/ && !/(Not|No Module) Installed/
+      }'
+)
+
+dimm_count=$( echo "$meminfo" | grep -P '^[^[:alpha:]]+(Installed ){0,1}Size:\s\d' | wc -l )
+
+echoindent 3 $dimm_count memory module\(s\) installed:
+
+echo "$meminfo" |
+   grep -P '^[^[:alpha:]]+(Locator|(Installed ){0,1}Size):' |
+   perl -pe 's/.*Locator: //g ; s/.*(Size.*)\n+/      - RAM module $1 /'
+
+echo;
+
+echo NETWORK
+
+echoindent 3 PHYSICAL INTERFACES
+
+ifaces=$( ls -d /sys/class/net/*| grep -P '[[:alpha:]]+\d+' | sed 's/.*\///' | grep -vi bond )
+
+for iface in $ifaces; do
+   ip=$( ip addr show $iface | grep -P '^[[:space:]]+inet \d' | awk '{ print $2 }' )
+   mii=$( mii-tool $iface 2>/dev/null | sed 's/^\w*:\s//' )
+
+   if [[ "$ip" == "" ]]; then ip='NO IP'; fi
+   if [[ "$mii" == "" ]]; then mii='unavailable';  fi
+
+   echoindent 6 $iface - $ip - mii: $mii
+   indentblock 6 "$( ethtool eth0 | grep -E 'Speed: |Duplex: ' | sed 's/^\t//' )"
+done
+
+echoindent 3 BONDED INTERFACES '(NETWORK REDUNDANCY)'
+
+bonds=$( ls -d /sys/class/net/*| grep -P 'bond\d+' | sed 's/.*\///' )
+
+if [[ "$bonds" == "" ]]; then
+   echoindent 6 No bonded interfaces '(no redundancy)'
+   [[ $isvirtual -eq 1 ]] && echoindent 6 '*Bonded interfaces are not necessary on virtual hosts*'
+else
+   for bond in $bonds; do
+      ip=$( ip addr show $bond | grep -P '^[[:space:]]+inet \d' | awk '{ print $2 }' )
+      mii=$( mii-tool $bond | sed 's/^\w*:\s//' )
+
+      if [[ "$ip" == "" ]]; then ip='NO IP';  fi
+      if [[ "$mii" == "" ]]; then mii='unavailable';  fi
+
+      echoindent 6 $bond - $ip - mii: $mii
+   done
+fi
+
+echoindent 3 GATEWAY
+echoindent 6 $( netstat -rn | grep ^0.0.0.0 | awk '{ print $2 }' )
+
+echo;
+
+echo DISK AND SAN \(with capacities\)
+
+echoindent 3 CAPACITY/USAGE Breakdown of TOP LEVEL Volumes
+indentblock 6 "$( df -hl -t ext4 -t ext3 -P | sed 's/Mounted on/Mount/' | column -t )"
+
+echo;
+
+#localdisks=$( ls -l /dev/disk/by-path/ | grep -P '(cciss/c\d+d\d+(?!p))|(\-scsi-.*/sd[[:alpha:]]+$)' );
+
+localdisks='';
+
+if [[ $havepowermt -eq 1 ]];
+then
+   localdisks=$(
+      {
+         powermt display dev=all |
+         
+         grep -P '\d+\s+lpfc\s.*?sd' |
+         
+         awk '{ print $3 }';  
+         
+         fdisk -l 2>/dev/null | 
+         
+         grep -viE 'mapper|emc|vxvm' |
+         
+         perl -ne '( /^Disk \/dev\/([[:alpha:]]+)(?<![[:digit:]]):.*/ || /^Disk \/dev\/(cciss\/c\d+d\d+):.*/ ) && print "$1\n"'
+      } |
+
+      sort | uniq -u | sed 's/\(.*\)/\/dev\/\1/'
+   );
+else
+   localdisks=$(
+      fdisk -l 2>/dev/null | 
+
+      grep -viE 'mapper|emc|vxvm' |
+
+      perl -ne '( /^Disk \/dev\/([[:alpha:]]+)(?<![[:digit:]]):.*/ || /^Disk \/dev\/(cciss\/c\d+d\d+):.*/ ) && print "$1\n"'
+   );
+fi
+
+echoindent 3 LOCAL PHYSICAL VOLUMES:
+
+for disk in $localdisks;
+do
+   fdisk -l $disk 2>/dev/null |
+
+   grep -P '^Disk /dev/' |
+
+   while read cleandisk; 
+   do
+      echoindent 6 $cleandisk
+
+      cleandisk=$( echo "$cleandisk" | perl -ne '/(\/dev\/.*?):/ && print "$1\n"' );
+
+      is_asm=0 ; dd if=$cleandisk bs=$(( 1024 * 100 )) count=1 2>/dev/null | strings | grep ORCLDISK && is_asm=1
+      is_lvm=0 ; dd if=$cleandisk bs=$(( 1024 * 100 )) count=1 2>/dev/null | strings | grep -i LVM >/dev/null && is_lvm=1
+      partcount=$( fdisk -l $cleandisk 2>/dev/null | grep ^/dev | wc -l || echo 0 );
+
+      if [[ $is_asm -eq 1 ]];
+      then
+         echoindent 9 '*this volume is in use by ORACLE ASM'
+      elif [[ $is_lvm -eq 1 && $partcount -le 1 ]];
+      then
+         echoindent 9 '*' $cleandisk ' is in use by Linux LVM'
+      fi
+
+      check_vol_ownership $cleandisk $is_asm $is_lvm;
+
+      echoindent 9 '*' $cleandisk has $partcount partitions
+
+      echo;
+   done
+done
+
+
+localdisktotal=$(
+
+   totalsize=0
+
+   for disk in $localdisks;
+   do
+      disk=$( fdisk -l $disk 2>/dev/null )
+
+      bytes=$( echo "$disk" | perl -ne '/^Disk \/dev\/.* (\d+) bytes$/ && print "$1\n"' )
+
+      for disksize in $bytes;
+      do
+         totalsize=$(( $totalsize + $disksize ));
+
+         echo $totalsize;
+      done
+   done | tail -n1
+);
+
+localdisktotal=$(
+   perl -e "
+   print '$localdisktotal bytes, approx ', 
+         ( sprintf '%.2f', ( $localdisktotal / (1000**3) ) ), 
+         ' Gigabytes, or approx ', 
+         ( sprintf '%.2f', ( $localdisktotal / ( 1000**4) ) ), 
+         ' Terabytes'"
+); 
+
+echoindent 6 "TOTAL LOCAL DISK: $localdisktotal"
+
+echo;
+
+echoindent 3 SAN VOLUMES:
+
+#sandisks=$( ls -l /dev/disk/by-path/ | grep -P '\-fc-.*lun-[[:digit:]]+[[:space:]]' );
+sandisks=$( ls /dev/emcpower?* 2>/dev/null | grep -vP 'power.*\d' );
+
+## red hat 4
+#if [[ "$sandisks" == "" ]]; then # try harder to find SAN disks
+#   sandisks=$( ls -l /dev/disk/by-path/ | grep -P '\-fc-0x.*0x' );
+#fi
+
+foundsan=0;
+
+[[ "$sandisks" != "" ]] && foundsan=1;
+
+hbainfo='The gethbainfo command is unavailable on this host'
+
+[[ -x /opt/HBAinfo/bin/gethbainfo ]] && hbainfo=$( /opt/HBAinfo/bin/gethbainfo )
+
+if [[ $foundsan -eq 1 ]]; then
+
+   echo "$sandisks" |  xargs fdisk -l 2>/dev/null |
+      grep -P '^Disk /dev/' |
+         while read disk; 
+         do
+            echoindent 6 $disk
+#
+#            cleandisk=$( echo "$disk" | perl -ne '/(\/dev\/.*?):/ && print "$1\n"' );
+#
+#            is_asm=0 ; dd if=$cleandisk bs=$(( 1024 * 100 )) count=1 2>/dev/null | strings | grep ORCLDISK >/dev/null && is_asm=1
+#            is_lvm=0 ; dd if=$cleandisk bs=$(( 1024 * 100 )) count=1 2>/dev/null | strings | grep -i LVM >/dev/null && is_lvm=1
+#            partcount=$( fdisk -l $cleandisk 2>/dev/null | grep ^/dev | wc -l || echo 0 );
+#
+#            if [[ $is_asm -eq 1 ]];
+#            then
+#               echoindent 9 '*' $cleandisk ' is in use by ORACLE ASM'
+#            elif [[ $is_lvm -eq 1 && $partcount -le 2 ]];
+#            then
+#               echoindent 9 '*' $cleandisk ' is in use by Linux LVM'
+#            fi
+#
+#            check_vol_ownership $cleandisk $is_asm $is_lvm;
+#
+#            echoindent 9 '*' $cleandisk has $partcount partitions
+#
+#            echo;
+#
+         done
+
+   luncount=$( echo "$sandisks" | wc -l );
+
+   echoindent 6 "That's a total of $luncount SAN volumes attached";
+
+   echo;
+
+   santotal=$(
+      { 
+         fdisk -l /dev/emcpower[a-z] /dev/emcpower[a-z][a-z] /dev/emcpower[a-z][a-z][a-z] 2>/dev/null | 
+
+         grep '^Disk /dev' |
+
+         perl -ne '/ (\d+) bytes/ && print "$1\n"' | 
+
+         while read lunsize; 
+         do 
+            totalsize=$(( $totalsize + $lunsize )); 
+
+            echo $totalsize
+
+         done | tail -n1
+
+      } | {
+         read totalsize;
+
+         perl -e "
+         print '$totalsize bytes, approx ', 
+               ( sprintf '%.2f', ( $totalsize / (1000**3) ) ), 
+               ' Gigabytes, or approx ', 
+               ( sprintf '%.2f', ( $totalsize / ( 1000**4) ) ), 
+               ' Terabytes'"
+         echo; 
+      }
+   );
+
+   echoindent 6 "TOTAL SAN: $santotal"
+
+
+   if [[ $havepowermt -eq 1 ]]; then
+
+      lpfc=$( powermt display | grep lpfc );
+
+      echo;
+
+      echoindent 6 LPFC INFO
+      echoindent 6 There are $( echo "$lpfc" | wc -l ) Light Pulse Fiber Channel \(LPFC\) connections -
+      echoindent 9 LPFC status readings:
+
+      echo "$lpfc" | awk '{ print "LPFC ID #", $1, "=", $3 }' | while read lpfcstat; do
+
+         echoindent 12 $lpfcstat
+      done
+
+      echo;
+
+      echoindent 6 HBA INFO - \(Speeds of '"UNKNOWN"' indicate no connection\)
+      indentblock 9 "$hbainfo"
+   else
+      echoindent 6 This script utility detected SAN LUNs in /dev/disk/by-path,
+      echoindent 6 but cannot detect the powermt command.  This is a problem
+      echoindent 6 that you should investigate
+   fi
+else
+   if [[ $havepowermt -eq 1 ]]; then
+      echoindent 6 This script utility could not detect SAN LUNs in /dev/disk/by-path,
+      echoindent 6 but found the powermt command installed on this host.  This might indicate
+      echoindent 6 a problem that you should investigate.
+
+      echo;
+
+      echoindent 6 HBA INFORMATION - \(SPEED '"UNKNOWN"' indicates no connection\)
+      indentblock 9 "$hbainfo"
+   else
+      echoindent 6 This machine has no SAN volumes attached
+   fi
+fi
+
+echo;
+
+havelvm=0;
+
+[[ "$( which vgs )" != "" ]] && havelvm=1;
+
+echoindent 3 'LOGICAL VOLUME BREAKDOWN (LVM2)'
+
+if [[ $havelvm -eq 1 ]]; then
+
+   echoindent 6 VOLUME GROUPS
+
+   indentblock 9 "$( vgs | column -t )"
+
+   echo;
+
+   echoindent 6 LOGICAL VOLUMES
+
+   indentblock 9 "$( lvs | awk '{ print $1, $2, $3, $4 }' | column -t )"
+else
+   echoindent 6 There are no logical volumes or volume groups on this host
+fi
+
+havenas=0;
+
+[[ $( mount | grep -i 'type nfs ' | wc -l ) -gt 0 ]] && havenas=1;
+
+echo;
+
+echoindent 3 NAS VOLUMES
+
+if [[ $havenas -eq 1 ]]; then
+
+   echoindent 18 ... Connections ...
+
+   indentblock 6 "$(
+   {
+      echo HOST SHARE MOUNT;
+
+      mount |
+      grep 'type nfs ' |
+      sort |
+      awk '{ print $1, $3 }'
+   } |
+      sed 's/\(^.*\):\(.*$\)/\1 \2/' |
+      column -t
+   )"
+
+   echo;
+
+   echoindent 18 ... Capacities ...
+
+   nasvols=$( mount | grep 'type nfs ' | awk '{ print $1 }' )
+
+   indentblock 6 "$(
+      {
+         echo SHARE SIZE USED AVAIL USE%;
+
+         for nasvol in $nasvols; do
+
+            df -hP | grep "$nasvol" | awk '{ print $1, $2, $3, $4, $5 }'
+
+         done
+      } | column -t
+   )"
+
+else
+   echoindent 6 There are no NAS connected to this host
+fi
+
+echo; printf '%33s' '-- --'; echo;
+
+printf '%58s' "This snapshot was taken `date`"
+
+echo; echo;
+
+echo '_ _ _ _ _ _ _ _ _ _ _ _ _ END OF REPORT _ _ _ _ _ _ _ _ _ _ _ _ _ _ _'; echo;
+
+exit;
+
+
+--------------------------------------------------
+mirror
+
+#!/usr/bin/perl
+use strict;
+
+my $vg = "rootvg";
+if ($#ARGV == 0) { $vg = $ARGV[0]; }
+
+my @vginfo = `lsvg -l $vg | egrep -v "livedump|fwdump|sysdump"`;
+my $lv;
+foreach $lv (@vginfo){
+        if ($lv =~ /(\S+)\s+\S+\s+(\d+)\s+(\d+)\s+(\d+)\s+\S+\s+(\S+)/){
+                if ($4 < 2){
+                        printf "%-20s %-20s not mirrored (Only on 1 Physical Volume)\n", $5, $1;
+                }elsif ( $3 < ($2 * 2) ){
+                        printf "%-20s %-20s not mirrored (LP's=$2,PP's=$3) \n", $5, $1;
+                }
+        }
+}
+
+----------------------------------------------------
+cpu
+
+#!/usr/bin/perl
+
+@info = qx "lparstat -i";
+chomp @info;
+
+foreach $line (@info){
+        ($label, $value) = split(":", $line);
+        $label =~ s/^\s+//; $label =~ s/\s+$//;
+        $value =~ s/^\s+//; $value =~ s/\s+$//;
+        $value =~ s/ MB//; $value =~ s/-SMT//;
+
+        if($label eq "Node Name")                {$node = $value; }
+        if($label eq "Type")                     {$type = $value; }
+        if($label eq "Minimum Capacity")         {$minunit = $value;}
+        if($label eq "Entitled Capacity")        {$desunit = $value;}
+        if($label eq "Maximum Capacity")         {$maxunit = $value;}
+        if($label eq "Minimum Virtual CPUs")     {$minproc = $value;}
+        if($label eq "Online Virtual CPUs")      {$desproc = $value;}
+        if($label eq "Maximum Virtual CPUs")     {$maxproc = $value;}
+        if($label eq "Variable Capacity Weight") {$weight = $value;}
+
+        if($label eq "Minimum Memory")           {$minmem = $value; }
+        if($label eq "Online Memory")            {$desmem = $value; }
+        if($label eq "Maximum Memory")           {$maxmem = $value; }
+}
+
+$HEAD[$a] = "ServerName"; $PF[$a] = "%-12s "; $FLDS[$a] = $node;     $a++;
+$HEAD[$a] = "CPUtype";    $PF[$a] = "%-7s ";  $FLDS[$a] = $type;     $a++;
+$HEAD[$a] = "MinProc";    $PF[$a] = "%-7s ";  $FLDS[$a] = $minproc;  $a++;
+$HEAD[$a] = "DesProc";    $PF[$a] = "%-7s ";  $FLDS[$a] = $desproc;  $a++;
+$HEAD[$a] = "MaxProc";    $PF[$a] = "%-7s ";  $FLDS[$a] = $maxproc;  $a++;
+$HEAD[$a] = "MinUnit";    $PF[$a] = "%-7s ";  $FLDS[$a] = $minunit;  $a++;
+$HEAD[$a] = "DesUnit";    $PF[$a] = "%-7s ";  $FLDS[$a] = $desunit;  $a++;
+$HEAD[$a] = "MaxUnit";    $PF[$a] = "%-7s ";  $FLDS[$a] = $maxunit;  $a++;
+$HEAD[$a] = "Weight";     $PF[$a] = "%-6s ";  $FLDS[$a] = $weight;   $a++;
+$HEAD[$a] = "";           $PF[$a] = "  ",;    $FLDS[$a] = "";        $a++;
+$HEAD[$a] = "MinMem";     $PF[$a] = "%-6s ";  $FLDS[$a] = $minmem;   $a++;
+$HEAD[$a] = "DesMem";     $PF[$a] = "%-6s ";  $FLDS[$a] = $desmem;   $a++;
+$HEAD[$a] = "MaxMem";     $PF[$a] = "%-6s ";  $FLDS[$a] = $maxmem;   $a++;
+
+
+for($i=0;$i<@HEAD;$i++){
+        printf "$PF[$i]", $HEAD[$i]
+}
+ 
+printf "\n";
+
+for($i=0;$i<@HEAD;$i++){
+        printf "$PF[$i]", $FLDS[$i]
+}
+ 
+printf "\n";
+
+---------------------------------------------
+mem
+
+#!/usr/bin/ksh
+#!/usr/bin/bash
+#!/usr/bin/sh
+#memory calculator
+um=`svmon -G | head -2|tail -1| awk {'print $3'}`
+um=`expr $um / 256`
+tm=`lsattr -El sys0 -a realmem | awk {'print $2'}`
+tm=`expr $tm / 1024`
+fm=`expr $tm - $um`
+echo "\n\n-----------------------";
+	echo "System : (`hostname`)";
+echo "-----------------------\n\n"
+
+echo "Memory Information\n\n";
+	echo "total memory = $tm MB"
+	echo "free memory = $fm MB"
+	echo "used memory = $um MB"
+echo "\n\n-----------------------\n";
+
+--------------------------------------------------
+aix_hel
+#!/bin/ksh
+
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
+
+if [[ "`uname`" != 'AIX' ]];
+then
+   echo This script runs on AIX only!  Aborted.
+   exit 1;
+fi
+
+# if you clean your path as I did above, this isn't necessary,
+# but in small scripts it makes for more consice code
+
+SWAP=/usr/sbin/lsps
+#TOP=/usr/bin/top
+PS=/bin/ps
+LPARSTAT=/bin/lparstat
+CAT=/bin/cat
+DF=/bin/df
+W=/usr/bin/w
+UPTIME=/usr/bin/uptime
+SED=/bin/sed
+GREP=/bin/grep
+HEAD=/usr/bin/head
+#TAC=/usr/bin/tac
+PERL=/bin/perl
+AWK=/bin/awk
+TR=/bin/tr
+IOSTAT=/bin/iostat
+WC=/usr/bin/wc
+PRINTF=/bin/printf
+SORT=/bin/sort
+UNAME=/bin/uname
+HAPACKAGE='IHS.hacmp.rte'
+HACMP=`ps ax | grep -v grep | grep clstrmgr`
+HASTATE=`lssrc -ls clstrmgrES |grep state`
+HAINFO=`/usr/es/sbin/cluster/utilities/clRGinfo`
+
+#COLUMN=/usr/bin/column
+echo
+echo "_ _ _ _ _ _ START OF SYSTEM REPORT (`uname -n`)_ _ _ _ _ _ "
+echo
+if [ -f /net/ccuaweb3/export/scripts/WTS/aix_sysinfo.sh ]
+then
+        /net/ccuaweb3/export/scripts/WTS/aix_sysinfo.sh 
+else
+        echo "    AIX sysinfo check script not found"
+fi
+echo
+echo "    RESOURCE USAGE STATISTICS"
+echo "------------------------------"
+echo
+cpucount=$( $LPARSTAT -i |grep -v 'Entitled Capacity of Pool' |grep 'Entitled Capacity' |awk '{print $4}')
+load5min="$( $UPTIME | $SED 's/.*load average: \([0-9]\{1,\}\.[0-9]\{2\}\),.*/\1/' )"
+iowait=$(sar 1 5 | grep Average | awk '{print $4}')
+swap_percent=`$SWAP  -s|awk '{print $2}'|grep -v Paging|cut -f1 -d"%"`
+server=`uname -n`
+
+echo ".--------------------------------------------------------------------."
+echo
+echo  CPU
+echo "   ( Load to processor ratio must be less than 1.0 per processor )"
+echo "      Number of CPUs: $cpucount";
+echo "      5 minute load average: $load5min";
+
+loadok=$( $PERL -e "print $load5min < $cpucount || 0" ) 
+
+if [[ "$loadok" == "1" ]];
+then
+   echo "      CPU load to processor ratio is within optimal range.";
+else
+   echo "      Load exceeds optimal conditions!";
+fi
+
+echo
+echo I/O AND DISKS
+echo "   ( iowait times greater than 20 are BAD when CPU load is not optimal )"
+echo "   ( if load optimal, sustained iowait should be lower than 30 )"
+echo "      I/O CPU wait time: $iowait";
+
+iowaitok=$( $PERL -e "print +( $iowait < 30 && $loadok ) || 0" ) 
+iowaitwarn=$( $PERL -e "print +( $iowait < 5 && !$loadok ) || 0" ) 
+iowaitalert=$( $PERL -e "print +( $iowait > 20 && !$loadok ) || 0" ) 
+
+if [ "$iowaitok" == "1" ];
+then
+   echo "      I/O wait metric is within optimal range.";
+elif [ "$iowaitwarn" ];
+then
+   echo "      WARNING! I/O wait metric above optimal threshold.";
+elif [ "$iowaitalert" ];
+then
+   echo "      ALERT!  I/O WAIT METRIC INDICATES MACHINE IS I/O BOUND!"
+fi
+
+echo
+echo "   Percentage of swap in use: ${swap_percent}"
+echo "      ( swap must be less than 60% to avoid RAM exhaustion and thrashing )"
+
+swapok=$( $PERL -e "print $swap_percent < 60 || 0" )
+
+if [ "$swapok" == "1" ];
+then
+   echo "      swap usage within acceptable range.";
+else
+   echo "      CURRENT SWAP USAGE INDICATES POTENTIAL MEMORY EXHAUSTION!";
+fi
+
+#echo
+#echo "   Analysis of disk PERFORMANCE utilization--NOT capacity/usage"
+#echo "      ( optimal values are 50% or lower, report excludes values of 0.00 )"
+
+
+echo
+echo " FILESYSTEM"
+echo "   Checking for mounted volumes over 80% USAGE..."
+echo "      ( greater than 80% indicate potential disk bottlenecks/slowdowns. )"
+echo "      ( greater than 90% indicate possible disk thrashing! )"
+echo "   Below filesystems are @ threshold"
+echo 
+df -g  2>/dev/null | sed 's/ 0 / 0G /g' |perl -wne 'if (/(\d+.)\s+(\d+)%\s+(.*)/){print "$3 is @ $2% (avail: $1)\n" if $2 > 80}' | sed 's/^/   /g'
+
+echo 
+echo "   ...done with disk usage checks.  Please note any warnings/alerts."
+
+echo
+echo MEMORY
+echo "    Total Installed Physical Memory is $(lparstat -i |egrep 'Desired Memory' |awk '{print $4, $5}')"
+
+MEM_REAL=`svmon -G | sed -n '/memory/p' |awk '{print$6/$2}'`
+MEM_USAGE=`echo  " $MEM_REAL * 100" | bc`
+echo "MEM USAGE:$MEM_USAGE%"
+echo
+
+echo 
+echo "Virtual memory usage"
+   echo "   Real percentage of virtual memory (physical + swap) in use: ${swap_percent}%";
+
+echo
+echo "PROCESS"
+echo "  ( Top 5 users/process utilizing CPU resources "
+echo
+ps auxw | sort -r +2 |head -10
+echo
+
+echo
+echo "  ( Top 5 users/process utilizing memory  resources )"
+echo
+svmon -P -t 10 -O summary=basic
+echo
+
+echo
+echo " ( ERRPT check for Hardware Errors )"
+echo
+errpt -d H
+echo
+
+echo
+echo " Network Packet Status"
+echo
+netstat -i
+echo
+
+if lslpp -l | grep $HAPACKAGE > /dev/null
+then
+  echo "IT'S HACMP CLUSTER SERVER"
+  echo "*************************"
+  echo "$HACMP service running"
+  echo
+  echo "CLUSTER STATE"
+  echo "*************"
+  echo
+  echo "$HASTATE"
+  echo
+  echo "RESOURCE GROUP STATUS"
+  echo "*********************"
+  echo "$HAINFO"
+  echo
+else 
+  echo "It's not HACMP Cluster server"
+fi
+
+
+$PRINTF "| %-50s |\n" "Scrpt run @   `date` "
+echo "_ _ _ _ _ _END OF SYSTEM  REPORT (`uname -n`) _ _ _ _ _ _"
+exit
+--------------------------------------------------------------
+fixpath
+
+#!/bin/bash
+
+# THIS SCRIPT IS FOR LINUX ONLY!
+
+export PATH=$PATH:/etc:/sbin:/usr/sbin
+
+if [[ "`uname`" != 'Linux' ]];
+then
+   echo This script runs on Linux only!  Aborted.
+   exit 1;
+fi
+
+echo 1 >  /sys/class/fc_host/host2/issue_lip
+echo 1 >  /sys/class/fc_host/host4/issue_lip
+echo "- - -" > /sys/class/scsi_host/host2/scan
+sleep 3;
+powermt restore
+powermt config
+sleep 3;
+
+
+if [ "$( type powermt 2>/dev/null )" != "" ];
+then
+   echo -n `hostname` ...
+else
+   echo -n `hostname` ...
+   echo FAIL : no powermt command found
+   exit
+fi
+
+#if [ "$( uname )" == "SunOS" ];
+#then
+#   echo WARNING : This is SunOS which cannot do shell math.  Check it manually
+#   exit;
+#fi
+
+if [ $(( $( powermt display 2>/dev/null | perl -ne '/^\s+\d/ && print' | wc -l ) % 2 )) != 0 ];
+then
+   echo FAIL : missing redundancy detected
+   exit
+fi
+
+if [ "$( powermt display 2>/dev/null | perl -ne '/(?:pci|scsi|lpfc).*?[[:space:]]+optimal/ && print' )" == "" ];
+then
+   echo FAIL : not optimal
+   exit
+fi
+
+if [ "$( powermt display 2>/dev/null | perl -ne '/^\s+\d+\slpfc/ && print' | awk '{ print $5 }' | grep -v 0 )" != "" ];
+then
+
+   echo FAIL : dead paths detected
+   exit
+fi
+
+if [ "$( powermt display 2>/dev/null | perl -ne '/^\s{0,}\d/ && print' | awk '{ print $4 }' | xargs | perl -e '$ct=<>;chomp$ct;@ct=split/ /,$ct;$ct=shift@ct;exit unless@ct>=1;for(@ct){exit if$_ ne$ct}print q{OK}' )" == "" ];
+then
+   echo FAIL : paths are not the same between HBAs
+   exit;
+fi
+
+echo PASS
+
+exit
+
+-------------------------------------------
+monitor
+
+#!/bin/ksh
+#
+# COMPONENT_NAME: perfpmr
+#
+# FUNCTIONS: none
+#
+# ORIGINS: IBM
+#
+# (C) COPYRIGHT International Business Machines Corp. 2000
+# All Rights Reserved
+#
+# US Government Users Restricted Rights - Use, duplication or
+# disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+#
+# monitor.sh
+#
+# invoke system performance monitors and collect interval and summary reports
+#
+
+export LANG=C
+BIN=/usr/bin
+SBIN=/usr/sbin
+AIXVER=`uname -v`
+
+show_usage()
+{
+ echo  "monitor.sh: usage: monitor.sh [-k][-e][-n] [-p] [-s] [-h][-I sec][-N count][-S sec][-i][-t][-F] time"
+ echo  "      -k used if no kdb monitor desired."
+ echo  "      -e used if no emstat or alstat desired."
+ echo  "      -n used if no netstat or nfsstat desired."
+ echo  "      -p used if no pprof desired."
+ echo  "      -s used if no svmon desired."
+ echo  "      -m used if no mpstat desired."
+ echo  "      -l used if no lparstat desired."
+ echo  "      -t used if no tstat desired."
+ echo  "      -h used if hpmstat desired."
+ echo  "      -i used if no iomon desired."
+ echo  "      -F used if no fcstat2 output desired."
+ echo  "      -I <seconds> specifies initial sleep delay before perfxtra monitoring starts"
+ echo  "      -N <count> specifies number of times to run perfxtra monitoring prgrams"
+ echo  "      -S <seconds> specifies number of seconds in between each iteration of perfxtra programs"
+ echo  "      time is total time in seconds to be measured."
+ exit 1
+}
+do_timestamp()
+{
+        echo "`$BIN/date +"%H:%M:%S-%D"` :\t$1"
+}
+
+function lsps_as
+{
+echo "Date/Time:  " `$BIN/date`
+echo "\n"
+echo "$SBIN/lsps -a"
+echo "-------"
+$SBIN/lsps -a
+
+echo "\n\n"
+echo "$SBIN/lsps -s"
+echo "-------"
+$SBIN/lsps -s
+}
+
+
+function vmstat_i
+{
+echo "Date/Time:  " `$BIN/date`
+echo "\n"
+echo "vmstat -i"
+echo "---------"
+$BIN/vmstat -i
+}
+
+function vmstat_v
+{
+echo "Date/Time:  " `$BIN/date`
+echo "\n"
+echo "vmstat -v"
+echo "---------"
+AMS=0; $BIN/lparstat -i|$BIN/grep "Memory Mode"|$BIN/grep -i Shar >/dev/null && AMS=1
+if [ "$AIXVER" = "6" ]; then
+	for apar in IZ30898 IZ31517
+	do
+		$SBIN/instfix -ik $apar >/dev/null 2>&1
+		if [ $? -ne 0 ]; then
+			AMS=0
+		fi
+	done
+fi
+if [ $AMS -eq 1 ]; then
+  $BIN/vmstat -hv  2>&1
+else
+  $BIN/vmstat -v 2>&1
+fi
+}
+
+do_fcstat_wwpn()
+{
+if [ -f /usr/sbin/fcstat ]; then
+	$PERFPMRDIR/fcstat_vios.sh
+fi
+}
+
+do_fcstat()
+{
+if [ -f /usr/sbin/fcstat ]; then
+        echo "\n\n------------ FCSTAT    ----------\n" 
+	$PERFPMRDIR/fcstat2 -l | while read f; do
+        #for f in `$SBIN/lsdev -Ccadapter|$BIN/grep "^fcs"|$BIN/awk '{print $1}'`; do
+        echo "\n------------------------------------------------" 
+                $SBIN/fcstat -D $f 
+        done
+fi
+}
+
+do_pile_out()
+{
+        if [ -n "$NO_KDB"  ]; then
+		echo "Will not execute kdb pile command since NO_KDB was specified"
+                return
+        fi
+	echo "pile" | $SBIN/kdb
+}
+#do_vmker_out()
+#{
+#        if [ -n "$NO_KDB"  ]; then
+#		echo "Will not execute kdb vmker -psize command since NO_KDB was specified"
+#                return
+#        fi
+#	echo "vmker -psize" | $SBIN/kdb
+#}
+do_kdb_vmmstats()
+{
+if [ -n "$NO_KDB"  ]; then
+        echo "$0: do_kdb_vmmstats function will not be run since NO_KDB was set"
+        return
+fi
+
+echo "dd wlm_hw_pages\n\nvmker -psize\nvmstat\nvmstat -p 0\nvmstat -p 1\nfrs *\npst *\npst 0\npst 1\npfhdata\npfhdata -lrumpss\npfhdata -tune\npfhdata -lsa\npfhdata -psm\nvmker\nvmker -psize\n\nppda *\n\ndw hcall_stats_flag\n\ndw pmap_stat 20" | $SBIN/kdb
+
+$PERFPMRDIR/getmempool.sh
+$PERFPMRDIR/getvmpool.sh
+}
+
+
+#--------------------------------------------------------
+# MAIN
+#--------------------------------------------------------
+do_timestamp "monitor.sh $@"
+PERFPMRDIR=`whence $0`
+PERFPMRDIR=`$BIN/ls -l $PERFPMRDIR |$BIN/awk '{print $NF}'`
+PERFPMRDIR=`$BIN/dirname $PERFPMRDIR`
+export LANG=C
+
+if [ $# -eq 0 ]; then
+        show_usage
+fi
+
+WPAR=`$SBIN/lswpar -q | wc -l`
+if [ $WPAR -gt 0 ]
+then
+	NETSTATWPAR="-W"
+else
+	NETSTATWPAR=""
+fi
+
+KDBMON=1
+EMSTAT=1
+NET=1
+PROF=1
+SVMON=1
+MPSTAT=1
+LPARSTAT=1
+HPMSTAT=0
+IOMON=1
+FCSTAT2=1
+TSTAT=1
+perfxtra_init=0
+perfxtra_count=0
+perfxtra_sleep=0
+while getopts FkihenpsmlI:N:S:t flag ; do
+        case $flag in
+		k)     KDBMON=0;;
+		t)     TSTAT=0;;
+		F)     FCSTAT2=0;;
+		i)     IOMON=0;;
+		h)     HPMSTAT=1;;
+                e)     EMSTAT=0;;
+                n)     NET=0;;
+                p)     PROF=0;;
+                s)     SVMON=0;;
+		m)     MPSTAT=0;;
+		l)     LPARSTAT=0;;
+		I)     perfxtra_init=$OPTARG;;
+		N)     perfxtra_count=$OPTARG;;
+		S)     perfxtra_sleep=$OPTARG;;
+                \?)    show_usage
+        esac
+done
+shift OPTIND-1
+SLEEP=$@
+
+# check total time specified for minimum amount of 60 seconds
+if [ "$SLEEP" -lt 60 ]; then
+ echo Minimum time interval required is 60 seconds
+ exit 1
+fi
+
+#if [ $SLEEP -lt 601 ]; then
+# INTERVAL=10
+# let COUNT=$1/10
+#else
+# INTERVAL=10	# changed from 60 to 10 on 6/5/12
+# let COUNT=$1/10  # changed from 60 to 10 on 6/5/12
+#fi
+if [ -n "$PERFPMR_MONITOR_INTVLTIME" ]; then
+	INTERVAL=$PERFPMR_MONITOR_INTVLTIME
+else
+	INTERVAL=10
+fi
+let COUNT=$1/$INTERVAL
+
+# need count+1 intervals for VMSTAT
+let COUNT=COUNT+1
+
+
+
+if [ $SVMON = 1 ]; then
+  echo "\n     MONITOR: Capturing initial lsps, svmon, and vmstat data"
+else
+  echo "\n     MONITOR: Capturing initial lsps and vmstat data"
+fi
+
+# do pile at start
+do_pile_out > pile.before
+#do_vmker_out > vmker.before
+do_kdb_vmmstats > vmmstats_kdb.before
+
+# pick up lsps output at start of interval
+lsps_as > lsps.before
+
+# pick up vmstat -i at start of interval
+vmstat_i > vmstati.before
+
+# pick up vmstat -v at start of interval
+vmstat_v > vmstat_v.before
+
+# pick up svmon output at start of interval
+# skip if svmon executable is not installed
+# or if -s flag was specified
+if [ ! -f /usr/bin/svmon ]; then
+  echo "     MONITOR: /usr/bin/svmon command is not installed"
+  echo "     MONITOR: This command is part of 'bos.perf.tools' fileset."
+else
+  if [ $SVMON = 1 ]; then
+    if [ $WPAR -gt 0 ]
+    then
+      $PERFPMRDIR/svmon.sh -o svmon.before -w ALL
+    else
+      $PERFPMRDIR/svmon.sh -o svmon.before
+    fi
+  fi
+fi
+
+
+# pick up fcstat output at end of interval
+do_timestamp "fcstat on each fc adapter"
+do_fcstat > fcstat.before
+if [ -d /usr/ios ]; then
+	do_fcstat_wwpn > fcstat_wwpn.before
+fi
+do_timestamp "fcstats completed"
+
+echo "     MONITOR: Starting perf_xtra programs: initsleep=$perfxtra_init count=$perfxtra_count sleep=$perfxtra_sleep"
+$PERFPMRDIR/perfxtra.sh $perfxtra_init $perfxtra_count  $perfxtra_sleep &
+echo "     MONITOR: Starting system monitors for $SLEEP seconds."
+
+$PERFPMRDIR/ps.sh $SLEEP > /dev/null &
+
+# skip nfsstat and netstat if -n flag used
+if [ "$NET" = 1 ]; then
+ if [ -x /usr/sbin/nfsstat ]; then
+  $PERFPMRDIR/nfsstat.sh $SLEEP > /dev/null &
+ fi
+ $PERFPMRDIR/netstat.sh $NETSTATWPAR $SLEEP > /dev/null &
+fi
+
+
+if [  "$KDBMON" = 1 ]; then
+	$PERFPMRDIR/kdb_mon.sh $SLEEP > /dev/null &
+fi
+
+if [  "$EMSTAT" = 1 ]; then
+	$PERFPMRDIR/emstat.sh $SLEEP > /dev/null &
+fi
+
+if [  "$MPSTAT" = 1 ]; then
+	$PERFPMRDIR/mpstat.sh $SLEEP > /dev/null &
+fi
+if [  "$HPMSTAT" = 1 ]; then
+	$PERFPMRDIR/hpmstat.sh $SLEEP > /dev/null &
+fi
+if [  "$TSTAT" = 1 ]; then
+	$PERFPMRDIR/tstat -A $INTERVAL $COUNT  > tstat.out 2>&1  &
+fi
+
+$PERFPMRDIR/sar.sh $SLEEP > /dev/null &
+
+$PERFPMRDIR/iostat.sh $SLEEP > /dev/null &
+
+#$PERFPMRDIR/aiostat.sh $SLEEP > /dev/null &
+
+if [ "$FCSTAT2" = 1 ]; then
+	$PERFPMRDIR/fcstat2 -Aat -C fcstat2.csv $INTERVAL $COUNT > fcstat2.out 2> fcstat2.err &
+fi
+if [ "$IOMON" = 1 ]; then
+	$PERFPMRDIR/iomon -i $INTERVAL -l $COUNT > iomon.out &
+fi
+
+if [  "$LPARSTAT" = 1 ]; then
+	$PERFPMRDIR/lparstat.sh $SLEEP > /dev/null &
+fi
+
+if [ $WPAR -gt 0 ]
+then
+	$PERFPMRDIR/vmstat.sh -w ALL $SLEEP > /dev/null &
+else
+	$PERFPMRDIR/vmstat.sh $SLEEP > /dev/null &
+fi
+
+if [ "$PROF" = 1 ]; then
+  # Give some time for above processes to startup and stabilize
+  $BIN/sleep 5
+  $PERFPMRDIR/pprof.sh $SLEEP > /dev/null &
+fi
+
+
+# wait until all child processes finish
+echo "     MONITOR: Waiting for measurement period to end...."
+trap 'echo MONITOR: Stopping...but data collection continues.; exit 2' 1 2 3 24
+$BIN/sleep $SLEEP &
+wait
+
+if [ "$SVMON" = 1 ]; then
+  echo "\n     MONITOR: Capturing final lsps, svmon, and vmstat data"
+else
+  echo "\n     MONITOR: Capturing final lsps and vmstat data"
+fi
+
+# do pile at end
+do_pile_out > pile.after
+#do_vmker_out > vmker.after
+do_kdb_vmmstats > vmmstats_kdb.after
+
+# pick up lsps output at end of interval
+lsps_as > lsps.after
+
+# pick up vmstat -i at end of interval
+vmstat_i > vmstati.after
+
+# pick up vmstat -v at end of interval
+vmstat_v > vmstat_v.after
+
+# pick up svmon output at end of interval
+# skip if svmon executable is not installed
+# or if -s flag was specified
+if [ -f /usr/bin/svmon -a "$SVMON" = 1 ]; then
+    if [ $WPAR -gt 0 ]
+    then
+      $PERFPMRDIR/svmon.sh  -o svmon.after -w ALL
+    else
+      $PERFPMRDIR/svmon.sh  -o svmon.after
+    fi
+fi
+
+# pick up fcstat output at end of interval
+do_timestamp "fcstat on each fc adapter"
+do_fcstat > fcstat.after
+if [ -d /usr/ios ]; then  # if VIOS
+	do_fcstat_wwpn > fcstat_wwpn.after
+fi
+do_timestamp "fcstats completed"
+
+echo "     MONITOR: Generating reports...."
+
+# collect all reports into two grand reports
+
+echo "Interval File for System + Application\n" > monitor.int
+echo "Summary File for System + Application\n" > monitor.sum
+
+$BIN/cat ps.int >> monitor.int
+$BIN/cat ps.sum >> monitor.sum
+$BIN/rm ps.int ps.sum
+
+echo "\f" >> monitor.int
+$BIN/cat sar.int >> monitor.int
+echo "\f" >> monitor.sum
+$BIN/cat sar.sum >> monitor.sum
+$BIN/rm sar.int sar.sum
+
+echo "\f" >> monitor.int
+$BIN/cat iostat.int >> monitor.int
+echo "\f" >> monitor.sum
+$BIN/cat iostat.sum >> monitor.sum
+$BIN/rm iostat.int iostat.sum
+
+echo "\f" >> monitor.int
+cat vmstat.int >> monitor.int
+echo "\f" >> monitor.sum
+$BIN/cat vmstat.sum >> monitor.sum
+$BIN/rm vmstat.int vmstat.sum
+
+echo "\nAIO data is in aiostat.int" >> monitor.int
+#echo "\f" >> monitor.int
+#$BIN/cat aiostat.int >> monitor.int 2>/dev/null
+#$BIN/rm aiostat.int 2>/dev/null
+
+
+if [ -n "$EMSTAT" ]; then
+	echo "\f" >> monitor.int
+	$BIN/cat emstat.int >> monitor.int
+	$BIN/rm emstat.int
+fi
+
+# skip nfsstat and netstat if -n flag used
+if [ $NET = 1 ]; then
+ if [ -x /usr/sbin/nfsstat ]; then
+  echo "     MONITOR: Network reports are in netstat.int and nfsstat.int"
+ else
+  echo "     MONITOR: Network report is in netstat.int"
+ fi
+fi
+
+echo "     MONITOR: Monitor reports are in monitor.int and monitor.sum"
+
+-----------------------------------------------------
+nfsstat
+
+#!/bin/ksh
+#
+# COMPONENT_NAME: perfpmr
+#
+# FUNCTIONS: none
+#
+# ORIGINS: 27
+#
+# (C) COPYRIGHT International Business Machines Corp.  2000
+# All Rights Reserved
+#
+# US Government Users Restricted Rights - Use, duplication or
+# disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+#
+# nfsstat.sh
+#
+# invoke nfsstat before/after measurement period and create report
+#
+export LANG=C
+BIN=/usr/bin
+SBIN=/usr/sbin
+
+
+NFSSTATOUT=nfsstat.int
+
+if [ $# -ne 1 ]; then
+ echo "nfsstat.sh: usage: nfsstat.sh time"
+ echo "      time is total time in seconds to be measured."
+ exit 1
+fi
+
+# check total time specified for minimum amount of 60 seconds
+if [ $1 -lt 60 ]; then
+ echo Minimum time interval required is 60 seconds
+ exit 1
+fi
+
+echo "\n     NFSSTAT: Collecting NFSSTAT statistics before the run...."
+echo "\n\n\n                   N  F  S  S  T  A  T    O  U  T  P  U  T\n" > $NFSSTATOUT
+echo "\n\nHostname:  "  `$BIN/hostname -s` >> $NFSSTATOUT
+echo "\n\nTime before run:  " `$BIN/date` >> $NFSSTATOUT
+
+echo "\f\n\n\n     N  F  S  S  T  A  T    O  U  T  P  U  T    B  E  F  O  R  E    R  U  N\n" > nfsstat.tmp
+echo         "\n\nnfsstat -m" >> nfsstat.tmp
+echo             "----------\n" >> nfsstat.tmp
+$SBIN/nfsstat -m    >>nfsstat.tmp  2>&1
+echo         "\n\nnfsstat -csnr" >> nfsstat.tmp
+echo             "-------------\n" >> nfsstat.tmp
+$SBIN/nfsstat -csnr >> nfsstat.tmp
+echo "     NFSSTAT: Waiting specified time...."
+trap 'kill -9 $!' 1 2 3 24
+$BIN/sleep $1 &
+wait
+
+echo "     NFSSTAT: Collecting NFSSTAT statistics after the run...."
+echo "\n\nTime after run :  " `date` >> $NFSSTATOUT
+
+# copy before data to out file now
+$BIN/cat nfsstat.tmp >> $NFSSTATOUT
+$BIN/rm nfsstat.tmp
+
+echo "\f\n\n\n       N  F  S  S  T  A  T    O  U  T  P  U  T    A  F  T  E  R    R  U  N\n" >> $NFSSTATOUT
+echo         "\n\nnfsstat -m" >> $NFSSTATOUT
+echo             "----------\n" >> $NFSSTATOUT
+nfsstat -m     >>$NFSSTATOUT  2>&1
+echo         "\n\nnfsstat -csnr" >> $NFSSTATOUT
+echo             "-------------\n" >> $NFSSTATOUT
+$SBIN/nfsstat -csnr >> $NFSSTATOUT
+
+echo "     NFSSTAT: Interval report is in file $NFSSTATOUT"
+
+-------------------------------------------------------------
+quicksnap
+
+#!/bin/ksh
+# Name: quicksnap  Version: 1.0
+# Ian MacQuarrie, 408-256-1820
+# IBM Product Engineering, SanJose CA
+# Script used to collect host configuration data
+# External commands: odmget,lsdev,lscfg,lsattr,lsvg,lslv,lslpp
+# Creation Date: 06-07-04  
+
+# Collect host info
+export LANG=C
+BIN=/usr/bin
+SBIN=/usr/sbin
+
+print "Data collected for host" $(hostname -s) "on" $(date)
+$BIN/printf "\n"
+
+# Collect some code levels
+$BIN/lslpp -L |grep -i "sdd"
+$BIN/lslpp -L |grep -i "ibm2105"
+$BIN/lslpp -L |grep -i "lvm"
+$BIN/lslpp -L |grep -i "df100"
+$BIN/printf "\n" 
+
+# Collect the AIX maintenance level
+$SBIN/instfix -i |grep ML
+$BIN/printf "\n"
+
+# Collect info on FC adapters
+print "HBA-FC     WWPN                 LOCATION"
+fcs_list=`$SBIN/lsdev -Cc adapter |$BIN/grep fcs |$BIN/awk '{print $1}'`
+for fcs in $fcs_list
+ do
+  wwpn=`$SBIN/lscfg -vl $fcs |$BIN/grep Network |$BIN/cut -c37-54`
+  adap_loc=`$SBIN/lsdev -Cl $fcs |$BIN/awk '{print $3}'`
+  $BIN/printf "%-10s %-20s %-10s\n" $fcs $wwpn $adap_loc
+ done
+
+# Collect into on SCSI adapters
+$BIN/printf "\n"
+print "HBA-SCSI   LOCATION"
+scsi_list=`$SBIN/lsdev -Cc adapter |$BIN/grep scsi |$BIN/awk '{print $1}'`
+for scsi in $scsi_list
+ do
+  adap_loc=`$SBIN/lsdev -Cl $scsi |$BIN/awk '{print $3}'`
+  $BIN/printf "%-10s %-20s\n" $scsi $adap_loc
+ done
+
+# Get a list of volume groups
+vg_list=`$BIN/odmget -q attribute=vgserial_id CuAt |$BIN/grep name |$BIN/cut -f2 -d\"`
+for vg in $vg_list
+ do
+ if [ "$vg" != "rootvg" ]
+ then
+  $SBIN/lsvg -o |$BIN/grep $vg > /dev/null 2>&1
+  rc=$? 
+  if [ $rc -eq 0 ] 
+   then
+    pp_size=`$SBIN/lsvg $vg |$BIN/grep "PP SIZE" |$BIN/awk '{print $6}'`
+    print "\n"
+    $BIN/printf "VOLUME GROUP:%s  PP SIZE:%sM\n" $vg $pp_size 
+    print "==================================================================="
+    pvid_list=`$BIN/odmget -q "name=$vg and attribute=pv" CuAt |$BIN/grep value |$BIN/cut -f2 -d\"`
+    print "PV            MAJ/MIN   SERIAL#    PVID               LOCATION PATH"
+    for pvid in $pvid_list
+     do
+      pvid_short=`print $pvid |$BIN/cut -c1-16`
+      disk_list=`$BIN/odmget -q "value=$pvid and attribute=pvid" CuAt |$BIN/grep name |$BIN/cut -f2 -d\"`
+    for disk in $disk_list
+     do
+      $BIN/odmget -q name=$disk CuDv |$BIN/grep 2105 > /dev/null
+      Type2105=$?
+      parent=`$SBIN/lsdev -Cl $disk -r parent`
+       if [ "$parent" = "dpo" ] # collect data for vpath devices
+        then
+         major=`$BIN/odmget -q value3=$disk CuDvDr |$BIN/grep value1 |$BIN/cut -f2 -d\"`
+         minor=`$BIN/odmget -q value3=$disk CuDvDr |$BIN/grep value2 |$BIN/cut -f2 -d\"`
+         $BIN/printf "%-12s %3x/%-17x %-10s\n"  $disk $major $minor $pvid_short                      
+         hdisk_list=`$BIN/odmget -q "name=$disk and attribute=active_hdisk" CuAt|$BIN/grep value|$BIN/cut -f2 -d\"|$BIN/cut -f1 -d\/`
+         for hdisk in $hdisk_list # collect data for hdisks under vpaths
+         do
+          serial=`$SBIN/lscfg -vl $hdisk |$BIN/grep Serial |$BIN/cut -c37-44`
+          if [ $Type2105 -eq 0 ]
+            then
+             port_id=`$SBIN/lscfg -vl $hdisk |$BIN/grep Z1 |$BIN/cut -c37-40`
+            else
+             port_id="N/A"
+          fi
+          adap_loc=`$SBIN/lsdev -Cl hdisk6 |$BIN/awk '{ print $3 }'`
+          major=`$BIN/odmget -q value3=$hdisk CuDvDr |$BIN/grep value1 |$BIN/cut -f2 -d\"`   
+          minor=`$BIN/odmget -q value3=$hdisk CuDvDr |$BIN/grep value2 |$BIN/cut -f2 -d\"`   
+          $BIN/printf "  %-10s %3x/%-6x %-29s %-8s %-10s\n" $hdisk $major $minor $serial $adap_loc $port_id 
+         done
+       else # collect data for non-vpath devices
+          serial=`$SBIN/lscfg -vl $disk |$BIN/grep Serial |$BIN/cut -c37-44`
+          if [ -z "$serial" ]
+            then
+              serial="N/A"
+          fi
+          if [ $Type2105 -eq 0 ]
+            then
+             port_id=`$SBIN/lscfg -vl $hdisk |$BIN/grep Z1 |$BIN/cut -c37-40`
+            else
+             port_id="N/A"
+          fi
+          adap_loc=`$SBIN/lsdev -Cl hdisk6 |$BIN/awk '{ print $3 }'`
+          major=`$BIN/odmget -q value3=$disk CuDvDr |$BIN/grep value1 |$BIN/cut -f2 -d\"`   
+          minor=`$BIN/odmget -q value3=$disk CuDvDr |$BIN/grep value2 |$BIN/cut -f2 -d\"`   
+          $BIN/printf "%-12s %3x/%-6x %-10s %-18s %-6s %-10s\n" $disk $major $minor $serial $pvid_short $adap_loc $port_id
+       fi
+     done
+    done
+  # collect data for locical volumes
+  vg_id=`$BIN/odmget -q "name=$vg and attribute=vgserial_id" CuAt |$BIN/grep value |$BIN/cut -f2 -d\"`
+  lv_id_list=`$BIN/odmget -q "value like $vg_id.*" CuAt |$BIN/grep value |$BIN/cut -f2 -d\"`
+  for lv_id in $lv_id_list
+   do
+    lv=`$BIN/odmget -q "attribute=lvserial_id AND value=$lv_id" CuAt |$BIN/grep name |$BIN/cut -f2 -d\"`
+    mount=`$BIN/odmget -q "name=$lv and attribute=label" CuAt |$BIN/grep value |$BIN/cut -f2 -d\"`
+    if [ -z "$mount" ]
+      then mount="N/A"
+    fi
+    major=`$BIN/odmget -q value3=$lv CuDvDr |$BIN/grep value1 |$BIN/cut -f2 -d\"`    
+    minor=`$BIN/odmget -q value3=$lv CuDvDr |$BIN/grep value2 |$BIN/cut -f2 -d\"`    
+    pp_count=`$SBIN/lsvg -l $vg |$BIN/grep $lv |$BIN/awk '{print $4}'` 
+    $BIN/printf "\n"
+    $BIN/printf "LOGICAL VOLUME:%s MAJ/MIN:%x/%x MOUNT POINT:%s PPs:%s\n" $lv $major $minor $mount $pp_count
+    copies=`$BIN/lslv $lv |$BIN/grep COPIES |$BIN/awk '{print $2}'`
+    if [ $copies -gt 1 ]
+      then
+       print "*** Mirrored LV ***"
+       print "partition table saved to $lv.ppmap.out"   
+       /etc/lslv -m $lv > $lv.ppmap.out
+    fi
+    pv_list=`/etc/lslv -l $lv |$BIN/egrep "hdisk|vpath" |$BIN/awk '{print $1}'`
+    for pv in $pv_list
+    do   
+     pp_count=`/etc/lslv -l $lv |$BIN/grep $pv |$BIN/awk '{print $2}' |$BIN/cut -f1 -d:`
+     $BIN/printf "%-10s %-10s\n" $pv $pp_count
+    done
+   done
+  else
+   $BIN/printf "\n"
+   print "$vg not online - can't collect data for offline volume groups."
+  fi # end of if vg online
+ fi # end of if not rootvg
+ done
+
+
+-------------------------------------------------------
+createfs
+
+#
+# Sample shell script to give you the idea of how to 
+# use the toolkit to fake up some real application
+#
+# Create the /db filesystem on two disks/striped
+
+mklv -y'db' -t'jfs' -u'8' -L'db' '-S64K' rootvg 64 hdisk0 hdisk1 
+crfs -v jfs -d'db' -m'/db' -Ayes  
+mount /db
+
+mkdir -p /db/log
+mkdir -p /db/data1
+mkdir -p /db/data1
+mkdir -p /db/data2
+
+mklv -y'web' -t'jfs' -u'8' -L'web' '-S64K' rootvg 64 hdisk0 hdisk1 
+crfs -v jfs -d'web' -m'/db' -Ayes  
+mount /web
+
+
+--------------------------------------------------
+checkwwn
+
+#!/usr/bin/perl
+
+$SerialNumber = qx "prtconf 2>/dev/null | grep \"Machine Serial Number\"";
+chomp $SerialNumber;
+
+@lscfg = qx "lscfg |grep fcs";
+chomp @lscfg;
+
+for($i=0;$i<@lscfg;$i++){
+	($a, $name, $value) = split(" ", $lscfg[$i]);
+	$hbas{$name} = $value;
+}
+
+@HBAinfo = qx "/opt/HBAinfo/bin/gethbainfo";
+chomp @HBAinfo;
+
+$rc=0;
+$rec = {};
+
+for($i=0;$i<@HBAinfo;$i++){
+	($name, $value) = split(" ", $HBAinfo[$i]);
+	$rec[$rc]->{$name} = $value;
+	if($name eq "Instance:"){
+		$rec[$rc]->{"location"} = $hbas{$value};
+		$rc++;
+	}
+}
+
+for($i=0;$i<@rec;$i++){
+	printf "%-5s ",  $rec[$i]->{"Instance:"};
+	printf "%-14s ", substr($rec[$i]->{"location"}, 14);
+	printf "%-16s ", $rec[$i]->{"PortWWN:"};
+	printf "%-8s ",  $rec[$i]->{"PortType:"};
+	printf "%-27s ", $rec[$i]->{"location"};
+	printf "\n";
+}
+
+
+------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
