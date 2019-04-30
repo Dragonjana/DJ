@@ -1,0 +1,256 @@
+# cat AIX6.1_Sanstack7.2
+# SAN STACK INSTALL ON AIX 6.1
+https://catecollaboration.citigroup.net/domains/platstor/gdse/products/services/SANStacks/CSBE-14062-SG.pdf
+
+
+# PLEASE Note ,For VIO Clients(vscsi Disks only) and  without HBAs or NPIV storage, Install IHS.SANconfigure.1.4.0.0.bff package from stealth-nj.nj.ssmb.com: /export1/home1.localhost/sw/AIX/PKG/
+#
+
+# FOR lpars with dedicated HBA or Virtual HBA (NPIV), please follow below mentioned steps
+
+
+------------------------------------------------------------------
+
+# files backup for reference
+
+mkdir /tmp/backup
+lspv  > /tmp/backup/lspv
+lspv  | grep power > /tmp/backup/lspv_power
+lsvg  > /tmp/backup/lsvg
+ls -l /dev | grep oracle>/tmp/backup/oracleowneddevices
+lsvg -o |grep -v rootvg |lsvg -il |grep open > /tmp/backup/lsvg_open
+df -g > /tmp/backup/df
+cp /etc/filesystems  /tmp/backup/filesystems
+powermt display > /tmp/backup/powermt_display
+powermt display dev=all > /tmp/backup/powermt_display_all
+
+--------------PREPARATION BEFORE GZ ----------------------------------------------------
+
+(As root on admin server /gftsadm1)
+# cd /home/ca02038/AUTOMATED_INFO_SAVING/Solaris_AIX_Linux;
+# vi server_list.txt;
+# ./do_it_all.sh;
+(This saves the information locally on the target at /var/tmp/ca02038, and also a copy on admin server in the TEMPO
+RARY_SAVED_INFO directory.)
+
+##TAKE ALT VG#######
+
+/net/ccuaweb3.nam.nsroot.net/export/scripts/AixLVM/ALT_VG
+
+####################
+
+------------STAGE the packages before GZ----------------
+
+cd /net/stealth-ny.ny.ssmb.com/export1/home1.localhost/sw/AIX/PKG
+
+mkdir /var/tmp/sa/
+cp EMC.AIX.5.3.0.9.bff /var/tmp/sa/
+cp EMC.AIX.TPA.1.2.0.5.bff /var/tmp/sa/
+cp HDS.AIX.ODM.5.0.52.3.tar.Z /var/tmp/sa/
+cp IHS.SANconfigure.1.4.0.0.bff	/var/tmp/sa/
+cp  EMCpower.license.1.1.0.0.bff /var/tmp/sa/
+
+cp IHS.HBAinfo.1.7.0.0.bff /var/tmp/sa/
+cp IHS.SANinfo.1.8.0.0.bff /var/tmp/sa/
+
+mkdir /var/tmp/sa/EMC
+
+cp EMCPOWER.AIX.5.7.2.0.bff /var/tmp/sa/EMC/
+
+------------------------------------------------------------------
+	DURING GZ
+------------------------------------------------------------------
+
+
+# SAN Stack 7.2
+upgrade for AIX
+
+------------------------------------------------------------------
+------------------------------------------------------------------
+
+***Bring down APP/Databases *****
+
+#1)  unmount all the filesystems
+
+lsvg -o |grep -v rootvg |lsvg -il |awk '/jfs/ {print $NF}' |xargs -i umount {}
+
+df -k |grep "^nas" |awk '{print $NF}'
+df -k |grep "^nas" |awk '{print $NF}' |xargs -i umount {}
+
+df -k |awk '/dtc/{print $NF}' |xargs -i umount {}
+df -k |grep -v "/dev/hd" |grep -v tiadmin2
+
+
+lsvg -o |grep -v rootvg |lsvg -il |grep open
+
+
+#- if you are unable to unmount due to filesystem busy
+#- and you have the okay from the user to kill the processes
+#- then follow below mentioned steps between ~~~~~
+
+------------------------------------------------------------------
+ps -ef |awk '$1 == "oracle" {print $0}'
+kill -9 `ps -ef |awk '$1 == "oracle" {print $2}'`
+
+ps -ef |egrep -v "grep|root|daemon|perform"
+ps -ef |egrep -v "grep|root" |awk '{print $1, $2}'>/tmp/aa
+cat /tmp/aa | awk '{print $2}' | grep -v PID |xargs -i kill -9 {}
+
+lsvg |grep -v rootvg |lsvg -li |awk '{print $NF}'|egrep -v ":|POINT|N/A"  >/tmp/aa
+lsvg |grep -v rootvg |lsvg -li |awk '{print $(NF - 1), $NF}'
+lsvg |grep -v rootvg |lsvg -li |awk '{print $(NF - 1), $NF}' |grep open
+lsvg -o |grep -v rootvg |lsvg -il |awk '/jfs/ {print $1}' |xargs -i fuser /dev/{}
+
+for i in `cat /tmp/aa`
+do
+        umount $i
+done
+
+#2) we need to varyoff all VGs by  doing , varyoffvg  <VGName>
+
+for i in `lsvg |egrep -v "rootvg|swapvg"`
+do
+        varyoffvg $i
+done
+
+lspv |grep power |grep -i active
+# NOTE : if above cmd output gives you disks which are still part of VG and are active,
+#         it means something didnot go as planned. please review lspv output and fix issues
+
+
+3.      Shutdown ECC
+a.      
+	 /etc/rc.d/init.d/eccmad stop
+	 /etc/rc.d/init.d/eccmad stopall 
+
+b.      Manually kill the "maragent" process
+c.      Find the PID of the maragent process "ps -ef | grep maragent"
+        ps -ef | grep maragent |grep -v grep
+
+d.      Run the command "kill <PID>" where
+
+4.      /etc/rc.agent stop
+
+ps -ef |egrep "ecc|/opt/CA|oracle|nav" |grep -v grep
+
+5. Shutdown stor daemon if running
+
+/usr/symcli/bin/stordaemon list  (Will show running daemons if any ,noted by * )
+/usr/symcli/bin/stordaemon shutdown storwatchd (shutdown the services identified from above)
+
+
+#    Make sure all the SAN filesystems are unmounted before proceeding otherwise
+#    SanStack Upgrade will fail
+
+----------------------------------------------------------------------------------------------
+
+# kill any NAVIsphere processes currently running before the stack7 installation
+ps -ef | grep -i navi
+
+ps -ef | grep -i navi | awk '{print $2}'| xargs -n1 kill -9
+
+
+#Remove celera and invista for sanstackverify to come clean
+lslpp -l | egrep 'EMC.CELERRA.aix.rte|EMC.INVISTA.aix.rte'
+
+installp -ug EMC.CELERRA.aix.rte
+installp -u EMC.INVISTA.aix.rte
+
+
+--------------------------------------
+lslpp -l | egrep 'EMC.CLARiiON.aix.rte|EMC.CLARiiON.fcp.rte|EMC.Symmetrix.aix.rte|EMC.Symmetrix.fcp.rte'
+
+cd /var/tmp/sa/
+
+installp -ac -d EMC.AIX.5.3.0.9.bff EMC.CLARiiON.aix.rte
+installp -ac -d EMC.AIX.5.3.0.9.bff EMC.CLARiiON.fcp.rte
+installp -ac -d EMC.AIX.5.3.0.9.bff EMC.Symmetrix.aix.rte
+installp -ac -d EMC.AIX.5.3.0.9.bff EMC.Symmetrix.fcp.rte
+installp -ac -d EMC.AIX.5.3.0.9.bff EMC.XtremIO.fcp.rte
+
+installp -ac -d EMC.AIX.TPA.1.2.0.5.bff all
+
+lslpp -l | egrep 'EMC.CLARiiON.aix.rte|EMC.CLARiiON.fcp.rte|EMC.Symmetrix.aix.rte|EMC.Symmetrix.fcp.rte|TPA'
+
+mkdir /var/tmp/EMC
+cp HDS.AIX.ODM.5.0.52.3.tar.Z /var/tmp/EMC
+cd /var/tmp/EMC
+zcat HDS.AIX.ODM.5.0.52.3.tar.Z | tar -xvf -
+inutoc .
+installp -ac -d . all
+
+--------------------------------------
+
+### IF naviagent is running, pls kill it before proceeding
+ps -ef | grep -i navi
+ps -ef | grep -i navi | awk '{print $2}'| xargs -n1 kill -9
+
+----------------------------------------------------
+cd /var/tmp/sa/
+
+installp -ad IHS.HBAinfo.1.7.0.0.bff all
+installp -ad IHS.SANinfo.1.8.0.0.bff all
+
+#Install EMCpowerpath through smitty .[select all]
+      	
+	cd /var/tmp/sa/EMC/
+        inutoc .
+        smitty installp [ select all packages ]
+
+cd /var/tmp/sa/
+
+installp -ac -d IHS.SANconfigure.1.4.0.0.bff all
+
+#Install Powerpath Licence
+
+installp -ac -d EMCpower.license.1.1.0.0.bff EMCpower.license
+
+/usr/sbin/powermt check_registration
+
+/opt/SANconfigure/bin/sanattr_set -N
+
+#Validations
+
+cfgmgr -v
+/opt/SANinfo/bin/sanstack_verify -v
+/opt/SANinfo/bin/reserve_verify -N
+
+--------------------------------------------------------
+
+
+# Confirm that the no_reserve policy is now set on all hdiskpower devices:
+lspv | grep hdiskpower > /tmp/gg;
+cat /tmp/gg | awk -F" " '{print $1}' > /tmp/gg1
+
+for i in `cat /tmp/gg1`
+do
+        echo $i;
+        lsattr -El $i | grep reserve;
+done
+
+
+
+######### Install the ecc6.14 through TPM now:
+https://catecollaboration.citigroup.net/domains/platstor/gdse/products/services/ECC/EMC%20ControlCenter%206.1%20UB14%20Host%20Agents%20Installation%20Guide.pdf
+
+PKG - CITI_AIX_eccagent_6.1.0.14_a0_aix_2.0
+
+
+######### end - ecc configuration check
+
+
+/opt/SANinfo/bin/sanstack_verify -v
+
+for i in `lsdev |awk '/fcs/{print $1}'`
+do
+   echo $i
+   fcstat $i | grep "Port Name"
+done
+
+#If sanstack_verify complains about firmware, then follow page 18 of below doc to upgrade firmware
+https://catecollaboration.citigroup.net/domains/platstor/gdse/products/services/SANStacks/CSBE-14062-SG.pdf
+#
+
+/usr/sbin/powermt check_registration
+/opt/HBAinfo/bin/gethbainfo
+
