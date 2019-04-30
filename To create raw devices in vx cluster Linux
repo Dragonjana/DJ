@@ -1,0 +1,252 @@
+To create raw devices in vx cluster 
+
+To show available free disk in VX
+# vxdisk list
+DEVICE       TYPE            DISK         GROUP        STATUS
+disk_0       auto:none       -            -            online invalid
+hitachi_vsp0_3d2b auto:cdsdisk    -            -            online thinrclm
+hitachi_vsp0_3d2c auto:cdsdisk    -            -            online thinrclm
+hitachi_vsp0_3d2e auto:none       -            -            online invalid thinrclm
+hitachi_vsp0_3d2f auto:none       -            -            online invalid thinrclm
+hitachi_vsp0_27a0 auto:cdsdisk    hitachi_vsp0_27a0  dumpfxuat1_dg online thinrclm
+hitachi_vsp0_2790 auto:cdsdisk    hitachi_vsp0_2790  gftsoafinswdb8un2_dg online thinrclm
+hitachi_vsp0_27b4 auto:cdsdisk    hitachi_vsp0_27b4  sybasefxuat1_dg online thinrclm
+hitachi_vsp0_27bb auto:cdsdisk    hitachi_vsp0_27bb  sybasefxuat2_dg online thinrclm
+
+To show vxdg list on server.
+# vxdg list 
+NAME         STATE           ID
+gftsoafinswdb8un2_dg enabled,cds          1410255235.97.gftsoafinswdb8un2
+dumpfxuat1_dg enabled,cds          1410254557.97.gftsoafinswdb8un1
+sybasefxuat1_dg enabled,cds          1410255092.131.gftsoafinswdb8un1
+sybasefxuat2_dg enabled,cds          1410255097.133.gftsoafinswdb8un1
+
+# vxdg -g dumpfxuat1_dg list
+NAME         STATE           ID
+gftsoafinswdb8un2_dg enabled,cds          1410255235.97.gftsoafinswdb8un2
+dumpfxuat1_dg enabled,cds          1410254557.97.gftsoafinswdb8un1
+sybasefxuat1_dg enabled,cds          1410255092.131.gftsoafinswdb8un1
+sybasefxuat2_dg enabled,cds          1410255097.133.gftsoafinswdb8un1
+
+# vxinfo -g dumpfxuat1_dg
+dumpfxuat1_vol fsgen    Started
+
+# vxinfo -g gftsoafinswdb8un2_dg
+optware_vol    fsgen    Started
+
+# vxinfo -g sybasefxuat1_dg
+sybasefxuat1_vol fsgen    Started
+
+# vxinfo -g sybasefxuat2_dg
+sybasefxuat2_vol fsgen    Started
+To check the raw disk on server
+# raw -qa
+/dev/raw/raw1:  bound to major 201, minor 272
+/dev/raw/raw2:  bound to major 201, minor 1056
+/dev/raw/raw3:  bound to major 201, minor 336
+/dev/raw/raw4:  bound to major 201, minor 1232
+/dev/raw/raw5:  bound to major 201, minor 1376
+/dev/raw/raw6:  bound to major 201, minor 480
+/dev/raw/raw7:  bound to major 201, minor 1360
+
+# cat  /etc/udev/rules.d/99-sybase.rules
+KERNEL=="raw1", NAME="fxuatcvglog001", OWNER="sybase", GROUP="sybase", MODE="0640"
+KERNEL=="raw2", NAME="fxuatcvglog002", OWNER="sybase", GROUP="sybase", MODE="0640"
+......
+KERNEL=="raw60", NAME="fxuatcvgdata041", OWNER="sybase", GROUP="sybase", MODE="0640"
+KERNEL=="raw61", NAME="fxuatcvgdata042", OWNER="sybase", GROUP="sybase", MODE="0640"
+
+To check the status
+# cd /etc/vx/bin/
+# ./vxlist vol
+TY   VOLUME             DISKGROUP                   SIZE STATUS    LAYOUT   LINKAGE
+vol  dumpfxuat1_vol     dumpfxuat1_dg            300.00g healthy   concat   -
+vol  optware_vol        gftsoafinswdb8un2_dg     100.00g healthy   concat   -
+vol  sybasefxuat1_vol   sybasefxuat1_dg           65.00g healthy   concat   -
+vol  sybasefxuat2_vol   sybasefxuat2_dg           65.00g healthy   concat   -
+
+to check Which disk is assign to the FS
+# ./vxlist vol optware_vol
+Volume:  optware_vol
+GUID:               {a13d007c-3804-11e4-ae2f-0f084e643757}
+Disk Group:         name=gftsoafinswdb8un2_dg id=1410255235.97.gftsoafinswdb8un2
+Host:               gftsoafinswdb8un2
+Size:               100g
+Type:               fsgen
+Status:             healthy
+Layout:             concat
+NMirrors:           1
+Read Policy:        SELECT
+Flags:              open writeback thinreclaim
+Device Path:        /dev/vx/dsk/gftsoafinswdb8un2_dg/optware_vol
+Permissions:        user=root group=root mode=0600
+
+filesystem
+TY   FSTYPE     %USED VSET   MOUNT-POINT
+fs   vxfs         12% -      /optware
+
+stats
+TY   OPERATION      COUNT     BLOCKS   TIME(MSEC)
+stat read          530957   73530882       2274.4
+stat write         669365   48362298       1660.2
+
+disks
+TY   DEVICE              DISK                  NPATHS ENCLR_NAME     ENCLR_SNO   STATUS
+disk hitachi_vsp0_2790   hitachi_vsp0_2790          4 hitachi_vsp0   91491       imported
+disk hitachi_vsp0_2791   hitachi_vsp0_2791          4 hitachi_vsp0   91491       imported
+disk hitachi_vsp0_2792   hitachi_vsp0_2792          4 hitachi_vsp0   91491       imported
+
+plexes
+TY   NAME             TYPE     STATUS
+plex optware_vol-01   simple   attached
+
+To take un-assign vxdisk from server
+# vxdisk list -o alldgs | grep -i none
+disk_0       auto:none       -            -            online invalid
+hitachi_vsp0_3d2e auto:none       -            -            online invalid thinrclm
+hitachi_vsp0_3d2f auto:none       -            -            online invalid thinrclm
+hitachi_vsp0_3d30 auto:none       -            -            online invalid thinrclm
+hitachi_vsp0_27aa auto:none       -            -            online invalid thinrclm
+hitachi_vsp0_27ab auto:none       -            -            online invalid thinrclm
+hitachi_vsp0_27ac auto:none       -            -            online invalid thinrclm
+
+# vxdisk list -o alldgs | grep -i none | grep -i hitachi | awk '{print $1}'
+hitachi_vsp0_3d2e
+hitachi_vsp0_3d2f
+hitachi_vsp0_3d30
+
+compare the output with below one to found free disk 
+
+ cd /etc/rc3.d
+
+# cat S96-sybase | grep -i raw | awk '{print $NF}' | awk -F "/" '{print $NF}'
+hitachi_vsp0_27bc
+hitachi_vsp0_27bd
+hitachi_vsp0_27be
+hitachi_vsp0_27bf
+
+
+
+to confirm check with below cmd
+
+vxprint -hrtg sybasefxuat1_dg
+vxprint -hrtg gftsoafinswdb8un2_dg
+vxprint -hrtg dumpfxuat1_dg
+
+and check the /dev folder for assigning disk 
+ls -lrt /dev/fxuatcvgdata04*
+
+Once free disk are find , edit below file
+
+	cd /etc/rc3.d/
+	cp S96-sybase /var/tmp/S96-sybase_bkp
+
+	vi S96-sybase
+	and
+
+	cd /etc/udev/rules.d/
+	cp 99-sybase.rules 99-sybase.rules_bkp
+
+	vi 99-sybase.rules
+like below
+
+# /etc/rc3.d/S96-sybase
+raw /dev/raw/raw59 /dev/vx/rdmp/hitachi_vsp0_27b3 (sample entry)
+
+#/etc/udev/rules.d/99-sybase.rules
+KERNEL=="raw59", NAME="fxuatcvgdata040", OWNER="sybase", GROUP="sybase", MODE="0640"
+
+
+once file are edit run cmd which you added in /etc/rc3.d/s96-sybase file
+
+raw /dev/raw/raw59 /dev/vx/rdmp/hitachi_vsp0_27b3
+raw /dev/raw/raw60 /dev/vx/rdmp/hitachi_vsp0_2795
+raw /dev/raw/raw61 /dev/vx/rdmp/hitachi_vsp0_2796
+
+then check it will listed on below cmd
+
+#raw -qa
+
+and here too
+
+#cd /dev
+
+ls -lrt fxuatcvgdata04*
+
+
+*******do the same on cluster server to******
+
+
+
+  477  /opt/VRTSvcs/bin/hastatus -summ
+  478  exit
+  479  vxdisk list
+  480  vxdisk list
+  481  vxdisk -o alldgs list
+  482  vxdisk -o alldgs list | grep -v vg
+  483  vxdisk -o alldgs list | grep -v dg
+  484  vxdisk -o alldgs list | grep -v dg | grep hitachi_
+  485  vxdisk -o alldgs list | grep -v dg | grep hitachi_ |wc -l
+  486  wc -l /etc/udev/rules.d/99-sybase.rules 
+  487  vxdisk -o alldgs list | grep -v dg | grep hitachi_ > /tmp/unused.txt
+  488  cat /etc/rc3.d/S96-sybase 
+  489  for i in `cat /tmp/unused.txt `; do grep $i /etc/rc3.d/S96-sybase ; done
+  490  for i in `cat /tmp/unused.txt `; do grep $i /etc/rc3.d/S96-sybase > /dev/null; if [ $? -ne 0 ]; then echo $i; fi; done
+  491  for i in `cat /tmp/unused.txt | awk '{print $1}' `; do grep $i /etc/rc3.d/S96-sybase > /dev/null; if [ $? -ne 0 ]; then echo $i; fi; done
+  492  for i in `cat /tmp/unused.txt | awk '{print $1}' `; do grep $i /etc/rc3.d/S96-sybase > /dev/null; if [ $? -ne 0 ]; then echo $i; fi; done  > /tmp/free.txt
+  493  vxdisk list | grep hitachi_vsp0_3d2e
+  494  fdisk -l /dev/vx/rdsk/hitachi_vsp0_3d2e
+  495  fdisk -l /dev/vx/rdmp/hitachi_vsp0_3d2e
+  496  vxfenadm -d
+  497  for i in `cat /tmp/free.txt `; do fdisk -l /dev/vx/rdmp/$i | grep Disk; done
+  498  vxdisk -o alldgs list | grep hitachi_vsp0_3d2e
+  499  vxdisk -o alldgs list | grep fen
+  500  for i in `cat /tmp/free.txt `; do fdisk -l /dev/vx/rdmp/$i | grep Disk | grep GB; done
+  501   vxdisk list -o alldgs | grep -i none | grep -i hitachi | awk '{print $1}'
+  502  cd /etc/rc3.d/
+  503  cat S96-sybase | grep -i raw | awk '{print $NF}' | awk -F "/" '{print $NF}'
+  504  exit
+  505  cat /etc/rc3.d
+  506  ls
+  507  cd /etc/rc3.d/
+  508  ls
+  509  cat S96-sybase 
+  510  vxdisk list 
+  511  /opt/SSPV/bin/inq 
+  512  exit
+  513  /opt/SSPV/bin/inq -et
+  514  /opt/SSPV/bin/inq
+  515  exit
+  516  history 
+  517  vxdisk -o alldgs list | grep -v dg | grep hitachi_ 
+  518   for i in `cat /tmp/unused.txt | awk '{print $1}' `; do grep $i /etc/rc3.d/S96-sybase > /dev/null; if [ $? -ne 0 ]; then echo $i; fi; done 
+  519  cat /tmp/unused.txt | awk '{print $1}' 
+  520  history 
+  521   for i in `cat /tmp/free.txt `; do fdisk -l /dev/vx/rdmp/$i | grep Disk; done
+  522  for i in `cat /tmp/free.txt `; do fdisk -l /dev/vx/rdmp/$i | grep Disk | grep GB; done
+  523  exit
+  524  cd /dev
+  525  ls -lrt fxuatcvgdata040
+  526  ls -lrt fxuatcvgdata041
+  527  ls -lrt fxuatcvgdata042
+  528  ls -lrt fxuatcvgdata039
+  529  cd /etc/rc3.d
+  530  ls
+  531  cat S96-sybase
+  532  cp S96-sybase /var/tmp/S96-sybase_bkp
+  533  vi S96-sybase
+  534  raw -qa
+  535  cd /etc/udev/rules.d/
+  536  ls
+  537  cp 99-sybase.rules 99-sybase.rules_bkp_15032016
+  538  vi 99-sybase.rules
+  539  raw -qa
+  540  cat /etc/rc3.d/S96-sybase 
+  541  raw /dev/raw/raw59 /dev/vx/rdmp/hitachi_vsp0_27b3
+  542  raw /dev/raw/raw60 /dev/vx/rdmp/hitachi_vsp0_2795
+  543  /dev/raw/raw59: bound to major 201, minor 784
+  544  raw /dev/raw/raw61 /dev/vx/rdmp/hitachi_vsp0_2796
+  545  raw -qa
+  546  cd /dev/
+  547  ls -lrt /dev/fxuatcvgdata04*
+  548  exit
