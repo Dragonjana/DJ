@@ -1,0 +1,97 @@
+545     lslv sybtempdb|grep -i GROUP
+546     lslv sybdumps|grep -i GROUP
+547     lslv optwarelv |grep -i GROUP
+548     lsvg sybase_vg
+549     bc
+550     dump_vg
+551     lsvg dump_vg
+552     lspv | grep -i hdiskpower | grep -i none > /tmp/zz
+553     cat /tmp/zz|wc -l
+554     cat /tmp/zz
+555     lspv | grep -i hdiskpower |wc -l
+556     bootinfo -s hdiskpower25
+557     cat > /tmp/test.sh
+558     chmod 775 /tmp/test.sh
+559     /tmp/test.sh
+560     lsvg -l sybase_vg
+561     lslv -l optwarelv
+562     extendvg dump_vg hdiskpower25
+563     lspv | grep -i hdiskpower25
+564     lsvg dump_vg | grep -i free
+565     extendvg dump_vg hdiskpower26 hdiskpower27 hdiskpower28 hdiskpower29 hdiskpower30
+566     lsvg dump_vg | grep -i free
+567     history 100
+568     df -gt /sybtempdb /sybdumps /optware
+569     df -gt /sybtempdb /sybdumps /optware
+570     chfs -a size=+45G /sybtempdb
+571     df -gt /sybtempdb
+572     lslv sybtempdb
+573     chlv -x 2000
+574     chlv -x 2000 sybtempdb
+575     lslv sybtempdb
+576     chfs -a size=+45G /sybtempdb
+577     chlv -x 2200 sybtempdb
+578     chfs -a size=+45G /sybtempdb
+579     lslv sybtempdb|grep -i GROUP
+580     lslv optwarelv |grep -i GROUP
+581     chfs -a size=+10G /optware
+582     lslv optwarelv
+583     chlv -x 1024 sybase_vg
+584     chlv -x 1024 optwarelv
+585     chfs -a size=+10G /optware
+586     df -gt /sybtempdb /sybdumps /optware
+587     chfs -a size=+50G /sybdumps
+588     lslv sybdumps
+589     chlv -x 4900 sybdumps
+590     crontab -l | grep -i shu
+591     date
+592     uptime
+593     who -r
+594     chfs -a size=+50G /sybdumps
+595     chfs -a size=+50G /sybdumps
+596      df -gt /sybtempdb /sybdumps /optware
+597     chfs -a size=+50G /sybdumps
+598     chfs -a size=+50G /sybdumps
+599     df -gt /sybtempdb /sybdumps /optware
+600     cd /dev
+601     ls -ltr rsyb15*
+602     ls -ltr rsyb15
+603     ls
+604     lsvg -o
+605     lsvg -l sybase_vg
+606     lsvg -l dump_vg
+607     lsvg sybase_vg | grep -i free
+608     lspv | grep -i hdiskpower | grep -i none > /tmp/zz
+609     cat /tmp/zz
+610     extendvg sybase_vg hdiskpower31 hdiskpower32 hdiskpower33 hdiskpower34 hdiskpower35
+611     lsvg sybase_vg | grep -i free
+612     cd /dev
+613     ls
+614     ls-ltr r*
+615     ls -ltr r*
+616     mklv -t raw -y syb15_vol01 sybase_vg 500M
+617     ls -ltr /dev/rsyb15_vol01
+618     clRGinfo
+619     smitty cspoc
+620     mklv -t raw -y syb15_vol02 sybase_vg 500M
+621     cat > /tmp/test.sh
+622     sh -x /tmp/test.sh
+623     ls -ltr rsy*
+624     ls -ltr rsyb15*
+625     chown sybase:sybase rsyb15*
+626     ls -ltr rsyb15*
+
+to check the FS vg
+lslv `df /var/opt/sybase/dump/fx | awk '{print $1}' | cut -f 3 -d "/" | tail -1` | grep "VOLUME GROUP" | awk '{print $6}'
+
+mklv -y mkv_data_05 -t raw -U sybase -G sybase mkvsybvg 8192M
+
+disk size on AIX
+
+getconf DISK_SIZE /dev/regpd_vol58
+
+check the staus of raw device 
+
+tctl -f /dev/regpd_vol58 status
+
+
