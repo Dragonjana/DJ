@@ -1,0 +1,116 @@
+Need to migrate the data from old disks to new disk:
+
+1) Finding out the disk details
+If the disks are more to find in the server, use the below command.
+#lspath (or)
+for i in `lsdev -Cc adapter | grep "Virtual SCSI" | grep Available | awk '{print $1}'` ; do echo $i ; lsmpio | grep -w $i | awk '{print "rmpath -l "$1" -p "$(NF-1)" -i "$2}' | sh > /dev/null 2>&1 ; rmdev -l $i > /dev/null 2>&1 ; cfgmgr -l $i ; lsmpio | grep -w $i > /dev/null 2>&1 ; done
+
+2) Change the attributes for all the new disks:
+
+Chdev –l <new disk> -a hcheck_interval=60 -a queue_depth=16 or sanattr_set –N
+                                                    (or)
+[UAT root @ gpd-ED4-59C8  /var/tmp]
+
+# lsattr -El hdisk26
+PCM             PCM/friend/vscsi                 Path Control Module        False
+algorithm       fail_over                        Algorithm                  True
+hcheck_cmd      test_unit_rdy                    Health Check Command       True+
+hcheck_interval 60                               Health Check Interval      True+
+hcheck_mode     nonactive                        Health Check Mode          True+
+max_transfer    0x40000                          Maximum TRANSFER Size      True
+pvid            00f730dc141315e30000000000000000 Physical volume identifier False
+queue_depth     3                                Queue DEPTH                True
+reserve_policy  no_reserve                       Reserve Policy             True+
+
+[UAT root @ gpd-ED4-59C8  /var/tmp]
+# for i in `cat disks`
+> do
+> chdev -l $i -a queue_depth=8 -P
+> done
+3) Assigning the new disk to the RootVG
+#Extendvg rootvg hdisk37 <New Disk>
+
+Migrate the data from old disk to new disk 
+#migratepv hdisk3<old Disk> hdisk37<new Disk>
+Example : migratepv hdisk3 hdisk37 &(& to run in background)
+Check the LV’s in the new disk
+#lspv –l <new Disk>( please ensure it is free)
+
+4) If the disk belongs RootVG Then do the following.
+#extendvg rootvg newdisk2 
+#migratepv olddisk newdisk.
+#bosboot –ad hdisk64<new disk> (creating the boot image, need to do for rootvg and alt_rootvg disks)
+# bootlist -m normal –o (Checking the Boot order)
+hdisk0 blv=hd5 pathid=0
+hdisk0 blv=hd5 pathid=1
+#bootlist –m normal –o  hdisk64<new disk>
+If 2 disks are there in the bootlist, then
+#bootlist –m normal –o  <first newdisk> <second new disk>
+
+5) Remove the disk from the RootVG
+# reducevg rootvg hdisk3<oldDisk>
+Clear the bootlv in the root Disk
+chpv –c hdisk0
+Clear the PVID before remove from the system
+Chdev –l hdisk3<old Disk> –a pv=clear
+Remove the disk from the system
+#rmdev –dl hdisk3<old Disk>
+
+
+6)Old_rootvg or alt_rootvg:
+
+#alt_rootvg_op  –X  Old_rootvg (check in the server whether it is old_rootvg or alt_rootvg)
+
+#rmdev  -Rdl  hdisk1(old_rootvg)
+
+#alt_disk_copy  -d  hdisk23(new old_rootvg disk)
+
+[UAT root @ gpd-ED4-59C8  /root]
+# bootlist -m normal -o
+hdisk23 blv=hd5 pathid=0
+hdisk23 blv=hd5 pathid=1
+[UAT root @ gpd-ED4-59C8  /root]
+# lsvg | grep -i root
+altinst_rootvg
+rootvg
+[UAT root @ gpd-ED4-59C8  /root]
+# lspv | grep -i root
+hdisk13         00f730dc14235a7a                    rootvg          active      
+hdisk23         00f730dc1414e893                    altinst_rootvg              
+[UAT root @ gpd-ED4-59C8  /root]
+# savebase
+[UAT root @ gpd-ED4-59C8  /root]
+
+#  bootlist -m normal -o hdisk13 hdisk23
+hdisk13 blv=hd5 pathid=0
+hdisk13 blv=hd5 pathid=1
+hdisk23 blv=hd5 pathid=0
+hdisk23 blv=hd5 pathid=1
+
+[UAT root @ gpd-ED4-59C8  /root]
+#  bootlist -m normal -o
+hdisk13 blv=hd5 pathid=0
+hdisk13 blv=hd5 pathid=1
+hdisk23 blv=hd5 pathid=0
+hdisk23 blv=hd5 pathid=1
+
+7)Non-Rootvg disks
+
+#extedndvg <vgname>  <Newdisk1> <new disk2> < newdisk3>
+Eg: exgtendvg appvg hdisk10 hdisk11 hdisk12 
+#migratepv <olddisk> <new disk>
+After migration please check the all the lps are copied or not.
+
+#lsvg –p <vgname>
+In this for the old disk total pp’s and free pp’s count should be same, then remove from the vg and remove from the server
+
+#reducevg <vgname> <olddiskname>
+#rmdev –Rdl <olddiskname>
+
+
+
+Notes:
+
+1)Run migratepv for non-root disks in background to make things easy. You can check the status of migrations using ps –ef | grep –I migrate.
+
+2)it is advisable to not run migratepv for root-disk in background.
