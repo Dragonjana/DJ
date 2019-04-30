@@ -1,0 +1,270 @@
+
+
+
+Please use the below steps to find the free SAN space on AIX servers
+
+
+lspv | grep -i hdiskpower | grep -i none > /tmp/zz
+
+cat /tmp/zz
+
+
+hdiskpower152   none                                None  ------> should be None (strictly no pvid on column 2)
+hdiskpower153   none                                None
+hdiskpower154   none                                None
+hdiskpower155   none                                None
+hdiskpower180   none                                None
+hdiskpower181   none                                None
+hdiskpower182   none                                None
+
+cat /tmp/zz | awk '{print $1}' > /tmp/aa
+
+cat /tmp/aa    ----- sorting the column1
+
+hdiskpower152
+hdiskpower153
+hdiskpower154
+hdiskpower155
+hdiskpower180
+hdiskpower181
+hdiskpower182
+
+cd /tmp
+
+
+#for i in `cat aa`
+>do
+>ls -lrt /dev/$i      ALL THE DEVICES SHOULD HAVE ROOT SYSTEM OWNERSHIP
+>done
+brw-rw----    1 root     system       35,152 Mar 25 2013  /dev/hdiskpower152
+brw-rw----    1 root     system       35,153 Mar 25 2013  /dev/hdiskpower153
+brw-rw----    1 root     system       35,154 Mar 25 2013  /dev/hdiskpower154
+brw-rw----    1 root     system       35,155 Mar 25 2013  /dev/hdiskpower155
+brw-rw----    1 root     system       35,180 Mar 25 2013  /dev/hdiskpower180
+brw-rw----    1 root     system       35,181 Mar 25 2013  /dev/hdiskpower181
+
+#for i in `cat aa`
+>do
+>ls -lrt /dev/[r]$i
+>done
+
+crw-rw----    1 oracle   dba          35,152 Sep 20 2014  /dev/rhdiskpower152
+crw-rw----    1 oracle   dba          35,153 Sep 20 2014  /dev/rhdiskpower153
+crw-rw----    1 oracle   dba          35,154 Mar 25 2013  /dev/rhdiskpower154
+crw-rw----    1 oracle   dba          35,155 Sep 20 2014  /dev/rhdiskpower155
+crw-rw----    1 oracle   dba          35,293 Sep 20 2014  /dev/rhdiskpower293
+crw-rw----    1 oracle   dba          35,294 Mar 25 2013  /dev/rhdiskpower294
+crw-rw----    1 root     system       35,1219 May  9 2014  /dev/rhdiskpower1219
+crw-rw----    1 root     system       35,1220 May  9 2014  /dev/rhdiskpower1220
+crw-rw----    1 root     system       35,1221 May  9 2014  /dev/rhdiskpower1221
+crw-rw----    1 root     system       35,1222 May  9 2014  /dev/rhdiskpower1222
+crw-rw----    1 root     system       35,1223 May  9 2014  /dev/rhdiskpower1223
+
+
+FROM THE ABOVE OUTPUT JST TAKE ONLY THE ROOT:SYSTEM OWNED DEVICES
+
+#vi yy
+crw-rw----    1 root     system       35,1219 May  9 2014  /dev/rhdiskpower1219
+crw-rw----    1 root     system       35,1220 May  9 2014  /dev/rhdiskpower1220
+crw-rw----    1 root     system       35,1221 May  9 2014  /dev/rhdiskpower1221
+crw-rw----    1 root     system       35,1222 May  9 2014  /dev/rhdiskpower1222
+crw-rw----    1 root     system       35,1223 May  9 2014  /dev/rhdiskpower1223
+
+
+#cat yy | awk '{print $NF}' > gg
+
+cat gg
+
+/dev/rhdiskpower1219
+/dev/rhdiskpower1220
+/dev/rhdiskpower1221
+/dev/rhdiskpower1222
+/dev/rhdiskpower1223
+/dev/rhdiskpower1224
+
+
+Put it in excel and replace the /dev/rhdiskpower to hdiskpower
+
+cat gg
+
+hdiskpower1219
+hdiskpower1220
+hdiskpower1221
+hdiskpower1222
+hdiskpower1223
+
+
+# for i in `cat gg`
+> do
+> ls -lrt /dev/$i     REVERFICATION THAT THE SORTED DISKS SHOULD BE IN ROOT:SYSTEM
+> done
+brw-rw----    1 root     system       35,1219 May  9 2014  /dev/hdiskpower1219
+brw-rw----    1 root     system       35,1220 May  9 2014  /dev/hdiskpower1220
+brw-rw----    1 root     system       35,1221 May  9 2014  /dev/hdiskpower1221
+brw-rw----    1 root     system       35,1222 May  9 2014  /dev/hdiskpower1222
+brw-rw----    1 root     system       35,1223 May  9 2014  /dev/hdiskpower1223
+
+
+
+# for i in `cat gg`
+> do
+> ls -lrt /dev/[r]$i   REVERFICATION THAT THE SORTED DISKS SHOULD BE IN ROOT:SYSTEM
+> done
+
+crw-rw----    1 root     system       35,1219 May  9 2014  /dev/rhdiskpower1219
+crw-rw----    1 root     system       35,1220 May  9 2014  /dev/rhdiskpower1220
+crw-rw----    1 root     system       35,1221 May  9 2014  /dev/rhdiskpower1221
+crw-rw----    1 root     system       35,1222 May  9 2014  /dev/rhdiskpower1222
+crw-rw----    1 root     system       35,1223 May  9 2014  /dev/rhdiskpower1223
+
+
+
+# for i in `cat gg`
+> do
+> echo $i
+> lquerypv -h /dev/$i
+> done>lquery.txt
+
+lspv | grep -i power | grep -i none | awk {'print $1'} | while read i; do lquerypv -h $i; done
+
+
+# cat lquery.txt | mail -s "lquerypv" janarthanan.chidhambaram@iuo.citi.com---> trigger a mail to our mailbox to verify the output
+
+OUTPUT WILL BE LIKE THIS - STRICTLY ENSURE THAT NO CHARACTERS SHOULD BE THERE INSIDE THE |......................|
+
+hdiskpower1219
+00000000   00000000 00000000 00000000 00000000  |................|
+00000010   00000000 00000000 00000000 00000000  |................|
+00000020   00000000 00000000 00000000 00000000  |................|
+00000030   00000000 00000000 00000000 00000000  |................|
+00000040   00000000 00000000 00000000 00000000  |................|
+00000050   00000000 00000000 00000000 00000000  |................|
+00000060   00000000 00000000 00000000 00000000  |................|
+00000070   00000000 00000000 00000000 00000000  |................|
+00000080   00000000 00000000 00000000 00000000  |................|
+00000090   00000000 00000000 00000000 00000000  |................|
+000000A0   00000000 00000000 00000000 00000000  |................|
+000000B0   00000000 00000000 00000000 00000000  |................|
+000000C0   00000000 00000000 00000000 00000000  |................|
+000000D0   00000000 00000000 00000000 00000000  |................|
+000000E0   00000000 00000000 00000000 00000000  |................|
+000000F0   00000000 00000000 00000000 00000000  |................|
+
+# for i in `cat gg`
+> do
+> echo $i
+> bootinfo -s $i
+> done                   IT WILL DISPLAY THE DISK SIZE = 34GB
+
+hdiskpower1219
+34526
+hdiskpower1220
+34526
+hdiskpower1221
+34526
+hdiskpower1222
+34526
+hdiskpower1223
+34526
+hdiskpower1224
+34526
+
+
+FINALLY CHECK WITH BELOW COMMAND
+
+# cat gg | wc -l
+     5
+
+total disk free = 5 
+size of each disk=34526(34GB)
+
+total free SAN available to be precise = 5*34526 = 168.5GB
+
+
+
+lsvg -o
+
+lsvg -p datavg
+
+
+
+
+---------------------------------------------------------------------
+
+To check free PP's in VG
+
+create file with the FS name
+
+[Prod root @ mwamdb11p  /root]
+# cat > /tmp/test1.txt
+/oradata/NAMIMRN0
+/oradata/NAMIMRN1
+/oradata/NAMIMRN2
+/oradata/AMMNPRL7
+/oradata/AMMNPRL8
+/oradata/AMMNSRL1
+
+# for i in `cat /tmp/test1.txt`
+> do
+> df -gt $i | grep -i /dev | awk -F "/" '{print $3}'| awk '{print $1}'
+> done
+
+NAMIMRN0_lv
+NAMIMRN1_lv
+NAMIMRN2_lv
+ammnprl7_lv
+ammnprl8_lv
+ammnsrl_lv
+
+Copy the result LV in new file
+
+# cat > /tmp/test2.txt
+NAMIMRN0_lv
+NAMIMRN1_lv
+NAMIMRN2_lv
+ammnprl7_lv
+ammnprl8_lv
+ammnsrl_lv
+
+# for i in `cat /tmp/test2.txt`
+> do
+> lslv $i | grep -i "VOLUME GROUP" | awk '{print $6}'
+> done
+
+
+imr_vg
+imr_vg
+imr_vg
+ammnprl7_vg
+ammnprl8_vg
+ammnsrl_vg
+
+Copy the result VG in new file
+
+[Prod root @ mwamdb11p  /root]
+# cat > /tmp/test3.txt
+imr_vg
+imr_vg
+imr_vg
+ammnprl7_vg
+ammnprl8_vg
+ammnsrl_vg
+
+
+# for i in `cat /tmp/test3.txt`
+> do 
+> echo $i = `lsvg $i  | grep -i "FREE PPs:" | awk '{print $7}'|tr -d "("`
+> done
+
+imr_vg = 41984
+imr_vg = 41984
+imr_vg = 41984
+ammnprl7_vg = 465280
+ammnprl8_vg = 493952
+ammnsrl_vg = 260480
+
+
+
+
+
+
