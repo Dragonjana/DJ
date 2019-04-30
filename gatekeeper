@@ -1,0 +1,155 @@
+# cat /usr/bin/gatekeeper
+#!/usr/bin/python
+
+#Gatekeeper2 - script for automatic key exchange
+#Author - Krzysztof Mazur ( km98310 )
+
+#Imports:
+from gatekeeperTools import createInc
+from gatekeeperTools import output
+from gatekeeperTools import counter
+from gatekeeperTools import configdb
+from gatekeeperTools import ArgValidate
+from gatekeeperTools import remote
+from gatekeeperTools import local
+from gatekeeperTools import mail
+
+from gatekeeperStages import argChecks
+from gatekeeperStages import preChecks
+from gatekeeperStages import srcChecks
+from gatekeeperStages import dstChecks
+from gatekeeperStages import installTectia
+from gatekeeperStages import installOpenssh
+
+import argparse
+import sys
+import os
+import socket
+
+#Configuration
+counterPath = "/etc/gatekeeper/counter"
+logDir = "/var/log/"
+logFile = "gatekeeper.log"
+
+#Main output 
+logPath = logDir + logFile
+
+quiet = None
+authHosts = None
+ticket = None
+ticketNumer = None
+user = None
+
+def main():
+
+    #Declare hosts variables
+    os.environ['PATH'] = '/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin'
+
+    #Create arguemnt parsers
+    parser = argparse.ArgumentParser()
+
+    #Global variables used in main
+    global quiet
+    global authHosts
+    global ticketNumber
+
+    #Arguemnts
+    parser.add_argument('-D',  action="store", dest="Destination_Host",  required=True,  help="(Required) Destination host for key installation, can be short or FQDN name")
+    parser.add_argument('-S',  action="store", dest="Source_Host", required=True, help="(Required) Source host for key installation , can be short or FQDN name") 
+    parser.add_argument('-d',  action="store", dest="Destination_FID", required=True, help="(Required) Destination FID")
+    parser.add_argument('-s',  action="store", dest="Source_FID", required=True, help="(Required) Source FID")
+    parser.add_argument('-n',  action="store", dest="ticket_number", required=True, help="(Required) Ticket number")
+    parser.add_argument('-p',  action="store", dest="LocalKeyPath", required=False, help="(Optional) Public key local path - for source servers not supported by ICG/CTO, openssh keys or custom configuration")
+    parser.add_argument('-a',  action="store", dest="authHosts", nargs='+', required=False, help='(Optional) Additional authorized hosts provided in shortname format and have to visible in ServerInfo Usage: -a host1 host2 host3') 
+    parser.add_argument('-u',  action="store", dest="user", default=False, help="(Optional) Requestor info")
+    parser.add_argument('-i',  action="store_true", dest="inc_create", default=False, help="(Optional) In case of key configuration issue, automatically raise INC to UNIX CORE queue ")
+    parser.add_argument('-q',  action="store_true", dest="quiet_mode", default=False, help="(Optional) Use quiet mode")
+    parser.add_argument('-o',  action="store_true", dest="sftp_only", default=False, help="(Optional) SFTP connection only ")
+    parser.add_argument('-t',  action="store_true", dest="test_mode", default=False, help="(Under development) Test connection prerequisites ")
+
+    #Get arguments
+    result = parser.parse_args()
+    
+    #Make dictionary from required arguments
+    arguments = { 'destinationHost': result.Destination_Host, 'sourceHost': result.Source_Host, 'destinationFID': result.Destination_FID, 'sourceFID': result.Source_FID, 'ticketNumber': result.ticket_number, 'localKeyPath': result.LocalKeyPath, 'authHosts': result.authHosts, 'incCreate': result.inc_create, \
+                  'quiet': result.quiet_mode, 'test': result.test_mode, 'sftp': result.sftp_only, 'keyLocation': None, 'user': result.user, 'createInc': result.inc_create }
+
+    #Check if key was provided
+    if (arguments['localKeyPath'] or arguments['localKeyPath'] is ""):
+        arguments['keyLocation'] = "local"
+    else:
+        arguments['keyLocation'] = "remote"
+
+    #Global variables - tools
+    counter.testMode = arguments['test']
+    counter.counterPath = counterPath
+
+    #Execute counter and take logNumber
+    logNumber = counter.get()
+
+    #Global variables - output class
+    output.quiet = arguments['quiet']
+    output.logPath = logPath
+    output.logNumber = logNumber
+
+    remote.logNumber = logNumber
+    remote.arguments = arguments
+
+    #Log and print start 
+    output.Header("Logging ID: " + str(logNumber))
+    output.Log("[START] Arguments: Ticket Number - " + arguments['ticketNumber'] + ", Source server - " + arguments['sourceHost'] + ", Destination server - " + arguments['destinationHost'] + ", Source FID - " + arguments['sourceFID'] + ", Destination FID - " + arguments['destinationFID'])
+    output.Message("Local log location: " + logPath)
+    output.Message("Remote log location: syslog")
+
+    #Strip arguments
+    arguments['destinationFID'] = arguments['destinationFID'].strip()
+    arguments['sourceFID'] = arguments['sourceFID'].strip()
+    arguments['ticketNumber'] = arguments['ticketNumber'].strip()
+
+    #Get hosts FQDN
+    getDestinationFQDN = local.fqdn(arguments['destinationHost'])
+    if (getDestinationFQDN['returncode'] == 0):
+        arguments['destinationHost'] = getDestinationFQDN['output']
+    else:
+        output.Error("Failed to get destination host fqdn")
+        output.Log("[ERROR] Failed to get destination host fqdn")
+        sys.exit(101)
+
+    getSourceFQDN = local.fqdn(arguments['sourceHost'])
+    if (getSourceFQDN['returncode'] == 0):
+        arguments['sourceHost'] = getSourceFQDN['output']
+    else:
+        output.Error("Failed to get source host fqdn")
+        output.Log("[ERROR] Failed to get source host fqdn")
+        sys.exit(102)
+
+    output.Log("[VERIFY] Fixed arguments: Ticket Number - " + arguments['ticketNumber'] + ", Source server - " + arguments['sourceHost'] + ", Destination server - " + arguments['destinationHost'] + ", Source FID - " + arguments['sourceFID'] + ", Destination FID - " + arguments['destinationFID'])
+
+    #Phase 0 start arg verify
+    argResult = argChecks.run(arguments)
+
+    #Phase 1 start pre checks
+    sourceHostDB, destinationHostDB, preResult, keyformat, keycontent = preChecks.run(arguments)
+
+    #Phase 2 start source checks
+    if (arguments['keyLocation'] == "remote"):
+        srcResult = srcChecks.run(arguments,sourceHostDB)
+        srcKeyLocation = srcResult 
+    elif (arguments['keyLocation'] == "local"):
+        srcKeyLocation = arguments['localKeyPath'] 
+
+    #Phase 3 start destination checks
+    dstResult = dstChecks.run(arguments,destinationHostDB)    
+
+    #Phase 4 Implementation
+    if (keyformat == "openssh"):
+        installResult = installOpenssh.run(arguments, srcKeyLocation, destinationHostDB['sftp'], keycontent['output'])
+    else:
+        installResult = installTectia.run(arguments, srcKeyLocation, destinationHostDB['sftp'])
+
+#Start
+if __name__ == "__main__":
+   main()
+[UAT root @ icgadmeur1u ~]
+
+gatekeeper -s swnet -d mwweb -S lfdttsisapn1u -D lfdcttssamap1u -n INC0062825723 
