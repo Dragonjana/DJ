@@ -1,0 +1,110 @@
+#!/usr/bin/ksh
+#!/usr/bin/bash
+#!/usr/bin/sh
+#
+# jc38549@citi.com
+# VTM status script
+# version 2.0
+# 
+# This script to adapt all servers across various regions in our environment
+# This script send mail with CSV file attachment of pending VTM details
+# Version 3.0 script provide â€ server,VTM Solution PDF,VTM ID,VTM Status,VTM Due Date,VTM Solutionâ€ detail on csv
+
+DATE=`/bin/date '+%Y%m%d'`
+OP="/tmp/vtrs_$DATE.html"
+> $OP
+ATTACH="/tmp/chk_$DATE.csv"
+> $ATTACH
+BTEXT="/tmp/vtm_$DATE.txt"
+> $BTEXT
+CHK="/tmp/chk1_$DATE.txt"
+> $CHK
+
+URL="http://ssm-db-dev/cgi-bin/vtrs/vtrs_host_profile.cgi?host="
+
+function getvtm {
+                        
+    host=`echo $1 | tr -d " "`
+        dns=`nslookup $host|grep Name|awk '{print $NF}'`
+                            
+        if [[ ! -n $dns  ]]; then
+            dns=`nslookup $host.eur.nsroot.net|grep Name|awk '{print $NF}'`
+        fi
+        if [[ ! -n $dns ]]; then
+            dns=`nslookup $host.apac.nsroot.net|grep Name|awk '{print $NF}'`
+        fi
+        if [[ ! -n $dns ]]; then
+            dns=`nslookup $host.jpn.nsroot.net|grep Name|awk '{print $NF}'`
+        fi
+        if [[ ! -n $dns ]]; then
+            dns=`nslookup $host.ap.ssmb.com|grep Name|awk '{print $NF}'`
+        fi
+                if [[ ! -n $dns ]]; then
+            dns=`nslookup $host.aus.nsroot.net|grep Name|awk '{print $NF}'`
+        fi
+    curl -ss  ${URL}${dns}
+}
+
+echo "Paste the server names , \033[4;32mCtlr + D to save the server list""\033[0m"". short name is enough. domain name will be appended automatically"
+list=$(cat)
+echo "		\033[4;32mEnter your mail id or gourp id icgunixcore@citi.com ""\033[0m"
+echo "		\033[4;32mFor multiple mail IDâ€™s use comma â€˜,â€™ symbol as addresses separators""\033[0m"
+echo
+echo "\033[4;32mEnter email id : ""\033[0m"
+read MAILID;
+MAILID=`echo $MAILID | tr -d " "`
+
+
+clear
+echo "server,VTM Solution PDF,VTM ID,VTM Status,VTM Due Date,VTM Solution" > $ATTACH
+for i in `echo $list`
+        do
+                echo "Checking $i.. Please wait"
+                i=`echo $i | tr -d " "`
+
+                getvtm $i  > $OP
+                
+                cat $OP | grep Congratulations > $CHK
+                if [[ -s "$CHK" ]]; then
+	                    grep -i title $OP |nawk -F" " '{print $6}' >> $BTEXT
+                        grep Congratulations $OP >> $BTEXT
+						printf '\n' >> $BTEXT
+                        
+                else
+						
+                        cat $OP |grep -i title |nawk -F" " '{print $6}' >> $ATTACH
+						
+						cat $OP | egrep -v "\[|BR|TR|nbsp|TABLE|\!"|/usr/sfw/bin/ggrep -A 3  'HREF="https://' > $OP
+
+						cat $OP | sed 's/>/> /g'|sed 's/A HREF=//g'|tr -d '<TD>|"'| nawk '{print $1 " " $3" " $4 " " $5 " " $6 " " $7 " " $8 " " $9 " " $10}' > $OP
+
+						cat $OP | sed 's/ALIGN=left//g'| sed 's/ ARGE=_blank //g'|sed 's/\/A//g'|sed 'N;s/\n/ /'|sed 'N;s/\n/ /'|uniq > $OP
+						cat $OP | sed 's/ \///g'  > $OP
+						cat $OP |nawk '{print $1 "," $2 "," $3 "," $4 "," $5 " "$6 " " $7 " " $8 " " $9 " " $10 " " $11" " $12" " $13" " $14" " $15}'|sed 's/http/,http/g' >>  $ATTACH
+                       	
+						printf '\n' >> $ATTACH
+                fi
+
+                echo "-----------------"
+done
+       
+	   
+        ( echo " Hi," 
+                echo
+                echo  "              Kindly find the enclosed attachment for pending VTM patch list."
+                echo  "	On below listed servers the VTM patches are in CLEAN state."
+				echo
+                cat $BTEXT
+				echo
+				echo  "Thanks & Regards,"
+				echo  "Janarthanan C"
+                
+        /usr/bin/uuencode $ATTACH $(basename $ATTACH)
+        
+        ) | /usr/bin/mailx -s "VTM STATUS - $DATE " $MAILID
+
+
+echo "Details sent to \033[4;32m$MAILID""\033[0m"
+
+
+rm $OP $ATTACH $BTEXT $CHK
