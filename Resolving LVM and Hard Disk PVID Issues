@@ -1,0 +1,306 @@
+Answer
+The Logical Volume Manager (LVM) on AIX uses a Physical Volume Identifier (PVID) to keep track of disk drives that are part of an LVM volume group. This is a system-generated 16-digit number that is stored physically on the hard drive and read into the ODM. LVM also stores this PVID in the Volume Group Descriptor Area (VGDA) for the volume group. Each PVID on a system uniquely identifies one physical volume.
+Problems with PVIDs
+Duplicate PVID
+The same PVID shows up on more than one disk.
+Problem Diagnosis
+1. Verify that you have a duplicate PVID on multiple disks.
+$ lspv 
+or
+If you know the name of an imported volume group having the problem use:
+$ lspv | grep VGNAME
+The lspv command reads out of the ODM, it does not read the PVID from disk. We need to check if the PVID listed in the ODM is the same as the PVID on disk.
+2. To read the PVID off the disk, you must log in as root or su to it, and use:
+# lquerypv -h /dev/hdisk7 80 10
+Example output:
+00000080   00021AC8 E561D594 00000000 00000000  |.....a..........|
+
+The PVID of the disk is in columns 2 and 3.
+
+
+Possible Cause and Solution 1: ODM and PVID on Disk Do Not Match
+
+If the PVID on disk does not match the ODM output from lspv, use the chdev command to re-read the proper PVID in from disk and repopulate the ODM.
+
+Example:
+# lspv | grep hdisk24
+hdisk24         deadbeefdeadbeef                    None
+
+Check to see if the PVID written to the disk is correct:
+# lquerypv -h /dev/hdisk24 80 10
+00000080   00050A85 577D8A61 00000000 00000000  |....W}.a........|
+
+So the ODM version does not match what is written onto the disk. Another way to verify this is to query the ODM directly:
+
+# odmget -q "name=hdisk24 and attribute=pvid" CuAt
+
+CuAt:
+        name = "hdisk24"
+        attribute = "pvid"
+        value = "deadbeefdeadbeef0000000000000000"
+        type = "R"
+        generic = "D"
+        rep = "s"
+        nls_index = 2
+
+Force the system to re-read the PVID off disk and repopulate the ODM:
+
+# chdev -a pv=yes -l hdisk24
+hdisk24 changed
+
+Now check that lspv shows the correct PVID:
+# lspv | grep hdisk24
+hdisk24         00050a85577d8a61                    None
+
+You can also double-check the ODM directly:
+
+# odmget -q "name=hdisk24 and attribute=pvid" CuAt
+
+CuAt:
+        name = "hdisk24"
+        attribute = "pvid"
+        value = "00050a85577d8a610000000000000000"
+        type = "R"
+        generic = "D"
+        rep = "s"
+        nls_index = 2
+
+
+Possible Cause and Solution 2: The Disks Are Copies of Each Other
+
+In recent years, SAN storage has become a popular way to attach new disks to systems using a fibrechannel network. Some of these SAN storage systems include a way to make a bit-for-bit copy of each disk (or LUN) in order to take that to another site or computer. The copy is exact, down to the VGDA and PVID areas of the LUNs If both of these disks, the original and the copy, are zoned to the same host and seen by cfgmgr, it will cause the system to show duplicate PVIDs in commands such as lspv, lsvg, and in the ODM.
+
+Varyonvg (either called from importvg or varyonvg) will fail due to duplicate PVIDs:
+
+# importvg -y datavg hdisk20
+0516-1775 varyonvg: Physical volumes hdisk21 and hdisk20 have identical PVIDs (00050a85470c2eeb).
+0516-780 importvg: Unable to import volume group from hdisk20.
+
+A. Find out if these disks are indeed copies of each other. If a copy of the volume group on the second disk (or set of disks) is not needed, the VGDA and PVID areas can be wiped out, allowing the user to create a new volume group on the disks.
+
+One word of warning, this is a permanent change to the disks.
+
+First, wipe the PVID off the drive using:
+# chdev -a pv=clear -l hdiskX  (If using another path manager, the name may be different)
+
+Next clear the VGDA off the drive:
+# chpv -C hdiskX
+
+Then you may use the mkvg command to create a new volume group on the disks, or add them to an existing volume group with extendvg.
+
+
+B. If, however, the disks are copies of each other for use in a backup strategy, and BOTH the source and backup (or target) volume group need to exist on the same machine, then the target volume group will need to be imported using recreatevg. The benefit of using recreatevg is that it can change the PVIDs of the disks as it imports the volume group, and update the VGDA with those new PVIDs.
+
+It should be noted at this point that AIX does not allow two logical volumes to have the same name, or two filesystems to have the same mount point. The recreatevg command by default will change the logical volume names and mount points, since it is meant for recreating an existing volume group.
+
+By default recreatevg will change the existing logical volume names by prefixing them with the string "fs" and prefixing the filesystem mount point paths with "/fs". These can be changed by using the -L and -Y flags to recreatevg.
+
+For example, if I have a volume group "origvg" with a filesystem and log device, and a SAN copy of it on hdisk6:
+
+# lsvg -l origvg
+origvg:
+LV NAME             TYPE       LPs     PPs     PVs  LV STATE      MOUNT POINT
+loglv01             jfs2log    1       1       1    closed/syncd  N/A
+fslv02              jfs2       256     256     1    closed/syncd  /data
+
+
+# lspv | grep origvg
+hdisk5          00050a85ef3356ec                    origvg          active
+hdisk6          00050a85ef3356ec                    origvg          active
+
+I can clear the PVID off hdisk6 and then run recreatevg against it:
+
+# chdev -a pv=clear -l hdisk6
+hdisk6 changed
+
+# lspv
+hdisk5          00050a85ef3356ec                    origvg          active
+hdisk6          none                                None
+
+# recreatevg -y copyvg hdisk6
+copyvg
+
+hdisk5          00050a85ef3356ec                    origvg          active
+hdisk6          00050a85ee6d1446                    copyvg          active
+
+# lsvg -l copyvg
+copyvg:
+LV NAME             TYPE       LPs     PPs     PVs  LV STATE      MOUNT POINT
+fsloglv01           jfs2log    1       1       1    closed/syncd  N/A
+fsfslv02            jfs2       256     256     1    closed/syncd  N/A
+
+
+Possible Cause and Solution 3: PVIDs Exist on Individual Disk Paths Rather Than on Multipath Device
+
+Example using SDD multipathing:
+
+vpath34  Available    Data Path Optimizer Pseudo Device Driver
+
+This vpath is made up of he following hdisks.
+
+hdisk138 Available 01-01-02
+U789D.001.DQD35BK-P1-C2-T2-W5005076801402F1D-L22000000000000 FC 2145
+hdisk139 Available 01-01-02
+U789D.001.DQD35BK-P1-C2-T2-W5005076801402F2D-L22000000000000 FC 2145
+hdisk140 Available 03-00-02
+U789D.001.DQD35PG-P1-C6-T1-W5005076801302F2D-L22000000000000 FC 2145
+hdisk141 Available 03-00-02
+U789D.001.DQD35PG-P1-C6-T1-W5005076801302F1D-L22000000000000 FC 2145
+
+---------------------------------------------------------------------
+
+From lspv output:
+
+hdisk138        none                                None
+hdisk139        none                                None
+hdisk140        none                                None
+hdisk141        none                                None
+vpath34         00cb3e924851eb12                    oravg1
+
+This is the correct configuration for a vpath, where the PVID is associated with the vpath device in the ODM.
+
+If the PVID appears on the individual paths (hdisks) then it can be moved using one of two SDD commands:
+
+hd2vp The SDD script that converts an hdisk device volume group to an
+SDD vpath device volume group.
+
+dpovgfix The command that fixes an SDD volume group that has mixed
+vpath and hdisk physical volumes.
+
+This can occur with any multipath driver that creates a pseudo-device to be used for access to the LUN. Another example of this is EMC PowerPath which uses an "hdiskpowerX" pseudo-device, which should have the PVID on it, while the individual paths are listed as "hdiskX" with no pvid or volume group association.
+Missing PVID
+The PVID from disk does not show up in the ODM or system commands.
+Problem Diagnosis
+If the disk does not show a PVID in "lspv":
+Solution
+Wrong PVID
+The PVID from disk shows up in "lspv", but it is not the right PVID. Also "lspv" may not show the drive associated with a volume group.
+Problem Diagnosis
+If the disk shows a PVID but no VG:
+
+lspv output:
+hdisk11         00c7a967e5b40149                    None
+
+Check the PVID on the disk itself to determine if this matches the lspv output:
+
+# lquerypv -h /dev/hdisk11 80 10
+00000080   00C7A967 E5B40149 00000000 00000000  |...g...I........|
+
+Now check the ODM to see what PVID is there. This usually will match lspv output, because that is where lspv gets it's data from.
+
+# odmget -q "name=hdisk11 and attribute=pvid" CuAt
+
+CuAt:
+        name = "hdisk11"
+        attribute = "pvid"
+        value = "00c7a967e5b401490000000000000000"
+        type = "R"
+        generic = "D"
+        rep = "s"
+        nls_index = 2
+
+So the ODM and PVID on disk match.
+
+Now check the PVIDs listed in the VGDA on the disk:
+
+# lqueryvg -Ptp hdisk11
+Physical:       00c7a967cc88015c                2   0
+Possible Cause and Solution 1: PVID on disk has changed
+
+If the PVIDs in the VGDA on disk do not contain the PVID from the above lquerypv command, then someone may have changed the one on disk. This may also put the disk in a "missing" state. Another symptom is a vg that may not be able to import.
+
+# importvg -y datavg hdisk11
+0516-1939 : PV identifier not found in VGDA.
+0516-780 importvg: Unable to import volume group from hdisk11.
+Problem Diagnosis:
+Check the PVID on disk
+
+# lquerypv -h /dev/hdisk11 80 10
+00000080   00C7A967 E5B40149 00000000 00000000  |...g...I........|
+
+Compare that with the PVID in the VGDA:
+
+# lqueryvg -Ptp hdisk11
+Physical:       00c7a967cc88015c                2   0
+
+So here the PVID written to disk is not what it should be. 
+
+Solution 
+This can be fixed using the recreatevg command. We will have recreatevg re-write all the PVIDs for each disk in the volume group, and update the VGDAs with those PVIDS so everything matches up again.
+
+We will use the flags "-Y NA" and "-L /" so the logical volume names and filesystem mount points are not changed. Without these options recreatevg will take the default action of changing the logical volume names and adding a prefix to each mount point.
+
+The names of all disks in the volume group must be included on the command line. This is different than the behavior of importvg, which requires the name of only 1 disk.
+
+# recreatevg -y datavg -Y NA -L / hdisk11
+datavg
+
+Now check that everything is there.
+
+# lspv | grep hdisk11
+hdisk11         00c7a967e61887e7                    datavg          active
+
+# lsvg -p datavg
+datavg:
+PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+hdisk11           active            639         639         128..128..127..128..128
+Possible Cause and Solution 2: PVID in ODM is wrong or gone
+Problem Diagnosis:
+In this case lspv shows nothing about the disk:
+
+# lspv
+hdisk4          none                                None
+
+or it may show a PVID but no volume group associated:
+
+hdisk4          abcdabcdabcdabcd                    None
+
+
+Other symptoms can be that the volume group only shows the PVID for a disk, not a name:
+
+# lsvg -p testvg
+0516-304 : Unable to find device id 00c7a967e601c226 in the Device
+        Configuration Database.
+testvg:
+PV ID             PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+00c7a967e601c226  active            639         639         128..128..127..128..128
+
+
+If the PVIDs in the VGDA on disk matches the PVID from the above lquerypv command, but not the lspv output or ODM, then the correct PVID can be re-read into the ODM.
+
+# lquerypv -h /dev/hdisk4 80 10
+00000080   00C7A967 E601C226 00000000 00000000  |...g...&........|
+
+This is the same PVID we see listed in the lsvg -p output above.
+
+# lqueryvg -Ptp hdisk4
+Physical:       00c7a967e601c226                2   0
+
+So the PVID on disk is good, and matches the one in the VGDA, but the ODM is wrong. 
+
+Solution 
+We can fix the ODM using chdev to re-read the correct PVID in again:
+
+# chdev -a pv=yes -l hdisk4
+hdisk4 changed
+
+Now verify that it's fixed:
+
+# lspv | grep hdisk4
+hdisk4          00c7a967e601c226                    testvg          active
+
+# lsvg -p testvg
+testvg:
+PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+hdisk4            active            639         639         128..128..127..128..128
+
+# odmget -q "name=hdisk4 and attribute=pvid" CuAt
+
+CuAt:
+        name = "hdisk4"
+        attribute = "pvid"
+        value = "00c7a967e601c2260000000000000000"
+        type = "R"
+        generic = "D"
+        rep = "s"
+        nls_index = 2
