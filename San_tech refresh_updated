@@ -1,0 +1,604 @@
+## steps prepared by Girish Vermani, last updated on 08/17/09 ##IX-HDS-STEPS AIX-HDS-STEPS
+
+
+1.      save output from lspv, lsvg, lsdev
+
+mkdir /var/tmp/stats  /var/tmp/stats/hds ; 
+cd  /var/tmp/stats/hds 
+lspv > /var/tmp/stats/hds/lspv.`uname -n` 
+lsvg > /var/tmp/stats/hds/lsvg.`uname -n`
+lsvg> /tmp/lsvg.out; 
+for i in `cat /tmp/lsvg.out`
+        
+do
+        
+ls -l /dev |grep $i
+        
+done>>/var/tmp/stats/hds/vgmajornumber.`uname -n`
+
+lsdev > /var/tmp/stats/hds/lsdev.`uname -n` 
+lscfg -v > /var/tmp/stats/hds/lscfg-v.`uname -n` 
+lscfg  > /var/tmp/stats/hds/lscfg.`uname -n` 
+lparstat -i  > /var/tmp/stats/hds/lparstat-i.`uname -n` 
+powermt display > /var/tmp/stats/hds/powermt.`uname -n` 
+powermt display dev=all > /var/tmp/stats/hds/powermt-all.`uname -n`
+/usr/lpp/EMC/Symmetrix/bin/inq.aix64_51  > /var/tmp/stats/hds/inq.`uname -n` 
+df -k > /var/tmp/stats/hds/df.`uname -n` 
+cp -p /etc/filesystems /var/tmp/stats/hds/filesystems.`uname -n` 
+cp -p /etc/filesystems /etc/filesystems.062109 
+ls -al /dev >/var/tmp/stats/hds/ls-al_dev_devices.`uname -n` 
+ls -l /dev/rhdisk* | grep oracle >/var/tmp/stats/hds/ASM_disks 
+lsvg -o | lsvg -il >/var/tmp/stats/hds/lsvg-o.`uname -n` 
+lslpp -l > /var/tmp/stats/lslpp_l
+lsvg rootvg > /var/tmp/stats/rootvg 
+lsvg -o |grep -v rootvg |lsvg -il |grep open > /var/tmp/stats/lsvg_open 
+lsvg  |grep -v rootvg |lsvg -i  > /var/tmp/stats/lsvg_full_details 
+lsvg -o |grep -v rootvg |lsvg -il > /var/tmp/stats/lsvg_lvdetails 
+lsvg -o | grep -v rootvg | lsvg -ip>/var/tmp/stats/lsvg_PVdetails
+lsvg -o | grep -v rootvg | lsvg -ip>/var/tmp/stats/lsvg_PVdetails
+
+grep seos /etc/inittab
+**************************
+
+1a) request ISA to shutdown seos
+
+ps -ef | grep -i seos
+
+#Comment out seos in /etc/inittab
+vi /etc/inittab
+/seos
+grep seos /etc/inittab
+
+
+1b) Stop BOKS
+
+cd /opt/FXboks/sbin
+./boksadm -S  
+	sysreplace restore
+
+exit
+
+#Change root password
+
+passwd   root
+abc@123
+
+*********************
+
+2.      Shutdown the db/app
+3.      unmount all filesystems
+------------------------------------------------------------------
+unmount all the filesystems
+
+lsvg -o |grep -v rootvg |lsvg -il |awk '/jfs/ {print $NF}' |xargs -i umount {}
+
+df -k |grep "^nas" |awk '{print $NF}'
+df -k |grep "^nas" |awk '{print $NF}' |xargs -i umount {}
+
+df -k |awk '/dtc/{print $NF}' |xargs -i umount {}
+df -k |grep -v "/dev/hd" |grep -v tiadmin2
+
+
+lsvg -o |egrep -v "swapvg|rootvg" |lsvg -il |grep open
+
+
+#- if you are unable to unmount due to filesystem busy
+#- and you have the okay from the user to kill the processes
+
+
+
+------------------------------------------------------------------
+
+ps -ef |awk '$1 == "oracle" {print $0}'
+kill -9 `ps -ef |awk '$1 == "oracle" {print $2}'`
+
+ps -ef |egrep -v "grep|root|daemon|perform"
+ps -ef |egrep -v "grep|root|daemon|perform" |awk '{print $1, $2}'>/tmp/aa
+cat /tmp/aa | awk '{print $2}' | grep -v PID |xargs -i kill -9 {}
+
+lsvg |grep -v rootvg |lsvg -li |awk '{print $NF}'|egrep -v ":|POINT|N/A"  >/tmp/aa
+cat /tmp/aa
+lsvg |grep -v rootvg |lsvg -li |awk '{print $(NF - 1), $NF}'
+lsvg |grep -v rootvg |lsvg -li |awk '{print $(NF - 1), $NF}' |grep open
+lsvg -o |grep -v rootvg |lsvg -il |awk '/jfs/ {print $1}' |xargs -i fuser /dev/{}
+
+for i in `cat /tmp/aa`
+do
+        umount $i
+done
+
+
+
+4.      varyoff all volumegroup
+
+for i in `lsvg |egrep -v 'rootvg|swapvg'`
+do
+        varyoffvg $i
+done
+
+5.      export volume group
+for i in `lsvg |egrep -v 'rootvg|swapvg'`
+do
+        exportvg $i
+done
+
+lsvg -o  ( only root and swap should be there)
+
+6.      remove SAN powerpath disks
+lsdev | grep hdiskpower > /tmp/gg
+
+cat /tmp/gg | awk -F" " '{print $1}' > /tmp/gg1
+cat /tmp/gg1
+
+
+ for i in `cat /tmp/gg1`
+ do
+ echo $i
+ done
+
+** IMPORTANT STEP **
+
+NOTE: now use rmdev -dl command to delete hdisk/power from /tmp/gg1
+
+ for i in `cat /tmp/gg1`
+ do
+ echo $i
+rmdev -dl $i
+ done
+******************
+lsdev | grep hdiskpower   ( nothing should be displayed)
+
+7.      remove underlying SAN hdisks
+
+lsdev | grep hdisk > /tmp/gg
+
+cat /tmp/gg | awk -F" " '{print $1}' > /tmp/gg1
+cat /tmp/gg1
+
+lsdev -Cc disk | grep "LVD SCSI Disk Drive" ## checkf for physical disks and remove accordingly if presetn
+
+lspath
+
+lscfg -v | grep vscsi
+
+** IMPORTANT STEP **
+lspv | egrep 'rootvg|swapvg'
+
+NOTE : vi /tmp/gg1 and remove hdisk0,hdisk1 & hdisk2 or any other root disks assigned to rootvg,altinst_rootvg & swapvg
+
+ vi /tmp/gg1   ## remove BOOT disk entries
+
+head /tmp/gg1  ## ENSURE boot disks are not showing
+
+
+****************
+
+ for i in `cat /tmp/gg1`
+ do
+ echo $i
+ done
+
+** IMPORTANT STEP **
+
+NOTE: now use rmdev -dl command to delete hdisk/power from /tmp/gg1
+
+
+ for i in `cat /tmp/gg1`
+ do
+ echo $i
+rmdev -dl $i
+ done
+
+
+******************
+
+lsdev | grep disk
+
+lscfg | grep disk
+
+8.      remove hba adapters that are used for SAN Disk Connectivity
+
+lscfg -v | grep fcs
+
+**  NOTE : Be Careful ***
+rmdev -l fcs0 -dR;
+rmdev -l fcs1 -dR;
+rmdev -l fcs2 -dR;
+rmdev -l fcs3 -dR;
+
+******************
+
+8a.     Rename rc2.d to avoid script hanging
+
+mv /etc/rc.d/rc2.d /etc/rc.d/rc2.d.ORIG
+
+9.      shut down server
+
+shutdown -F
+
+
+## Verify from hmc that the server has shutdown completely
+
+## to get console info, run following cmds ##
+login to tpaadm1
+ksh
+. /.profile
+cd /adminweb/secure2/AIX/FRAMES
+./ConnectConsole <servername>
+
+## NOTE : in above cmd, donot use mkvterm cmd, instead use following to check the status of lpar
+
+lssyscfg  -r lpar -m <frame_name_from_above_output> | grep <servername>
+
+
+10.  Once the server is shutdown the SA will send an email to HDS team confirming that above steps are complete.
+ 
+11.  HDS performs changes and informs SA once the changes are complete.
+
+12.  Bring up the server
+
+## to get console info, tun following cmds
+
+login to tpaadm1
+ksh
+. /.profile
+cd /adminweb/secure2/AIX/FRAMES
+./ConnectConsole <servername>
+
+13.  cfgmgr ( no need)
+14.  run inq and verify if u see disks (just to confirm if any doubts )
+
+/usr/lpp/EMC/Symmetrix/bin/inq.aix64_51 > /tmp/inq
+cat /tmp/inq
+
+15.  Verify all disks are visible
+
+lspv
+lsdev | grep hdisk
+
+16.  powermt check
+17.  powermt config
+powermt display
+
+
+# Record the stats soon after the tech refresh is done and before you mount any FS.
+
+mv /var/tmp/stats/hds1 /var/tmp/stats/hds1.old; 
+mkdir -p /var/tmp/stats/hds1 ; cd  /var/tmp/stats/hds1
+lspv > /var/tmp/stats/hds1/lspv.`uname -n`
+lsvg > /var/tmp/stats/hds1/lsvg.`uname -n`
+lsdev > /var/tmp/stats/hds1/lsdev.`uname -n`
+lscfg -v > /var/tmp/stats/hds1/lscfg-v.`uname -n`
+lscfg  > /var/tmp/stats/hds1/lscfg.`uname -n`
+powermt display > /var/tmp/stats/hds1/powermt.`uname -n`
+powermt display dev=all > /var/tmp/stats/hds1/powermt-all.`uname -n`
+/usr/lpp/EMC/Symmetrix/bin/inq.aix64_51  > /var/tmp/stats/hds1/inq.`uname -n`
+df -k > /var/tmp/stats/hds1/df.`uname -n`
+
+
+cat /var/tmp/stats/hds1/inq.`uname -n` | mailx -s `uname -n` sathish.kk@citi.com
+------------------------------------------------------------------------------------------
+
+
+
+17B) If clusters, plz make sure all reserve locks on power disks are set to NO
+
+#  ASM DATABSE AND HACMP Cluster  (clRGinfo)
+
+
+# For cluster hosts (including Oracle ASM clustered hosts), set the default ODM default attribute reserve_policy=no_reserve (default is single_path) for Symmetrix, Clariion, and HDS hdisk devices and for Powerpath hdiskpower devices
+
+/opt/SANconfigure/bin/sanattr_set -N;
+/opt/SANconfigure/bin/sanattr_set
+/opt/SANinfo/bin/sanstack_verify -v
+
+
+# Confirm that the no_reserve policy is now set on all hdiskpower devices:
+lspv | grep hdiskpower > /tmp/gg;
+cat /tmp/gg | awk -F" " '{print $1}' > /tmp/gg1
+
+for i in `cat /tmp/gg1`
+do
+        echo $i;
+        lsattr -El $i | grep reserve;
+done
+
+
+
+18.  import volumegroup. 
+# we need to identify VG name and matching pvid before 
+# running following command
+# importvg -y <VG_name> <hdiskpower_name> 
+#
+# to get a list of VG which were active before shutdown,use
+cat /var/tmp/stats/hds/lsvg.`uname -n`
+# make sure to match up hdiskpower pvid between below 2 commands output
+
+HOSTNAME=`uname -n`
+for i in `cat /var/tmp/stats/hds/lsvg.$HOSTNAME | egrep -v "rootvg|swapvg"`
+do
+echo $i
+done
+
+#Generate importvg cmds to run them manuamlly to importvg
+
+for i in `cat /var/tmp/stats/hds/lsvg.$HOSTNAME | egrep -v "rootvg|swapvg"`
+do
+echo "Checking for $i ...... "
+OLD_PVID=`cat /var/tmp/stats/hds/lspv.$HOSTNAME | grep power | grep $i  | sort +2 | head -1 | awk -F" " '{print $2}'`
+NEW_HDISKPOWER=`lspv | grep power | grep $OLD_PVID | awk -F" " '{print $1}'`
+echo " 			importvg -y $i $NEW_HDISKPOWER "
+done
+
+
+lspv | grep power
+
+
+# if VG needs to varyon, pls do so using varyonvg VG_name
+
+
+# Ask SAN Team to provide you new disk mapping. Compare disks which were part of ASM before and new and based on that
+change ownership to oracle:dba
+
+19.  Copy Original /etc/filesystems 
+cd /var/tmp/stats/hds/
+cp /etc/filesystems  /var/tmp/stats/hds/filesystems.after_reboot        
+cp -p  filesystems.`uname -n` /etc/filesystems
+
+
+### After Reboot also make sure mount order in /etc/filesystems is correct:
+/net/ccuaweb3/export/scripts/AixLVM/CheckMountOrder
+
+19aa. mount f/s and chec k LV in VG
+
+mount -a
+
+### make sure all filesystems are mounted:
+/net/ccuaweb3/export/scripts/AixLVM/CheckMounts;
+(if it returns nothing, you are good)
+
+
+ lsvg -o | lsvg -il
+
+cat /var/tmp/stats/hds/lsvg-o.`uname -n`
+
+
+19a. for oracle/sybase DB servers, please check /dev for raw device ownerships
+
+egrep 'oracle|sybase'  /var/tmp/stats/hds/ls-al_dev_devices.`uname -n`
+
+ls -al /dev | egrep 'oracle|sybase' 
+
+ls -al /dev | egrep 'ora'
+
+
+
+####### Check Queue depth , symmetic = 16 , Hitachi=8
+powermt display
+
+for i in `lspv | grep power | awk -F" " '{print $1}'`
+do
+lscfg -vl $i | grep Manufacturer
+done
+
+
+for i in `lspv | grep power | awk -F" " '{print $1}'`
+do
+echo $i
+done
+
+for i in `lspv | grep power | awk  '{print $1}' `
+do
+   echo $i, `lsattr -El $i | grep queue_depth | awk '{print $1 " " $2 }'`  ` lscfg -vl $i | grep Manufacturer`
+done > /tmp/queue_depth
+
+
+cat /tmp/queue_depth | more
+
+cat /tmp/queue_depth | mailx  -s `uname -n` sathish.kk@citi.com
+
+if value doesnot match  symmetic = 16 , Hitachi=8, then use below commands to change them
+
+#for EMC disks , use  chhdev -l $disk -a queue_depth=16
+#for HITACHI disks , use chhdev -l $disk -a queue_depth=8
+
+
+powermt display  | mailx  -s `uname -n`_powermt_display vel.maheswaran@citi.com
+
+20 ENABLE rc2.d and do another Reboot before releasing to ensure all mounts properly
+----------------------------------------------------------------------------------------
+
+mv /etc/rc.d/rc2.d.ORIG /etc/rc.d/rc2.d
+
+#reboot the server
+#shutdown -Fr
+
+20a) .  perform the checkout and request APP team to startup apps and checkout
+ 
+21. enable boks 
+
+Install ISA Passowrd and enable boks
+
+
+/opt/FXboks/sbin/boksadm -S
+	sysreplace replace
+exit
+
+#Check to See if FXboks has been activated
+
+grep true /etc/opt/FXboks/ENV  #(SSM_ATCIVE=true)
+
+ls -al /usr/bin/su
+lrwxrwxrwx   1 root     system            7 Aug  7 16:02 /usr/bin/su -> su..ssm
+
+
+Check to verify that there is only one entry for boks in /etc/services
+
+grep boks /etc/services
+
+/net/ccuaweb3/export/scripts/AixLVM/lparcheck
+
+
+# MIgration complete
+
+
+root@cccmai100d.nam.nsroot.net: umount /abinitio/eme
+root@cccmai100d.nam.nsroot.net: umount /abinitio
+
+root@cccmai100d.nam.nsroot.net: umount  /optware
+umount: error unmounting /dev/optware: Device busy
+
+root@cccmai100d.nam.nsroot.net: fuser -uc  /optware
+/optware:  7995672(km91192) 4391522(db2v9as)
+
+root@cccmai100d.nam.nsroot.net: fuser -kuc /optware
+/optware:  7995672(km91192) 4391522(db2v9as)
+
+root@cccmai100d.nam.nsroot.net: umount  /optware
+umount: error unmounting /dev/optware: Device busy
+
+root@cccmai100d.nam.nsroot.net: fuser -uc  /optware
+
+
+
+trobleshout 
+
+root@mwewpsdb1p.nam.nsroot.net RC=0 # /opt/SANinfo/bin/sanstack_verify -s
+INFO: Using updated SAN Stack configurations from CSBE website v2.1.7W
+INFO: Latest SAN Stack for AIX 6100 is AIX SAN Stack v7.2.
+INFO: It will be used as the baseline.
+INFO: Running HBAinfo...(this could take a while)
+ERROR: ECC Agent is not properly installed and/or has not been configured.
+ERROR: Installed SAN Stack does NOT match AIX SAN Stack v7.2, please remedy all errors.
+INFO: SAN Stack v7.2 Solution Guide: https://catecollaboration.citigroup.net/domains/platstor/gdse/products/services/SANStacks/CSBE-14062-SG.pdf
+INFO: End of Support Date: TBD
+# Rinfo: NS
+*(/dev/pts/0)* /root
+
+
+Loganathan, Yogasimhan [CCC-OT NE] [9:12 PM]: 
+oh..
+As of now skip that one....
+please check /opt/SANinfo/bin/reserve_veriy -Nv
+for any errors
+Chidhambaram, Janarthanan [CCC-OT NE] [9:14 PM]: 
+root@mwewpsdb1p.nam.nsroot.net RC=0 # /opt/SANinfo/bin/reserve_verify -Nv
+-
+reserve_verify v1.5.0
+Hostname: mwewpsdb1p.nam.nsroot.net
+Date: Sun Nov 29 10:44:30 EST 2015
+-
+INFO: Checking for duplicate reserve_policy attributes in ODM CuAt...
+INFO: Checking for reserve_lock attributes in ODM CuAt...
+INFO: Checking for reserve_policy=yes attributes in ODM CuAt...
+INFO: Checking for duplicate reserve attributes in ODM PdAt...
+INFO: Checking for other duplicated attributes...
+INFO: Checking reserves are disabled with lsattr...
+INFO: Checking reserve attributes in ODM PdAt...
+INFO: Checking Powerpath reserve_enable attribute with lsattr...
+ERROR: powerpath0 attribute reserve_enable=none instead of no
+INFO: Checking hdisk reservation state with devrsrv...
+INFO: Verify the configuration of other servers sharing the same storage before upgrades or reboots
+-
+Return code is 0
+Date: Sun Nov 29 10:44:34 EST 2015
+
+shall i run this below cmd
+
+/usr/sbin/chdev -l powerpath0 -a reserve_enable=no
+
+Loganathan, Yogasimhan [CCC-OT NE] [9:16 PM]: 
+yes
+
+Chidhambaram, Janarthanan [CCC-OT NE] [9:17 PM]: 
+lemme remove the powerdisk first and i run the cmd
+
+
+root@mwewpsdb1p.nam.nsroot.net RC=0 # /usr/sbin/chdev -l powerpath0 -a reserve_enable=no
+
+
+Method error (/etc/methods/chgdisk):
+        0514-029 Cannot perform the requested function because a
+                 child device of the specified device is not in a correct state.
+powerpath0 unable to unrecognize devices.
+
+
+*(/dev/pts/0)* /root
+hi ji 
+shall i remove powerdisk 
+Loganathan, Yogasimhan [CCC-OT NE] [9:18 PM]: 
+Hi jana
+one min
+Chidhambaram, Janarthanan [CCC-OT NE] [9:19 PM]: 
+ok
+Loganathan, Yogasimhan [CCC-OT NE] [9:34 PM]: 
+
+chdev -l powerpath0 -a reserve_enable=no -P
+and then reboot server pls
+
+Chidhambaram, Janarthanan [CCC-OT NE] [9:35 PM]: 
+ok ji 
+root@mwewpsdb1p.nam.nsroot.net RC=11 # chdev -l powerpath0 -a reserve_enable=no -P
+powerpath0 changed
+*(/dev/pts/0)* /root
+Loganathan, Yogasimhan [CCC-OT NE] [9:36 PM]: 
+ok.. pls reboot
+Chidhambaram, Janarthanan [CCC-OT NE] [9:36 PM]: 
+ok ji 
+done 
+Chidhambaram, Janarthanan [CCC-OT NE] [9:47 PM]: 
+ji
+root@mwewpsdb1p.nam.nsroot.net RC=1 # /opt/SANinfo/bin/reserve_verify -Nv
+-
+reserve_verify v1.5.0
+Hostname: mwewpsdb1p.nam.nsroot.net
+Date: Sun Nov 29 11:15:40 EST 2015
+-
+INFO: Checking for duplicate reserve_policy attributes in ODM CuAt...
+
+INFO: Checking for reserve_lock attributes in ODM CuAt...
+INFO: Checking for reserve_policy=yes attributes in ODM CuAt...
+INFO: Checking for duplicate reserve attributes in ODM PdAt...
+INFO: Checking for other duplicated attributes...
+INFO: Checking reserves are disabled with lsattr...
+INFO: Checking reserve attributes in ODM PdAt...
+INFO: Checking Powerpath reserve_enable attribute with lsattr...
+INFO: Checking hdisk reservation state with devrsrv...
+INFO: Verify the configuration of other servers sharing the same storage before upgrades or reboots
+-
+Return code is 0
+Date: Sun Nov 29 11:15:44 EST 2015
+*(/dev/pts/0)* /root
+Loganathan, Yogasimhan [CCC-OT NE] [9:48 PM]: 
+super...
+Chidhambaram, Janarthanan [CCC-OT NE] [9:48 PM]: 
+one doubt 
+INFO: Checking for reserve_policy=yes attributes in ODM CuAt...
+y its in YES
+reserver_policy as to be NO right ?
+Loganathan, Yogasimhan [CCC-OT NE] [9:48 PM]: 
+it's checking for attritube yes...
+Chidhambaram, Janarthanan [CCC-OT NE] [9:49 PM]: 
+but its shoud by No right 
+Loganathan, Yogasimhan [CCC-OT NE] [9:49 PM]: 
+script is checking value "reserve_policy=yes" only
+it's not showing for any disks actually
+Chidhambaram, Janarthanan [CCC-OT NE] [9:50 PM]: 
+oh ok ok 
+shall i release the server to DB team to bring up 
+root@mwewpsdb1p.nam.nsroot.net RC=0 # powermt display
+Symmetrix logical device count=11
+==============================================================================
+----- Host Bus Adapters --------- ------ I/O Paths ----- ------ Stats ------
+### HW Path Summary Total Dead IO/Sec Q-IOs Errors
+==============================================================================
+   0 fscsi0 degraded 31 9 - 0 0
+   1 fscsi1 optimal 22 0 - 0 0
+   2 fscsi2 degraded 31 9 - 0 0
+   3 fscsi3 optimal 22 0 - 0 0
+ji shall run powermt check 
+
+
+
+
+
