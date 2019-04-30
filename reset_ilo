@@ -1,0 +1,129 @@
+STEDOCSWCS44P STEDOCSWCS54P STEDOCSWDB1PN2 STEDOCMWDB4PN2 STEDOCSWDB4PN2
+
+
+
+471  uptime
+  472  hponcfg 
+  473  man hponcfg
+  474  hponcfg --help
+  475  hponcfg -h
+  476  sbin/hponcfg -f /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/Tools/ILO/xml/Reset_RIB.xml
+  477  /sbin/hponcfg -f /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/Tools/ILO/xml/Reset_RIB.xml
+  478  lsmod | grep -i ilo
+  479  cat /etc/redhat-release 
+  480  /sbin/hponcfg -f /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/Tools/ILO/xml/Get_Network.xml
+  481  /sbin/hponcfg -f /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/Tools/ILO/xml/Get_Network.xml
+  482  hponcfg -r
+  483  exit
+  484  uptime
+  485  crontab -l | grep -i boot
+  486  date
+  487  /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/VTM/checkFirmware.sh
+  488  hponcfg -w /tmp/ilo
+  489  hponcfg -r 
+  490  exit
+  491  ping fimktvlap17u 
+  492  who -r
+  493  ps -ef | grep K
+  494  ps -ef | grep K
+  495  ps -ef | grep rc6
+  496  history
+  497  crontab -l
+  498  date
+  499  history | grep down
+  500  history | grep reb
+  501  uptime
+  502  who -r
+  503  hponcfg -w /tmp/ilo
+  504  cat /tmp/ilo
+  505  history
+[UAT root @ fimktvlap17u ~]
+
+
+
+
+
+
+  423  hponcfg 
+  424  man hponcfg
+  425  hponcfg --help
+  426  hponcfg -h
+  427  sbin/hponcfg -f /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/Tools/ILO/xml/Reset_RIB.xml
+  428  /sbin/hponcfg -f /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/Tools/ILO/xml/Reset_RIB.xml
+  429  lsmod | grep -i ilo
+  430  cat /etc/redhat-release 
+  431  /sbin/hponcfg -f /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/Tools/ILO/xml/Get_Network.xml
+  432  /sbin/hponcfg -f /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/Tools/ILO/xml/Get_Network.xml
+  433  hponcfg -r
+  434  exit
+  435  uptime
+  436  crontab -l | grep -i boot
+  437  date
+  438  /net/ldnvnasnfsu008.eur.nsroot.net/vol/ldneqtv052/eqtqt052/VTM/checkFirmware.sh
+  439  hponcfg -w /tmp/ilo
+  440  hponcfg -r 
+  441  exit
+  442  ping fimktvlap17u 
+  443  who -r
+  444  ps -ef | grep K
+  445  ps -ef | grep K
+  446  ps -ef | grep rc6
+  447  history
+  448  crontab -l
+  449  date
+  450  history | grep down
+  451  history | grep reb
+  452  history 
+  453  which hponcfg
+  454  rpm -qf /sbin/hponcfg
+  455  rpm -ql hponcfg-4.3.0-0
+  456  more /usr/share/doc/hponcfg/readme.txt
+  457   exit
+  458  cd /tmp/ilo
+  459  cat /tmp/ilo
+  460  cp -p /tmp/ilo /tmp/ilo.1.txt
+  461  vi /tmp/ilo.1.txt
+  462  hponcfg -f /tmp/ilo.1.txt
+  463  hponcfg -r 
+  464  hponcfg  -w /tmp/ilo1
+  465  cat /tmp/ilo1
+  466  haoncfg -f  /tmp/ilo.1.txt
+  467  hponcfg -f  /tmp/ilo.1.txt
+  468  haoncfg -w /tmp/ilo3
+  469  hponcfg -w /tmp/ilo3
+  470  cat /tmp/ilo3
+  471  vi /tmp/test
+  472  hponcfg -f /tmp/test
+  473  hponcfg -w /tmp/ilo4
+  474  cat /tmp/ilo4
+  475  vi /tmp/test
+  476  exit
+  477  cat /tmp/ilo4 
+  478  exit
+  479  uptime
+  480  who -r
+  481  hponcfg -w /tmp/ilo
+  482  cat /tmp/ilo
+  483  history
+  484  cat /tmp/ilo
+  485  cat /tmp/ilo*
+  486  ls -ltr /tmp/ilo*
+  487  cat /tmp/ilo1
+  488  nslookup fimktvlap16u
+  489  nslookup fimktvlap18u
+  490  nslookup fimktvlap17d
+  491  nslookup fimktvlap15u
+  492  nslookup fimktvlap14u
+  493  nslookup fimktvlap13u
+  494  vi /tmp/test1
+  495  hponcfg -f /tmp/test1
+  496  cat /tmp/test
+  497  i /tmp/test
+  498  vi /tmp/test
+  499  hponcfg -f /tmp/test
+  500  exit
+  501  history
+
+  
+  
+  
