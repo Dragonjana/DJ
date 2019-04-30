@@ -1,0 +1,36 @@
+Read-only filesystem remediation:
+Initial steps to approach:
+- Determine the cause to head in right direction: Hardware or software, configuration or registry etc. If the Grub is accessible after the BIOS check it’s most likely not a hardware failure.
+- Determine the errors messages. There are wide variety of error message from which it can be determined which filesystem (root, var etc) or partition (sda2, sdb3 etc) that is giving errors. Note them down.
+1. If a non-root partitions make modification in fstab file and remount.
+Example: In /etc/fstab file
+#mount -n -o remount /var
+(or)
+# mount -o remount,rw /var To remount:
+#mount –o rw /var
+2. If the OS is in a state where there is no option to reboot, try to reset or shutdown and power up the VM again.
+If Step 1 and Step 2 doesn’t help go into single user mode to perform a filesystem check (fsck) and remediate any corrupted inodes.
+Procedure to go into single user mode:
+3. Restart the VM
+4. Access the GRUB screen. Go into the Grub menu or hit ESC when the RHEL flash screen is displayed.
+5. Select the Kernel line and hit ‘e’ to edit the entry. Diagnose the file if all the relevant parameters are present. Such as:
+(a) When encountering the error “Filesystem errors were encountered that couldn’t be fixed automatically… when you press enter the system will be halted. Do a manual fsck”
+Add a line Init=/bin/sh at the end of the Kernel line in grub1 (adds to the shell fast if issue getting on to single user mode shell prompt)
+6. Append “S” or “1” or “Single” at the end of the Kernel line and hit ESC to return to menu.
+7. Press ‘b’ to boot the system into single user mode.
+8. Upon booting of the OS into single user mode determine the mounted file systems.
+(a) Mount
+(b) Df –h
+9. Important – Un-mount filesystem that need to undergo filesystem check (always best to fsck on unmounted filesystems to avoid data corruption).
+Example: Unmount the filesystem, for example: if its /home (dev/sd3) type the command:
+#umount /dev/sda3 or #umount /home
+10. Run fsck on the partition determined in step 1.
+fsck –p –y /dev/sdX where X is what partition the filesystem is on
+Or
+fsck /dev/sda3
+* look at man pages for more options)
+11. Specify the filesystem type using –t option: # fsck –t ext3 /dev/sda3 OR #fsck.ext3 /dev/sda3
+12. Perform the necessary fixing of the Inodes as per the messages. The process is self intuitive.
+13. Execute commands Mount and Df –h to determine the mounted filesystems.
+14. Once Inodes are remediated reboot the virtual server.
+Note: if any files are recovered they are places in /home/lost+found directory by fsck command.
