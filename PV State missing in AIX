@@ -1,0 +1,102 @@
+Lee, Scott1 [CCC-OT] [10:09 PM]: 
+Do you see my screen?
+First, I deleted /dev/gerd/data/gerddata182 from rschdb27u1/u2.
+Chidhambaram, Janarthanan [CCC-OT NE] [10:09 PM]: 
+with rm ?
+Lee, Scott1 [CCC-OT] [10:09 PM]: 
+yes.
+Then, I destroy the oradatavg and re-created...
+That's all.
+# reducevg -d oradatavg hdiskpower199
+0516-914 rmlv: Warning, all data belonging to logical volume
+        oradata_lv on physical volume hdiskpower199 will be destroyed.
+rmlv: Do you wish to continue? y(es) n(o)? 
+y
+rmlv: Logical volume oradata_lv is removed.
+[UAT root @ rschdb27u1 /]
+# lsvg -p oradatavg 
+oradatavg:
+PV_NAME PV STATE TOTAL PPs FREE PPs FREE DISTRIBUTION
+hdiskpower27 active 1076 1076 216..215..215..215..215
+[UAT root @ rschdb27u1 /]
+# reducevg -d oradatavg hdiskpower27 
+ldeletepv: Volume Group deleted since it contains no physical volumes.
+[UAT root @ rschdb27u1 /]
+# lsvg -p oradatavg 
+0516-306 : Unable to find volume group oradatavg in the Device
+        Configuration Database.
+# mkvg -f -S -y oradatavg hdiskpower27
+oradatavg
+[UAT root @ rschdb27u1 /]
+# mklv -y oradata_lv -e x -t jfs2 -x 32768 oradatavg 1
+oradata_lv
+[UAT root @ rschdb27u1 /]
+# crfs -v jfs2 -d oradata_lv -m /dumps -p rw -A yes -a options=noatime -a logname='INLINE'
+File system created successfully.
+32048 kilobytes total disk space.
+New File System size is 65536
+[UAT root @ rschdb27u1 /]
+# for i in 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 199
+> do
+> extendvg oradatavg hdiskpower${i}
+> done
+[UAT root @ rschdb27u1 /]
+# lsvg oradatavg
+VOLUME GROUP: oradatavg VG IDENTIFIER: 00f81edf00004c000000015f73484a63
+VG STATE: active PP SIZE: 32 megabyte(s)
+VG PERMISSION: read/write TOTAL PPs: 29058 (929856 megabytes)
+MAX LVs: 256 FREE PPs: 29057 (929824 megabytes)
+LVs: 1 USED PPs: 1 (32 megabytes)
+OPEN LVs: 0 QUORUM: 13 (Enabled)
+TOTAL PVs: 25 VG DESCRIPTORS: 25
+STALE PVs: 0 STALE PPs: 0
+ACTIVE PVs: 25 AUTO ON: yes
+MAX PPs per VG: 32768 MAX PVs: 1024
+LTG size (Dynamic): 256 kilobyte(s) AUTO SYNC: no
+HOT SPARE: no BB POLICY: relocatable 
+MIRROR POOL STRICT: off 
+PV RESTRICTION: none INFINITE RETRY: no
+DISK BLOCK SIZE: 512 CRITICAL VG: no
+FS SYNC OPTION: no 
+# chfs -a size=900G /dumps
+Filesystem size changed to 1887436800
+Inlinelog size changed to 900 MB.
+# mount /dumps
+[UAT root @ rschdb27u1 /]
+# chown oracle:dba /dumps
+[UAT root @ rschdb27u1 /]
+# cat /etc/filesystem to check entry is okay.
+/dumps:
+        dev = /dev/oradata_lv
+        vfs = jfs2
+        log = INLINE
+        mount = true
+        options = noatime,rw
+        account = false
+Chidhambaram, Janarthanan [CCC-OT NE] [10:13 PM]: 
+# mkvg -f -S -y oradatavg hdiskpower27
+?
+Lee, Scott1 [CCC-OT] [10:13 PM]: 
+Yes...
+Chidhambaram, Janarthanan [CCC-OT NE] [10:13 PM]: 
+this one for activty disk
+Lee, Scott1 [CCC-OT] [10:13 PM]: 
+I used hdiskpower27 for 1st disk on oradatavg. :)
+Chidhambaram, Janarthanan [CCC-OT NE] [10:13 PM]: 
+oh ok ok 
+Lee, Scott1 [CCC-OT] [10:14 PM]: 
+before I do this, I 100% destroyed oradatavg and all disks in that VG.
+Chidhambaram, Janarthanan [CCC-OT NE] [10:14 PM]: 
+thanks a lot 
+now its fixed 
+right 
+so we no need to reboot 
+Lee, Scott1 [CCC-OT] [10:17 PM]: 
+No need to reboot as long as DBA is okay with their DB. :)
+Chidhambaram, Janarthanan [CCC-OT NE] [10:18 PM]: 
+we need to do the same thing on node 2 ?
+Lee, Scott1 [CCC-OT] [10:19 PM]: 
+No, no2 is not using /dumps. it's oracleRAC, so, we need to be really careful.
+Chidhambaram, Janarthanan [CCC-OT NE] [10:20 PM]: 
+ok ok 
+
