@@ -1,0 +1,36 @@
+•	
+STEP 1: Once you start GRUB press the E (edit).
+ 
+STEP 2: Select the line below and press the E (edit).
+kernel /boot/vmlinuz-2-6-26-2-686 root=/dev/hda2 ro quiet
+ 
+STEP 3: Add at the end of the line parameter: init = / bin / bash press ENTER
+grub edit> kernel /boot/vmlinuz-2-6-26-2-686 root=/dev/hda2 ro quiet init=/bin/bash
+ 
+STEP 4: Above the line below press button B (boot).
+Kernel /boot/vmlinuz-2-6-26-2-686 root=/dev/hda2 ro quiet init=bin/bash
+ 
+STEP 5: Making the root directory (/) editable.
+Type: mount –o remount, rw /
+ 
+STEP 6: Edit the file that stores user passwords encrypted.
+# vi /etc/shadow
+ 
+STEP 7: The first line is the root user with the password encrypted.
+Root: $1$HI:x/5WF$jBM6D6DmrN90EjoK7D1NK.:12212:0:99999:7:::
+ 
+STEP 8: Remove the encrypted password:
+root::12212:0:99999:7:::
+:wq! (Exit and save changes)
+ 
+STEP 9: After restarting the linux kernel select:
+Debian GNU/Linux, Kernel 2.6.26-2-686
+ 
+STEP 10: Logue in linux using root user without password.
+debian login: root <ENTER>
+ 
+11 STEP: Change the root password to one of your own.
+debian:~# passwd <ENTER>
+Enter new UNIX password: password <ENTER>
+Retype new UNIX password: password <ENTER>
+ 
