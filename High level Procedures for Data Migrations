@@ -1,0 +1,315 @@
+1
+High level Procedures for Data Migrations.
+Data Migration Overview:
+The Data Migration / Tech Refresh process is a seamless data movement from old to new storage arrays across both EMC and
+Hitachi technologies.
+Back out from a data migration process is to simply reverse the process, re- zoning the server to original source array. The SA
+teams should able to bring up their server services back.
+CITI SAN Teachrefresh DL:
+NAM team: *CTI GLOBAL EX CIS HIA SAN TR & MIGRATIONS
+EMEA team: *CTI EMEA EX CIS HIA SAN TR & MIGRATIONS
+CATE link to verify the current sanstack version :
+The SA team is responsible to have the SANstack levels are upto date on their servers to see storage without any issues.
+https://catecollaboration.citigroup.net/domains/platstor/gdse/products/techstdshmpgs/SANStacks.aspx
+2
+AIX:
+1. Send inq, powermt display dev=all outputs and type of cluster (ASM, RAC etc.) to “CITI SAN TechRefresh Team”. They will
+send the list of in scope devices.
+2. Stop the Application or Database
+3. Export ALL the Volume Groups (See AIX Additional Detail)
+4. SA will shutdown the Server
+5. “CITI SAN TechRefresh Team” will Perform the Backend changes
+6. SA will power up the Server
+7. SA will verify ALL disks are visible to Server
+8. Import ALL the Volume Groups
+9. Start the Application or Database
+10. Final Verification by Application and database teams
+AIX Additional Details:
+1. save output from lspv, lsvg, lsdev
+2. unmount all filesystems
+3. varyoff all volumegroup
+4. export volume group
+5. remove only in scope powerpath disks
+6. remove only in scope underlying hdisks
+7. remove adapters
+8. shut down server
+9. “CITI SAN TechRefresh Team” Performs Backend Changes
+10. Bring up the server
+11. cfgmgr
+12. inq
+13. Verify all disks are visible
+14. powermt config
+15. import volumegroup
+16. verify for filesystems
+17. perform the checkout
+Redhat Linux:
+1. Send inq, powermt display dev=all outputs, Veritas version (if any) and type of cluster to “CITI SAN TechRefresh Team”.
+They will send the list of devices in scope.
+2. Stop the Application or Database
+3. SA will shutdown the Server
+4. “CITI SAN TechRefresh Team” will Perform the Backend changes
+5. SA will power up the Server
+6. SA will verify ALL disks are visible to Server
+7. Start the Application or Database
+8. Final Verification by Application and database teams
+Oracle Solaris:
+For Servers running Solaris 5.10 with no ZFS :
+1. SA team need to provide “CITI SAN TechRefresh Team” with the current existing sd.conf and lpfc.conf files form the server
+( only for Soalris 5.8 / 5.9)
+2. “CITI SAN TechRefresh Team” will supply new sd.conf and lpfc.conf files to SA ( only for Soalris 5.8 / 5.9)
+3. Bring down applications and databases
+4. export the vgs and unmount the filesystems.
+5. Bring system to OK prompt – notify “CITI SAN TechRefresh Team”
+6. “CITI SAN TechRefresh Team” will complete zoning and data copy activities, notify SA when completed
+7. SA will reboot the server with - - r or boot –r to discover and reconfigure devices. Validate
+8. disks present , import vgs and file systems mounted
+9. Verify databases and applications are functioning properly – as if no change had
+3
+10. taken place (Apps and DBA group). Email entire team with confirmation
+11. Once confirmation is received that system is functioning normally
+12. Final verification can take place by database and application teams (optional)
+For Servers running Solaris 5.10 with ZFS
+1. Stop the Application or Database
+2. # zfs list
+3. # zoneadm list -cv
+4. # zoneadm -z <zone_name> halt
+5. # zfs umount <filesystem_name>
+6. # zpool export zfspool
+7. SA will shutdown the Server
+8. “CITI SAN TechRefresh Team” will Perform the Backend changes
+9. SA will power up the Server
+10. SA will verify ALL disks are visible to Server
+11. Import the ZPool and Mount the ZPool
+Solaris server with LDOMS:
+Follow the below procedure to bring up the LDOMS……………
+1. Inform the App team to shut down the apps
+2. SA to check and save “inq” , “df –k” , “share”, “format”, ldm list-bindings, zpool status output.
+3. Disable the startup scripts.
+4. Export zpool in guest ldom(if guest ldom has zpool) (zpool list to check)
+5. #zpool export <zpool name>
+6. Give init 0 on all guest ldom.
+7. disable app start up script
+8. Ldm stop <guest ldom>
+9. Ldm unbind <guest ldom>
+10. Export zpool in Control domain (zpool list to check).
+11. #zpool export <zpool name>
+12. Shutdown the control domain and inform Tech refresh support.
+Step 1: After tech refresh is done on server:
+Check if emcpower devices are same as before/after tech refresh using “echo| format” output, if devices are same GOTO Appendix A.
+1. import zpool in control domain and make sure it's online and not faulted.
+2. #zpool import <zpool name>.
+3. Ldm bind <guest ldom>
+4. Ldm start <guest ldom>
+5. Import zpool in guest ldom(if guest ldom has zpool)and make sure zpool is online and mounted (zpool status, zfs list).
+6. Enable startup script, do a final reboot of guest ldom and sent mail to app for checkouts
+Boot up the server, check if devices names are the same as before , if yes – import export ldomroot and ldomroot1 (zpool status to
+check), bind/start all ldoms. If NOT go to appendix A
+Appendix A
+If the devices are NOT the same after the refresh then RENAMING the devices needs to be done FIRST before importing zpool in control
+domain (see sample command)
+SAN techrefresh team is responsible for providing the before and after powerdevices mapping after techrefresh activity.
+Commands for renaming the power devices:--
+powermt check
+powermt release
+powermt config
+emcpadm rename -s <device-name> -t <device-name>
+powermt save
+4
+reboot
+After successful rename of power devices and successful imports of zpool GOTO Step 1 : “After tech refresh is done on server”, still if
+you are not able to rename the power devices GOTO Appendix B below
+Appendix B
+For example, on webgtdcsmld03p we have 3 disks as emcpower8c,9c,10c.. if emcpower device name changed then we need to remove
+the vdisk/vdsdev and add back with correct name(new device name) as given by Techrefresh team.
+ldm remove-vdisk <disk_name> <ldom>
+ldm remove-vdsdev <volume_name>@<service_name>
+ldm add-vdsdev <volume_name>@<service_name>
+ldm add-vdisk <disk_name> <volume_name>@<service_name> <ldom>
+Refer below LDom_WSG_Build_Document doc for ldm commands and usage.
+https://globalconsumer.collaborationtools.consumer.citigroup.net/sites/GMW/internal/sre/SREAmericas/websa/SA%20Documentation/
+Forms/AllItems.aspx?RootFolder=%2Fsites%2FGMW%2Finternal%2Fsre%2FSREAmericas%2Fwebsa%2FSA%20Documentation%2FSolaris
+&FolderCTID=0x010100F076B2D50384224387F996A89FE7872E&View={4C23386A-5659-4E82-87A8-3CF36A1A3716}
+Once the above is done GOTO step 3 in “After tech refresh is done on server”
+Backout Plan:
+1. Need to export zpool on server.
+2. Shutdown the guest ldoms (ldm stop/unbind)
+3. Bring down the Control domain and ask SAN Teach refresh to revert back the old settings.
+4. Import the zpool on CD
+5. Bring up the guest ldom (ldm bind/start)
+6. Import the zpool on guest ldom.
+7. Application team to do checkout.
+MS Windows:
+1. DBA’s and application teams stop databases and / or applications
+2. SA will take a screen shot of current drive configuration and email to “CITI SAN TechRefresh Team” for reference
+3. For a Windows server, the SA will need to power down the system.
+4. “CITI SAN TechRefresh Team” will complete zoning and other activities, notify SA by email when completed
+5. SA power on (reboot) the server to discover the LUNs via the new WWN. Validate disks present and file systems mounted
+6. Verify databases and applications are functioning properly – as if no change had taken
+place (Apps and DBA group). Email entire team with confirmation
+7. Once confirmation is received that system is functioning normally, the migration event for the SA has completed.
+8. “CITI SAN TechRefresh Team” will begin the data movement process (occurs in the background with no
+further outage to the server)
+9. “CITI SAN TechRefresh Team” will send notification that the data copy process has completed.
+10. Final verification can take place by database and application teams (optional)
+Note:
+The steps to discover the SAN storage to your server.
+1. Open Server Manager
+2. Click on Tools -> Computer Management. This will bring up the “Computer Management” window.
+3. Click on “Disk Management”. It will take a minute to come up.Under the Actions pane on the right, click on “More Actions” ->
+“Rescan Disks”. Even if you see new SAN Storage show up on its own, you should still do a rescan or Right-click on each SAN
+Disk and select “Online”.
+4. PS C:\> Get-Disk | Where-Object IsOffline –Eq $True
+5
+Alternatively, you can run the following power shell command to do the same thing: (To list all disks that are currently offline, type the
+following command:
+Number Friendly Name OperationalStatus Total Size Partition Style
+------ ------------- ----------------- ---------- ---------------
+2 EMC SYMMETRIX Multi-Path Disk Device Offline 33.53 GB RAW
+1 EMC SYMMETRIX Multi-Path Disk Device Offline 2.81 MB RAW
+(To bring all disks that are currently offline back online, type the following command: )
+PS C:\> Get-Disk | Where-Object IsOffline –Eq $True | Set-Disk –IsOffline $False
+PS C:\> Get-Disk | Where-Object IsOffline –Eq $False
+Number Friendly Name OperationalStatus Total Size Partition Style
+------ ------------- ----------------- ---------- ---------------
+0 HP LOGICAL VOLUME SCSI Disk Device Online 410.1 GB MBR
+5 HITACHI OPEN-V Multi-Path Disk Device Online 34.69 GB RAW
+4 HITACHI OPEN-V Multi-Path Disk Device Online 34.69 GB RAW
+2 EMC SYMMETRIX Multi-Path Disk Device Online 33.53 GB RAW
+1 EMC SYMMETRIX Multi-Path Disk Device Online 2.81 MB RAW
+If Windows Server cannot be hard booted :
+If the Server cannot be shut down completely we have to disable the HBA in order to take away the current devices and present the
+new devices.
+Following is the procedure which has to be followed UVM Migration.
+To Disable HBA
+1. Stop the applications.
+2. Set the StartUp mode to manaul for the applications.
+3. Go to each EMC disk and create a new text file with the Drive Letter as the name of the file. In this way it will easy for us to
+identify which disk is associated with which Drive Letter when disable and enable the HBA's.
+4. Goto Device Manager and Click on Select SCSI and RAID controllers.
+5. Right Click on a HBA, Select Properties.
+6. In the Properties window under General tab, Click the Drop-Down Menu under Device
+7. Usage: and Select "Do not use this device (disable)" and Click OK.
+To Enable HBA
+1. Goto Device Manager and Click on Select SCSI and RAID controllers.
+2. Right Click on a HBA, Select Properties.
+3. In the Properties window under General tab, Click the Drop-Down Menu under Device
+4. Usage: and Select "Use this device (enable)" and Click OK.
+5. Check if the Drive letters are assigned back correctly or not by looking at the file which we created before disabling the HBA
+against each disk.
+6
+Migration Procedure for Microsoft Cluster Servers.
+MSCS Pre-Migration Steps:
+1. Allocate ALL Cluster Resources to Primary Node.
+2. PAUSE Secondary Node and Take it OFFLINE.
+3. Backup Disk Signatures to a text file using MS resource kit tool dumpcfg.exe on Primary Node.
+4. Take Primary Node OFFLINE.
+5. Set Cluster Service Manual Mode on both nodes.
+6. Shutdown Primary Node and Secondary Node Cluster.
+MSCS Post Migration Steps:
+1. Boot Primary Node, Make sure you can see the LUN’s under Disk Management. (Remember, you will not be able to access the
+file system until Cluster Service is started).
+2. Start MS Cluster Service, and verify that the file system is accessible.
+3. Boot Secondary Node.
+4. Start MS Cluster Service on Secondary Node, UNPAUSE Secondary Node and verify the file system is accessible.
+5. Verify Cluster Failover.
+NOTE: Windows Servers which are using Dynamic Disk, after the migration sometimes the Disk will show as Offline/Missing in Disk
+Management, if that is the case SA has to perform the below tasks to fix the issues.
+Issue1:
+Online (Errors) - The disk may display this status if input/output (I/O) errors are detected on it. Fix:
+To resolve this issue, right-click the disk, and then click Reactivate Disk to return the disk to the online status.
+Issue2:
+Offline or Missing - The disk may display this status if it is inaccessible. This may occur if the disk is corrupted or if it is
+temporarily unavailable.
+Fix:
+To troubleshoot this issue: Repair any disk, controller, or connection problems. Verify that the physical disk is turned on and that it
+is correctly attached to the computer. Right-click the disk, and then click Reactivate Disk to return the disk to the online status.
+HP-UX:
+1. Stop the Application or Database
+2. Export ALL the Volume Groups with –s option and save the map file
+3. SA will shut down the Server
+4. “CITI SAN TechRefresh Team” will Perform the Backend changes
+5. SA will power up the Server
+6. SA will verify ALL disks are visible to Server
+7. Import ALL the Volume Groups using –s option and the map file that was created
+8. Start the Application or Database
+9. Final Verification by Application and database teams
+7
+HP-UX MC Service Guard Cluster:
+1. Make Copy of the /etc/fstab, Collect ls -l /dev/*/group >/<dir>/group.info - To get the minor # usage, Collect the Ownership of
+the directories/file systems residing on SAN Disks, Run vgexport -v -s -p -m </dir/vg##.map>vgname >/<dir>/vgname.dsk
+2. Collect Cluster Configuration - cmquerycl -v -c <clustername> -C cmclustconf_bef
+3. Stop the db/Applications
+4. umount the file systems residing on SAN Disks
+5. Backup the Cluster COnfig Directory - /etc/cmcluster
+6. Disable the Cluster Autostart in /etc/rc.config.d/cmcluster - AUTOSTART_CMCLD=0
+7. Run vgchange -a n /dev/<vgname> for all the VG's
+8. Run vgexport -v -s -m /<dir>/<mapfile_name> /dev/<vgname>
+9. Rename /etc/powermt.custom file
+10. Run rmsf -H for the SAN Disks
+11. Shutdown the Nodes
+12. Perform the Tasks related to Migration
+13. Bring up the Nodes
+14. Run ioscan -fn -C disk
+15. Run insf -e
+16. Run inq, powermt config
+17. Run mkdir /dev/<vgname>
+18. Run mknod /dev/<vgname>/group c 64 <minor#>
+19. Run vgimport -v -s -m /<dir>/<mapfile> /dev/<vgname>
+20. Run vgchange -a y /dev/<vgname>
+21. Change the ownership of the directories if required using chown command
+22. Run mount -a
+23. Edit the cmcluster_bef file to add new cluster lock disk device files
+24. Verify the validity of new cluster configuration (the only change is cluster lock device file) #cmcheckconf -v –C cmcluster_bef
+25. If the cmcheckconf command executes successfully, apply the new configuration
+#vgchange –a y VGlock
+( Activate the cluster lock VG, use appropriate VG name as per the configuration)
+#cmapplyconf –v –C cmcluster_bef
+If the cmapplyconf command is successful, start the cluster
+#vgchange –a n VGlock
+#vgchange –c y VGlock
+#cmruncl –v
+26. Verify if cluster was started successfully and if all the packages are running on their respective nodes, check if all file systems
+are mounted
+#cmviewcl –v
+27. If database/application startup is automated thru cluster, that is end of the cutover else start them manually, Enable the
+cluster autostart in /etc/rc.config.d/cmcluster
+AUTOSTART_CMCLD=1
+This will automate the cluster formation whenever servers are rebooted in future
+28. Run vgcfbbackup
+29. Cluster cutover complete
+8
+Some useful commands:
+i) To get the inq report from the server :
+#./inq
+Or
+# ./export/opt/SANinfo/inq
+Or
+# cd /opt/SANinfo/bin/
+# ./inq
+ii) To remove deadpaths after migration:
+Powermt check
+Powermt config
+Powermt save
+iii) To get the powerpath report form the server
+/etc/powermt display dev=all
+iv) To check the sanstack version or status of the server:
+/opt/SANinfo/StackCheck/sanstack_verify –s
+Or
+./SANstack_verify -s
+v) To take the Hitachi luns under powerpath control:
+/etc/powermt set policy=ad dev=all class=hitachi
+/etc/powermt manage class=hitachi
+/etc/powermt unmanage class=symm (optional – if SA don’t want to remove EMC devices)
+/etc/powermt config
+/etc/powermt save reboot
+vi) To list the device ids from veritas multipathing software:
+vxdmpadm list dmpnode all
+vii) To check the VERITAS version on the server
+pkginfo -l VRTSvxvm
+viii) Commands for renaming the power devices:--
+powermt check
+powermt release
+powermt config
+emcpadm rename -s <device-name> -t <device-name>
+powermt save
+reboot the server.
