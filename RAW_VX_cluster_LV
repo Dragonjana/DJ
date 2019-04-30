@@ -1,0 +1,573 @@
+
+   53  hastatus -sum
+   54   /repository/VTM/post-patch.sh
+   55  vxdisk path
+   56  powermt display
+   57  uname
+   58  powermt display
+   59  cat /etc/redhat-release 
+   60  multipath -ll
+   61  pvs
+   62  df -h
+   63  vxdisk -eo alldgs list
+   64  history | grep -i subpaths
+   65  vxdmpadm getsubpaths
+   66  hastatus
+   67  hastatus -sum
+   68  hagrp -freeze scooby2eur_prod
+   69  hagrp -freeze scooby2eur_prod2
+   70  hastatus -sum
+   71  hagrp -unfreeze scooby2eur_prod2
+   72  hagrp -unfreeze scooby2eur_prod
+   73  hastatus -sum
+   74  hagrp 
+   75  hagrp -offline scooby2eur_prod -any
+   76  hastatus -sum
+   77  hares 
+   78  hares -clear bpaprod_sybaseRS -sys lrdmqaatdbn1p
+   79  hastatus -sum
+   80  hagrp -online scooby2eur_prod -sys lrdmqaatdbn1p
+   81  hastatus -sum
+   82  hastatus -sum
+   83  hagrp -offline scooby2eur_prod2 -any
+85  hagrp -online scooby2eur_prod2 -sys lrdmqaatdbn1p
+   86  hastatus -sum
+   87  ps -ef | grep -i vcs
+   88  uname -a ;date
+   89  hastatus -summ
+   90  ps -ef |grep -i pmon
+   91  hares -state FIBPA_LN_PROD_157 
+   92  exit
+   93  hastatus -sum
+   94  hagrp -resources lrdmqaatdbn1p
+   95  hagrp -resources scooby2eur_prod
+   96  hagrp -resources scooby2eur_prod2
+   97  exit
+   98  uname -a ;date
+   99   hagrp -resources scooby2eur_prod
+  100  hastatus -summ
+  101  hagrp -switch scooby2eur_prod2 -sys lrdmqaatdbn2p
+  102  clear
+  103  hastatus -summ
+  104  hagrp -switch scooby2eur_prod2 -to lrdmqaatdbn2p
+  105  watch hastatus -sum
+  106  hastatus -sum
+  107  hastatus -sum
+  108  hastatus -sum
+  109  exit
+  110  hastatus -sum
+  111  ps -ef | grep -i data
+  112  ps -ef | grep dataserver
+  113  ps -ef | grep -i dataserver
+  114  powermt display
+  115  multipath -ll
+  116  vxdmpadm listctlr
+  117  vxdmpadm getsubpaths
+  118  exit
+  119  df -h /optware/sybase/BPA/DUMPS/
+  120  date
+  121  uptime
+  122  export PATH=$PATH:/opt/VRTSvcs/bin
+  123  hastatus -summ
+  124  w
+  125   ps -ef |grep dataserver
+  126  grep -i link /var/log/messages
+  127  /net/tfiad3/nfs/sar.pl  23 
+  128  /net/tfiad3/nfs/sar.pl  30 
+  129  history 
+  130  hastatus -sum
+  131  tail /var/VRTSvcs/log/engine_A.log 
+  132  tail -100 /var/VRTSvcs/log/engine_A.log 
+  133  date
+  134  hastatus -sum
+  135  hagrp -resources scooby2eur_prod
+  136  hagrp -resources scooby2eur_prod2
+  137  hastatus -sum
+  138  ps -ef | grep sybase
+  139  hastatus -sum
+  140  hagrp -resources scooby2eur_prod
+  141  hares -display bpaprod_sybase
+  142  less /var/VRTSvcs/log/engine_A.log 
+  143  ps -ef | grep sybase
+144  uptime
+  145  less /var/VRTSvcs/log/engine_A.log 
+  146  hares -display bpaprod_sybase
+  147  ps -ef | grep FIBPA_LN_PROD_157
+  148  hatype -display |grep -i sybase|grep -i time
+  149  ps -ef |grep -i dataserver
+  150  view /var/VRTSvcs/log/engine_A.log 
+  151  hatype -display |grep -i sybase|grep -i tole
+  152  hatype -display sybse
+  153  hatype -display Sybase
+  154  hastatus -summ
+  155  hagrp -resources scooby2eur_prod
+  156  hagrp -display scooby2eur_prod
+  157  cat /var/VRTSvcs/log/engine_A.log 
+  158  hastatus -sum
+  159  cat /var/VRTSvcs/log/engine_A.log | grep scooby2eur_prod
+  160  hares -display cdmgprod_sybase 
+  161  cat /var/VRTSvcs/log/engine_A.log | grep "2017/07/30 1"
+  162  hares -display cdmgprod_sybase
+  163  cat /etc/VRTSvcs/conf/config/main.cf | more
+  164  ps -ef | grep sybase
+  165  ps -ef | grep sybase | grep datas
+  166  cat /var/VRTSvcs/log/engine_A.log | grep "2017/07/30 1" | 
+  167  ps -ef | grep FICDMG_LN_PROD_157
+  168  ps -ef | grep sybase| grep datase
+  169  hastatus -sum
+  170  cat /var/VRTSvcs/log/engine_A.log | grep scooby2eur_prod | grep -v prod2
+  171  cat /etc/VRTSvcs/conf/config/main.cf | more
+  172  cat /var/VRTSvcs/log/engine_A.log | grep scooby2eur_prod 
+  173  hastatus -sum
+  174  hares -display bpaprod_sybase
+  175  hatype -display Sybase
+  176  hastatus -sum
+  177  less /var/VRTSvcs/log/engine_A.log 
+  178  hares -list
+  179  hares -list | grep syb
+  180  hastatus -sum
+  181  hagrp -resources scooby2eur_prod
+  182  hastatus -sum
+  183  hagrp -resources scooby2eur_prod2
+  184  hastatus -summ
+  185  uptime
+  186  cd /var/crash/
+  187  ls -lrt
+  188  dmidecode -t1
+  189  hplog -v
+  190  date
+  191  hastatus -summ
+  192  uptime
+  193  who -r
+  194  df -h
+  195  ps -ef |grep -i had
+  196  hastatus -sum
+  197  w
+  198  hastatus -sum
+  199  hagrp -state scooby2eur_prod
+  200  hastatus -sum
+  201  ls -ltr 
+  202  hastatus -summ
+  203  hares -clear bpaprod_sybaseRS -sys lrdmqaatdbn2p
+ 204  hares -clear bpaprod_sybase -sys lrdmqaatdbn1p
+  205  hastatus -summ
+  206  hagrp -switch scooby2eur_prod -to lrdmqaatdbn1p
+  207  hastatus -summ
+  208  tail -f /var/VRTSvcs/log/engine_A.log 
+  209  hastatus -summ
+  210  tail -f /var/VRTSvcs/log/engine_A.log
+  211  hagrp -state scooby2eur_prod
+  212  hagrp -resources scooby2eur_prod
+  213  hagrp -resources scooby2eur_prod --attr
+  214  for i in `hagrp -resources scooby2eur_prod`; do hares -state $i; done
+  215  hastatus -summ
+  216  hares -online bpaprod_sybaseRS -sys lrdmqaatdbn1p
+  217  hastatus -summ
+  218  hagrp -state scooby2eur_prod
+  219  hastatus -summ
+  220  tail -f /var/VRTSvcs/log/engine_A.log 
+  221  tail -100 /var/VRTSvcs/log/engine_A.log 
+  222  hastatus -summ
+  223  hares -display bpaprod_sybaseRS
+  224  ls -ltr /optware/sybase/BPA/HOME/rep/REP-15_5/install/vcs_start_repserver.ksh
+  225  su - sybase
+  226  su sybase
+  227  hastatus -sum
+  228  hastatus-summ
+  229  hastatus -summ
+  230  hares -display bpaprod_sybaseRS
+  231  history
+  232  hastatus -summ
+  233  hastatus -summ
+  234  df -h
+  235  tail -f /var/VRTSvcs/log/engine_A.log 
+  236  cat /proc/net/bonding/bond0 
+  237  tail -f /var/VRTSvcs/log/engine_A.log 
+  238  hastatus -summ
+  239  su sybase
+  240  hastatus -summ
+  241  ps -ef | grep -i ase
+  242  tail -f /var/VRTSvcs/log/engine_A.log 
+  243  hastatus -summ
+  244  hares -clear bpaprod_sybaseRS -sys lrdmqaatdbn1p
+  245  hastatus -summ
+  246  hagrp -freeze scooby2eur_prod
+  247  hastatus -summ
+  248  tail -50 /var/VRTSvcs/log/engine_A.log
+  249  uptime
+  250  cd /opt/VRTSvcs/bin/triggers/resfault
+  251  cd /opt/VRTSvcs/bin/triggers/
+  252  ls -ltr 
+  253  ls -ld /opt/VRTSvcs/bin/triggers/
+  254  cd /opt/VRTSvcs/bin/triggers/
+  255  ls -ltr 
+  256  /usr/openv/netbackup/bin/bp
+  257  hares -display bpaprod_sybase
+  258  hastatus -summ
+  259  hares -display bpaprod_sybaseRS
+  260  ls -ltr /optware/sybase/BPA/HOME/rep/REP-15_5/install/FIBPA_LN_RS_PROD_157.log
+  261  tail -100 /optware/sybase/BPA/HOME/rep/REP-15_5/install/FIBPA_LN_RS_PROD_157.log
+  262  ls -ltr /optware/sybase/BPA/HOME/rep/interfaces
+  263  ls -ltr /optware/sybase/BPA/HOME/rep/REP-15_5/install/FIBPA_LN_RS_PROD_157.cfg
+ 264  ls -ltr /optware/sybase/BPA/HOME/rep/SYSAM-2_0/licenses/010_EMEA_Citi_License_Server.lic /optware/sybase/BPA/HOME/rep/SYSAM-2_0/licenses/020_NAM_Citi_License_Server.lic /optware/sybase/BPA/HOME/rep/SYSAM-2_0/licenses/030_APAC_Citi_License_Server.lic
+  265  tail -1000 /var/VRTSvcs/log/engine_A.log
+  266  tail -1000 /var/VRTSvcs/log/engine_A.log | grep -E "CRITICAL|ERROR"
+  267  date
+  268  hastatus -summ
+  269  uptime
+  270  hastatus -summ
+  271  tail -1000 /var/VRTSvcs/log/engine_A.log | grep -E "CRITICAL|ERROR"
+  272  hastatus -summ
+  273  hares -display bpaprod_sybase
+  274  hastatus -summ
+  275  hares -online bpaprod_sybaseRS -sys lrdmqaatdbn1p
+  276  hastatus -summ
+  277  tail -f /var/VRTSvcs/log/engine_A.log 
+  278  hastatus -summ
+  279  hagrp -unfreeze scooby2eur_prod
+  280  hastatus -summ
+  281  bash
+  282  haconf -makerw
+  283  for R in bpaprod_sybase bpaprod_sybaseBK bpaprod_sybaseRS cdmgprod_sybase cdmgprod_sybaseBK; do hares -override $R RestartLimit; hares -modify $R RestartLimit 1; hares -override $R OnlineRetryLimit ; hares -modify $R OnlineRetryLimit 1; done
+  284  haconf -dump -makero
+  285  for R in bpaprod_sybase bpaprod_sybaseBK bpaprod_sybaseRS cdmgprod_sybase cdmgprod_sybaseBK; do hares -display $R -attribute RestartLimit ; ; hares -display $R -attribute OnlineRetryLimit 1; done
+  286  for R in bpaprod_sybase bpaprod_sybaseBK bpaprod_sybaseRS cdmgprod_sybase cdmgprod_sybaseBK; do hares -display $R -attribute RestartLimit ; hares -display $R -attribute OnlineRetryLimit 1; done
+  287  for R in bpaprod_sybase bpaprod_sybaseBK bpaprod_sybaseRS cdmgprod_sybase cdmgprod_sybaseBK; do hares -display $R -attribute RestartLimit ; hares -display $R -attribute OnlineRetryLimit; done
+  288  cd /repository/Admin/rt60677/scripts && ./gather-san-info.sh 
+  289  cd /var/tmp/san_tech_refresh/
+  290  mkdir /var/tmp/san_tech_refresh/
+  291  cd /var/tmp/san_tech_refresh/ && mv ../linux_san_migration.sh . && chown root:root linux_san_migration.sh && ./linux_san_migration.sh table
+  292  vxdisk list
+  293  vxdisk list -o alldgs
+  294  rescan-scsi-bus.sh 
+  295  vxdisk list -o alldgs
+  296  cd /var/tmp/san_tech_refresh/
+  297  ls
+  298  ./linux_san_migration.sh table
+  299  /opt/VRTS/bin/vxdisksetup -i emc0_13b0 format=cdsdisk
+  300  /opt/VRTS/bin/vxdisksetup -i emc0_13b1 format=cdsdisk
+  301  /opt/VRTS/bin/vxdisksetup -i emc0_13b2 format=cdsdisk
+  302  vxdisk list -o alldgs
+  303  uname -a
+  304  uptime
+  305  ps -ef |grep -i had
+  306  hastatus -summ
+  307  who -r
+  308  uptime
+  309  uname -a
+  310  hastatus -summ
+  311  hagrp -disp scooby2eur_prod |more
+  312  hagrp -disp scooby2eur_prod2 |more
+  313  cd /etc/VRTSvcs/conf/config/
+  314  vi main.cf
+  315  hares -state bpaprod_sybase
+  316  hastatus -summ
+  317  hagrp --freeze scooby2eur_prod
+ 318  hagrp -freeze scooby2eur_prod
+  319  hastatus -summ
+  320  hastatus -summ
+  321  hastatus -summ
+  322  hastatus -summ
+  323  hastatus -summ
+  324  hagrp -unfreeze scooby2eur_prod
+  325  hastatus -summ
+  326  hastatus -sum
+  327  ps -ef | grep sybase
+  328  less /var/VRTSvcs/log/engine_A.log 
+  329  hastatus -sum
+  330  less /var/VRTSvcs/log/engine_A.log 
+  331  ps -ef | grep isql
+  332  lastcomm | more
+  333  lastcomm | less
+  334  cd /opt/bmc/patrol/Patrol3
+  335  ls
+  336  cd log
+  337  ls
+  338  ls -lrt
+  339  less PatrolAgent-lrdmqaatdbn1p-3181.errs
+  340  date
+  341  man lastcomm
+  342  lastcomm | less
+  343  less PatrolAgent-lrdmqaatdbn1p-3181.errs
+  344  ls -l
+  345  less /var/log/messages
+  346  who
+  347  last | more
+  348  hares -list 
+  349  hares -list  | grep bpaprod_sybase
+  350  hares -state  | grep bpaprod_sybase
+  351  hastatus -sum
+  352  hagrp -freeze scooby2eur_prod
+  353  hastatus -sum
+  354  hagrp -unfreeze scooby2eur_prod
+  355  hastatus -sum
+  356  cd /etc/VRTSvcs/conf/config/
+  357  vi main.cf
+  358  hagrp -freeze scooby2eur_prod
+  359  hastatus -sum
+  360  hastatus -sum
+  361  hagrp -unfreeze scooby2eur_prod
+  362  hastatus -sum
+  363  date
+  364  hsres -state bpaprod_sybaseRS 
+  365  haststus -summ
+  366  hastatus -summ
+  367  hares -state bpaprod_sybaseRS
+  368  datye
+  369  date
+  370  exit
+  371  lastcomm | less
+  372  lastcomm | less
+  373  pwd
+  374  cd /opt/bmc/patrol/Patrol3/log
+  375  ls
+  376  ls -lrt
+  377  less  PatrolAgent-lrdmqaatdbn1p-3181.errs.~1~
+ 378  less  PatrolAgent-lrdmqaatdbn1p-3181.errs.~2~ 
+  379  less  PatrolAgent-lrdmqaatdbn1p-3181.errs.~3~ 
+  380  hatype -display Sybase
+  381  lastcomm --pid | more
+  382  /repository/VTM/patch-2017Q2.sh 
+  383  /repository/VTM/updateILO4.sh 
+  384  hastatus -sum
+  385  hares -list scooby2eur_prod
+  386  hagrp -list scooby2eur_prod
+  387  hagrp -resources scooby2eur_prod
+  388  haconf -makerw
+  389  hares -override bpaprod_sybase CleanTimeOut 
+  390  hatype -display Sybase
+  391  hares -override bpaprod_sybase CleanTimeout 
+  392  hares -modify bpaprod_sybase CleanTimeout 90
+  393  hares -override bpaprod_sybaseBk CleanTimeout 
+  394  hares -override bpaprod_sybaseBK CleanTimeout 
+  395  hares -modify bpaprod_sybaseBK CleanTimeout 90
+  396  haconf -dump -makero
+  397  hastatus -sum
+  398  hares -display bpaprod_sybase
+  399  hastatus -sum
+  400  hastop -all
+  401  hastatus -usm
+  402  hastatus -sum
+  403  hastatus -sum
+  404  shutdown -r now
+  405  hastatus -sum
+  406  haconf -dump -makero
+  407  hagrp -resources scooby2eur_prod2
+  408  haconf -makerw
+  409  hares -override CleanTimeout cdmgprod_sybase 
+  410  hares -override cdmgprod_sybase CleanTimeout
+  411  hares -modify cdmgprod_sybase CleanTimeout 90
+  412  hares -override cdmgprod_sybaseBK CleanTimeout
+  413  hares -modify cdmgprod_sybaseBK CleanTimeout 90
+  414  haconf -dump -makero
+  415  hastatus -sum
+  416  /repository/VTM/post-patch.sh 
+  417  ps -ef | grep dataserver
+  418  less /var/VRTSvcs/log/engine_A.log 
+  419  sar -r -f /var/log/sa/sa16
+  420  sar -r -f /var/log/sa/sa16 -s 12:00:00 -e 14:00:00
+  421  sar  -f /var/log/sa/sa16 -s 12:00:00 -e 14:00:00
+  422  less /var/log/messages/
+  423  less /var/log/messages
+  424  less /var/log/messages-20170917 
+  425  cat /etc/security/limits.conf
+  426  uname -a
+  427  hares -state FIBPA_LN_PROD_157
+  428  hares -state scooby2eur_prod
+  429  hastatus -summ |grep -i scooby2eur_prod 
+  430  hagrp -resources scooby2eur_prod
+  431  hagrp -offline scooby2eur_prod -sys lrdmqaatdbn1p
+  432  hastatus -summ |grep -i scooby2eur_prod 
+  433   hastatus -summ
+  434  hagrp -online scooby2eur_prod -sys lrdmqaatdbn1p
+  435   hastatus -summ
+  436  uptime
+  437  cd /opt/VRTSvcs/bin
+438  ./hastatus -summ
+  439  ./hagrp -resources scooby2eur_prod
+  440  cd /etc/VRTSvcs/conf/config
+  441  cat main.cf|grep -C 10 FIBPA_LN_PROD_157 
+  442  cat main.cf|grep -C 10 FIBPA_LN_PROD_157 --color
+  443  ./hares -display bpaprod_sybase
+  444  cd /opt/VRTSvcs/bin
+  445  ./hares -display bpaprod_sybase
+  446  history
+  447   hastatus -summ |grep -i scooby2eur_prod
+  448  sar 2
+  449   hastatus -summ |grep -i scooby2eur_prod
+  450  ./hastatus -sum
+  451  hagrp -offline scooby2eur_prod -sys lrdmqaatdbn1p
+  452  ./hastatus -sum
+  453  watch `hastatus -summ`
+  454  watch `hastatus summ`
+  455  ./hastatus -sum
+  456  hagrp -online scooby2eur_prod -sys lrdmqaatdbn1p
+  457  ./hastatus -sum
+  458  cd /opt/SSPV/bin
+  459  ./inq -et
+  460  ./sanstack_verify
+  461  vxdmpadm listctlr all
+  462  vxdmadm getsubpaths ctlr=all
+  463  vxdmadm getsubpaths ctlr=c1
+  464  vxdmpadm getsubpaths ctlr=c1
+  465  vxdmpadm getsubpaths ctlr=c3
+  466  vxdmpadm getsubpaths ctlr=c3 |wc -l
+  467  vxdmpadm getsubpaths ctlr=c1 |wc -l
+  468  cat /etc/redhat-release 
+  469  script /var/tmp/lrdmqaatdbn1p-san-before.log
+  470  df -h
+  471  vi /var/tmp/lrdmqaatdbn1p-san-before.log
+  472  cat /var/tmp/lrdmqaatdbn1p-san-before.log |mail -s "lrdmqaatdbn1p-pre-san" balaji.giridharan@citi.com
+  473  exit
+  474  pvs
+  475  df -h 
+  476  vxdg list
+  477  vxassist -g bpadg maxsize
+  478  vxprint -g bpadg -v
+  479  vxdisk -eo alldgs list
+  480  vxdisk -eo alldgs list|awk '$3 ~ /-/ && $4 ~ /-/ {print $0}'
+  481  hastatus -summ
+  482  cd /etc/VRTSvcs/conf/config/
+  483  ls
+  484  cat main.cf
+  485  clear
+  486  cd /dev/vx/dsk/
+  487  ls -l
+  488  cd bpadg/
+  489  ls -l
+  490  hastatus -summ
+  491  hares -disp -attribute State -group scooby2eur_prod
+  492  hares -disp -attribute State -group scooby2eur_prod|grep ONLINE
+  493  hares -disp -attribute State -group scooby2eur_prod2
+  494  ls -l
+  495  cat /etc/VRTSvcs/conf/config/main.cf|grep DATA_23
+  496  cat /etc/VRTSvcs/conf/config/main.cf|grep DATA_21
+  497  cat /etc/VRTSvcs/conf/config/main.cf|grep DATA_22
+498  cat /etc/VRTSvcs/conf/config/main.cf|grep DATA_23
+  499  history |grep -i hares
+  500  exit
+  501  vxdisk list
+  502  history
+  503  vxdmpadm listctlr all
+  504  hastatus -summ
+  505  vxdisk list -o alldgs
+  506  vxdg list 
+  507  vxdg -g bpadg list
+  508  raw -qa
+  509  ls -ltr /etc/udev/rules.d/
+  510  cd /etc/udev/rules.d/
+  511  cat 40-VxVM.rules
+  512  cat 60-raw.rules
+  513  cd /etc/vx/bin/
+  514  ./vxlist vol
+  515  less /etc/VRTSvcs/conf/config/main.c
+  516  less /etc/VRTSvcs/conf/config/main.cf
+  517  ls -al /dev/vx/rdsk/bpadg/
+  518  hacf --help
+  519  hacf -cftocmd /etc/VRTSvcs/conf/config/ -display | egrep -i DATA_14
+  520  bash
+  521  clear
+  522  vxdisk list -o alldgs | grep -i none
+  523  vxdisk list -o alldgs 
+  524  ls -ltr /etc/rc3.d/| grep -i sybase
+  525  ls -ltr /etc/rc3.d
+  526  ls -ltr /etc/rc3.d/
+  527  ls -ltr /etc/rc3.d/*| grep -i sybase
+  528  ls -ltr /dev/vx/rdmp/
+  529  ls -ltr /dev/raw/
+  530  ls -ltr /dev/vx/rdsk/bpadg/
+  531  vxdisk list -o alldgs 
+  532  vxdg -g bpadg addddisk emc0_13b0 
+  533  vxdg -g bpadg adddisk emc0_13b0 
+  534  vxdisk set clone=on
+  535  vxdisk set emc0_13b0 clone=on
+  536  vxdisk set emc0_13b1 clone=on
+  537  vxdisk set emc0_13b2  clone=on
+  538  vxdisk list -o alldgs 
+  539  vxdg -g bpadg addddisk emc0_13b0 
+  540  vxdg -g bpadg adddisk emc0_13b0 
+  541  vxdg -g bpadg adddisk emc0_13b1
+  542  vxdg -g bpadg adddisk emc0_13b2
+  543  vxdisk list -o alldgs 
+  544  vxassist -g bpadg maxsize
+  545  history | grep -i vxas
+  546  history | grep -i vx
+  547  vxassist -g bpadg make DATA_24 16384M
+  548  ls -ltr /dev/vx/rdsk/bpadg/
+  549  vxassist -g bpadg make DATA_25 16384M
+  550  vxassist -g bpadg make DATA_26 16384M
+  551  vxassist -g bpadg make DATA_27 16384M
+  552  vxassist -g bpadg make DATA_28 16384M
+
+ 553  ls -ltr /dev/vx/rdsk/bpadg/
+  554  vxedit -g bpadg set user=sybase group=sybase DATA_24
+  555  ls -ltr  /dev/vx/rdsk/bpadg/DATA_24
+  556  vxedit -g bpadg set user=sybase group=sybase DATA_25
+  557  vxedit -g bpadg set user=sybase group=sybase DATA_26
+  558  vxedit -g bpadg set user=sybase group=sybase DATA_27
+  559  vxedit -g bpadg set user=sybase group=sybase DATA_28
+  560  ls -ltr  /dev/vx/rdsk/bpadg/DATA_2*
+  561  cat /etc/VRTSvcs/conf/config/main.cf| grep "DATA"
+  562  hastatus -display
+  563  hastatus -summ
+  564  hares -display -attribut State -group scooby2eur_prod
+  565  hares -dep bpaprod_sybase
+  566  hares -dep bpaprod_sybaseBK
+  567  hares -add vol_bpadg_DATA_22 Volume scooby2eur_prod;
+  568  hares -modify vol_bpadg_DATA_22 DiskGroup bpadg;
+  569  hares -modify vol_bpadg_DATA_22 Volume DATA_22;
+  570  hares -modify vol_bpadg_DATA_22 Enabled 1;
+  571  hares -link bpaprod_sybase vol_bpadg_DATA_22;
+  572  hares -link vol_bpadg_DATA_22 bpadg;
+  573  haconf -makerw
+  574  hares -add vol_bpadg_DATA_22 Volume scooby2eur_prod;
+  575  hares -modify vol_bpadg_DATA_22 DiskGroup bpadg;
+  576  hares -modify vol_bpadg_DATA_22 Volume DATA_22;
+  577  hares -modify vol_bpadg_DATA_22 Enabled 1;
+  578  hares -link bpaprod_sybase vol_bpadg_DATA_22;
+  579  hares -link vol_bpadg_DATA_22 bpadg;
+  580  hares -display -attribut State -group scooby2eur_prod
+  581  hares -dep bpaprod_sybase
+  582  hares -add vol_bpadg_DATA_23 Volume scooby2eur_prod;
+  583  hares -modify vol_bpadg_DATA_23 DiskGroup bpadg;
+  584  hares -modify vol_bpadg_DATA_23 Volume DATA_23;
+  585  hares -modify vol_bpadg_DATA_23 Enabled 1;
+  586  hares -link bpaprod_sybase vol_bpadg_DATA_23;
+  587  hares -link vol_bpadg_DATA_23 bpadg;
+  588  hares -add vol_bpadg_DATA_24 Volume scooby2eur_prod;
+  589  hares -modify vol_bpadg_DATA_24 DiskGroup bpadg;
+  590  hares -modify vol_bpadg_DATA_24 Volume DATA_24;
+  591  hares -modify vol_bpadg_DATA_24 Enabled 1;
+  592  hares -link bpaprod_sybase vol_bpadg_DATA_24;
+  593  hares -link vol_bpadg_DATA_24 bpadg;
+  594  hares -add vol_bpadg_DATA_25 Volume scooby2eur_prod;
+  595  hares -modify vol_bpadg_DATA_25 DiskGroup bpadg;
+  596  hares -modify vol_bpadg_DATA_25 Volume DATA_25;
+  597  hares -modify vol_bpadg_DATA_25 Enabled 1;
+  598  hares -link bpaprod_sybase vol_bpadg_DATA_25;
+  599  hares -link vol_bpadg_DATA_25 bpadg;
+  600  hares -add vol_bpadg_DATA_26 Volume scooby2eur_prod;
+  601  hares -modify vol_bpadg_DATA_26 DiskGroup bpadg;
+  602  hares -modify vol_bpadg_DATA_26 Volume DATA_26;
+  603  hares -modify vol_bpadg_DATA_26 Enabled 1;
+  604  hares -link bpaprod_sybase vol_bpadg_DATA_26;
+  605  hares -link vol_bpadg_DATA_26 bpadg;
+  606  hares -add vol_bpadg_DATA_27 Volume scooby2eur_prod;
+  607  hares -modify vol_bpadg_DATA_27 DiskGroup bpadg;
+  608  hares -modify vol_bpadg_DATA_27 Volume DATA_27;
+  609  hares -modify vol_bpadg_DATA_27 Enabled 1;
+  610  hares -link bpaprod_sybase vol_bpadg_DATA_27;
+  611  hares -link vol_bpadg_DATA_27 bpadg;
+  612  hares -add vol_bpadg_DATA_28 Volume scooby2eur_prod;
+613  hares -modify vol_bpadg_DATA_28 DiskGroup bpadg;
+  614  hares -modify vol_bpadg_DATA_28 Volume DATA_28;
+  615  hares -modify vol_bpadg_DATA_28 Enabled 1;
+  616  hares -link bpaprod_sybase vol_bpadg_DATA_28;
+  617  hares -link vol_bpadg_DATA_28 bpadg;
+  618  hares -display -attribut State -group scooby2eur_prod
+  619  hares -dep bpaprod_sybase
+  620  history
+[Prod root @ lrdmqaatdbn1p ~]
+# 
+
+
