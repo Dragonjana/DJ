@@ -1,0 +1,136 @@
+vxdisk -o alldgs list
+cldev list -v
+vxdisksetup -i cAtAdA
+vxdisksetup -i cBtBdB
+vxdg init ora-dg oral=cAtAdA ora2=cBtBdB
+vxassist -g ora-dg make oravol 3g layout=mirror
+cldg create -t vxvm -n node1,node2 ora-rg
+newfs /dev/vx/rdsk/ora-dg/oravol
+mkdir /global/oracle
+vi /etc/vfstab: - yes global
+mount /global/oravol
+chown oracle:dba /global/oracle
+---------------------------------
+clrt register SUNW.oracle_server
+clrt register SUNW.oracle_listener
+clrg create -n node1,node2 ora-rg
+clrslh create -g ora-rg ora-lh
+clrs create -g ora-rg -t HAStoragePlus \
+-p FilesystemMountPoint=/global/oracle \
+-p AffinityOn=true|false ora-stor
+clrg online -M ora-rg
+---------------------------------
+clrs create -g ora-rg \
+-t oracle_server \
+-p Resource_dependencies=ora-stor
+-p ORACLE_sid=MYORA -x ORACLE_home=/global/oracle/product/10.2.0/db_1 \
+-p Alert_log_file=/global/oracle/admin/MYORA/bdump/alert_MYORA.log \
+-p Parameter_file=/global/oracle/admin/MYORA/pfile/initMYORA.ora \
+-p Connect_string=sc_fm/sc_fm ora-server-res
+---------------------------------
+clrs create -g ora-rg -t oracle_listener \
+-p ORACLE_home=/global/oracle/product/10.2.0/db_1 \
+-p Listener_name=LISTENER -p Resource_dependencies=ora-stor \
+ora-listener-res
+
+=============================================================
+
+Register Data Services
+# clrt register SUNW.HAStoragePlus
+# clrt register SUNW.oracle_listener
+# clrt register SUNW.oracle_server
+# clrt register SUNW.gds
+--------------------------------------------------------
+Initialize VX disks for rbcsu2dg
+# vxdisksetup -i emcpower3
+
+Create Local rbcsu2dg
+# vxdg init rbcsu2dg rbcsu2dg01=emcpower3
+# vxassist -g rbcsu2dg make optware  15g layout=nostripe
+# vxassist -g rbcsu2dg make visibr65  1g layout=nostripe
+# vxassist -g rbcsu2dg make patrol    1g layout=nostripe
+# vxassist -g rbcsu2dg make db2       1g layout=nostripe
+# vxassist -g rbcsu2dg make dce       1g layout=nostripe
+# vxassist -g rbcsu2dg make optmqm    1g layout=nostripe
+# vxassist -g rbcsu2dg make visibr    1g layout=nostripe
+# vxassist -g rbcsu2dg make ndmopt    1g layout=nostripe
+# vxassist -g rbcsu2dg make apps      1g layout=nostripe
+# vxassist -g rbcsu2dg make dcelocal  1g layout=nostripe
+# vxassist -g rbcsu2dg make cmmigr    1g layout=nostripe
+# vxassist -g rbcsu2dg make sminder   1g layout=nostripe
+# vxassist -g rbcsu2dg make sows      1g layout=nostripe
+# vxassist -g rbcsu2dg make rbcsstage 1g layout=nostripe
+# vxassist -g rbcsu2dg make rbcslog   1g layout=nostripe
+# vxassist -g rbcsu2dg make ndmwork   1g layout=nostripe
+--------------------------------------------------------
+Register Local rbcsu2dg
+# vxdg import rbcsu2dg
+# cldg create -t vxvm -p localonly=true -n rbcsssu2 rbcsu2dg
+# vxvol -g rbcsu2dg startall
+--------------------------------------------------------
+Make large filesystems
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/optware
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/visibr65
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/patrol
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/db2
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/dce
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/optmqm
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/visibr
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/ndmopt
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/apps
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/dcelocal
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/cmmigr
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/sminder
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/sows
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/rbcsstage
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/rbcslog
+# mkfs -F vxfs -o largefiles /dev/vx/rdsk/rbcsu2dg/ndmwork
+
+Add to /etc/vfstab
+############################## LOCAL TO RBCSU1DG #################################################
+/dev/vx/dsk/rbcsu2dg/optware   /dev/vx/rdsk/rbcsu2dg/optware   /optware/oracle        vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/visibr65  /dev/vx/rdsk/rbcsu2dg/visibr65  /opt/inprise/vbroker6  vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/patrol    /dev/vx/rdsk/rbcsu2dg/patrol    /usr/users/patrol      vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/db2       /dev/vx/rdsk/rbcsu2dg/db2       /opt/IBM/db2           vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/dce       /dev/vx/rdsk/rbcsu2dg/dce       /opt/dce               vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/optmqm    /dev/vx/rdsk/rbcsu2dg/optmqm    /opt/mqm               vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/visibr    /dev/vx/rdsk/rbcsu2dg/visibr    /opt/inprise/vbroker   vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/ndmopt    /dev/vx/rdsk/rbcsu2dg/ndmopt    /opt/cdunix            vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/apps      /dev/vx/rdsk/rbcsu2dg/apps      /opt/apps              vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/dcelocal  /dev/vx/rdsk/rbcsu2dg/dcelocal  /opt/dcelocal          vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/cmmigr    /dev/vx/rdsk/rbcsu2dg/cmmigr    /cmmigr                vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/sminder   /dev/vx/rdsk/rbcsu2dg/sminder   /export/opt/SiteMinder vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/sows      /dev/vx/rdsk/rbcsu2dg/sows      /export/opt/sows       vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/rbcsstage /dev/vx/rdsk/rbcsu2dg/rbcsstage /rbcsprod_stage        vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/rbcslog   /dev/vx/rdsk/rbcsu2dg/rbcslog   /rbcslog               vxfs 3 yes -
+/dev/vx/dsk/rbcsu2dg/ndmwork   /dev/vx/rdsk/rbcsu2dg/ndmwork   /ndmwork               vxfs 3 yes -
+
+Add oracle to /etc/passwd
+# oracle:x:29963:101:FUNCTIONAL,,,ORACLE INSTANCE:/u01/oracle:/bin/ksh
+...
+
+Add oracle to /etc/group
+# dba::101:oracle
+...
+
+Make it on both nodes
+# mkdir -p /optware/oracle
+# mkdir -p /opt/inprise/vbroker6
+# mkdir -p /usr/users/patrol
+# mkdir -p /opt/IBM/db2
+# mkdir -p /opt/dce
+# mkdir -p /opt/mqm
+# mkdir -p /opt/inprise/vbroker
+# mkdir -p /opt/cdunix
+# mkdir -p /opt/apps
+# mkdir -p /opt/dcelocal
+# mkdir -p /cmmigr
+# mkdir -p /export/opt/SiteMinder
+# mkdir -p /export/opt/sows
+# mkdir -p /rbcsprod_stage
+# mkdir -p /rbcslog
+# mkdir -p /ndmwork
+
+# mount /optware/oracle
+# chown oracle:dba  /optware/oracle
+
