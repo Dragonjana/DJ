@@ -1,0 +1,119 @@
+AIX How to add and remove an array LUN to/from a Volume Group VG and add a Snapshot copy of the LUN to another VG
+Run cfgmgr on the host server to enable AIX to see the new LUN or what will be seen as a disk. This new disk should come in as hdiskx where x is a number such as hdisk2.
+
+In this example we will add a disk to the root volume group rootvg
+
+Type lspv and the new disk should be displayed, in this case hdisk2 is the new disk.
+
+hdisk0 000093ea04c0e3ab rootvg active
+hdisk1 000093ea3b6b6148 rootvg active
+hdisk2 none None
+Type chdev -l hdisk2 -a pv=yes to create a PVID on the disk
+
+The output of lspv should then show something like the following
+
+hdisk0 000093ea04c0e3ab rootvg active
+hdisk1 000093ea3b6b6148 rootvg active
+hdisk2 000093ea5fd39687 None
+In this case we would like to add the new hdisk into the volume group rootvg
+
+To do this type extendvg -f rootvg hdisk2
+
+The output of lspv should then show something like the following
+
+hdisk0 000093ea04c0e3ab rootvg active
+hdisk1 000093ea3b6b6148 rootvg active
+hdisk2 000093ea5fd39687 rootvg active
+
+We then need to increase the number of physical volumes in each logical volume, to in this case 3 to incorporate the new disk.
+
+To do this quickly a script as shown can be run. Using awk the script assigns the first column of the output of lsvg -l rootvg (the LV names) to the variable LV. For each LV the command mklvcopy creates the third PV on hdisk2
+
+Before running the script type lsvg -l rootvg and you should see "PVs 2" for each LV. Then run the script below.
+
+for LV in `lsvg -l rootvg | awk 'NR>2 {print $1}'`
+do
+mklvcopy $LV 3
+done
+Re-run lsvg-l rootvg and you should now see "PVs 3" for each LV
+
+We now need to sync the data onto the new disk hdisk2. To do this type
+
+syncvg -p hdisk2 &
+
+a ps -ef should show a lresyncpv process
+
+Also a lsvg rootvg should show some STALE PPs. Keep running this command and the number of STALE PPs should decrease. The sync is finished when this number reaches 0.
+
+To ensure that the AIX server boots with this 3 way mirror should we lose any one of the internal disks run bosboot on the disks as follows
+
+bosboot -ad /dev/hdisk0
+
+bosboot -ad /dev/hdisk1
+
+This ensures both disks are bootable should one disk fail
+
+Also the server will fail to boot if a disk fails and quorum is set (quorum set on is the default). This is because with quorum set the server expects to see a majority of disks in the volume group before it will boot, in the case of a 3 way mirror this would be 2 disks. Unfortunately though if one of the internal disks fail the second available disk is on the array, which may be iscsi or fibre attached. Therefore the server will not be able to see this disk until the drivers are loaded which is too late in the boot sequence, therefore the server fails to boot.
+
+To turn quorum off type the following
+
+chvg -a 'y' -Q 'n' rootvg
+
+That's it we have a three way mirror with two system disks and a LUN on an array.
+
+We can now at some point take a Snapshot copy of this LUN on the array. This could be performed daily for a period of say seven days. We can now perform a recovery from the snapshot if required. This could be done by presenting the snapshot to the AIX server and adding to a new VG, this would enable us to recover data from that snapshot.
+
+To do this map out the snapshot disk from the array to the aix server.
+
+Then run cfgmgr on the AIX server and the snapshot disk should appear with the same pvid in the same volume group in this case rootvg as hdisk3. hdisk3 is identical to hdisk2 so will appear the same.
+
+hdisk0 000093ea04c0e3ab rootvg active
+hdisk1 000093ea3b6b6148 rootvg active
+hdisk2 000093ea5fd39687 rootvg active
+hdisk3 000093ea5fd39687 rootvg active
+
+We need to change the pvid on the disk to allow us to assign it to a new VG. To do this run the following
+
+chdev -l hdiskX -a pv=clear
+
+chdev -l hdiskX -a pv=yes
+
+We then need to change the details on the disk that describe which VG the disk belongs to. hdisk3 currently belongs to rootvg, we can change this to a new volume group called newvg as shown below.
+
+recreatevg -f -y newvg hdisk3
+
+This should create a new VG called newvg containing PV hdisk3
+
+Type lsvg -p newvg to display something like the following
+
+newvg:
+PV_NAME PV STATE TOTAL PPs FREE PPs FREE DISTRIBUTION
+hdisk3 active 570 308 113..101..00..00..94
+
+An lsvg -l newvg will show the LVs in the VG.
+
+We can mount these LVs on suitable mount points created by
+
+mkdir mount_point_name.
+
+To mount the new LVs use the mount command as follows, notice the LV names now begin with fs.
+
+So to mount the usr LV in newvg type something like the following
+
+mount /dev/fshd2 /newusr
+
+And that is it, you now have a copy of /usr from the snapshot disk mounted on /newusr
+
+Once the data has been retrieved from the snapshot disk we need to reverse the process and remove the new VG and hdisk3 from the AIX server. To do this follow the steps below
+
+umount /newusr
+
+varyoffvg newvg
+
+exportvg newvg
+
+lspv
+
+rmdev -dl hdisk3
+
+And that's it the snapshot disk is no longer visible to the AIX server and can be unmapped from the array
